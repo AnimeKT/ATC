@@ -13,21 +13,26 @@ body {
     overflow-x: hidden;
 }
 
-/* Navbar y Buscador */
+/* Navbar y Buscador - Solución de alineación */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 40px;
+    padding: 10px 25px; /* Padding ajustado */
     background-color: #18181b;
     border-bottom: 1px solid #27272a;
-    gap: 20px;
+    gap: 15px;
+    position: sticky; top: 0; z-index: 900; /* Sticky para mejor UX */
 }
 
-.logo h1 { font-size: 24px; color: #fff; white-space: nowrap;}
+.logo h1 { font-size: 22px; color: #fff; white-space: nowrap; cursor: pointer;}
 .logo span { color: #3ba4fa; }
 
-.search-bar { position: relative; flex: 1; max-width: 400px; }
+.search-bar { 
+    position: relative; 
+    flex: 1; 
+    max-width: 350px; /* Un poco más compacto */
+}
 .search-bar i {
     position: absolute; left: 15px; top: 50%;
     transform: translateY(-50%); color: #71717a;
@@ -40,17 +45,23 @@ body {
 }
 .search-bar input:focus { border-color: #3ba4fa; }
 
-.user-actions { display: flex; gap: 10px; }
+/* Forzar botones a la DERECHA */
+.user-actions { 
+    display: flex; 
+    gap: 10px; 
+    margin-left: auto; /* Mágico: empuja todo a la derecha del contenedor flex */
+}
 
 /* Filtros - Optimizados para deslizar en móvil */
 .filtros-container {
     display: flex; 
-    justify-content: center; 
+    justify-content: flex-start; /* Alineado a la izquierda para scroll móvil */
     gap: 12px;
-    padding: 20px; 
+    padding: 15px 20px; 
     background-color: #121214;
     overflow-x: auto; /* Permite scroll horizontal */
     white-space: nowrap;
+    border-bottom: 1px solid #27272a;
 }
 /* Oculta la barra de scroll visualmente pero mantiene la función */
 .filtros-container::-webkit-scrollbar { display: none; }
@@ -68,7 +79,7 @@ body {
 
 /* Contenedor General */
 .contenedor { max-width: 1200px; margin: 0 auto; padding: 20px; }
-.titulo-seccion { margin: 20px 0; font-size: 20px; color: #fff; display: flex; align-items: center; gap: 10px;}
+.titulo-seccion { margin: 10px 0 20px; font-size: 20px; color: #fff; display: flex; align-items: center; gap: 10px;}
 
 /* Panel de Registro Extendido */
 .header-registro { display: flex; align-items: center; gap: 20px; margin-bottom: 20px;}
@@ -113,39 +124,39 @@ body {
 
 /* Tarjetas de Anime */
 .grid-animes {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;
 }
 .tarjeta-anime {
-    background-color: #18181b; border-radius: 12px; overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #18181b; border-radius: 10px; overflow: hidden;
+    transition: all 0.3s ease;
     border: 1px solid #27272a; position: relative; cursor: pointer;
 }
 .tarjeta-anime:hover {
     transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.8);
     border-color: #3ba4fa;
 }
-.tarjeta-anime img { width: 100%; height: 260px; object-fit: cover; }
+.tarjeta-anime img { width: 100%; height: 230px; object-fit: cover; }
 
 .estado-badge {
     position: absolute; top: 10px; left: 10px; padding: 4px 8px;
-    border-radius: 4px; font-size: 11px; font-weight: bold; color: white;
-    backdrop-filter: blur(4px);
+    border-radius: 4px; font-size: 10px; font-weight: bold; color: white;
+    backdrop-filter: blur(4px); z-index: 10;
 }
 .estado-emision { background-color: rgba(16, 185, 129, 0.9); } 
 .estado-finalizado { background-color: rgba(239, 68, 68, 0.9); } 
 
-.info-tarjeta { padding: 12px; }
+.info-tarjeta { padding: 10px; }
 .titulo-tarjeta {
-    font-weight: 600; color: #fff; font-size: 14px;
+    font-weight: 600; color: #fff; font-size: 13px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* Autenticación y Botones */
 .btn-login {
     background-color: transparent; border: 1px solid #3ba4fa;
-    color: #3ba4fa; padding: 8px 16px; border-radius: 8px;
+    color: #3ba4fa; padding: 6px 12px; border-radius: 8px;
     cursor: pointer; font-weight: 600; transition: all 0.3s ease;
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 8px; font-size: 14px;
 }
 .btn-login:hover { background-color: #3ba4fa; color: #fff; }
 
@@ -158,12 +169,12 @@ body {
 .modal-contenido {
     background: linear-gradient(145deg, #121214, #0f0f11);
     border: 1px solid #27272a; border-radius: 12px; position: relative;
-    padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.9); color: #e0e0e0;
+    padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.9); color: #e0e0e0;
 }
-.modal-auth-box { max-width: 400px; width: 90%; }
+.modal-auth-box { max-width: 350px; width: 90%; }
 .btn-cerrar {
-    position: absolute; top: 15px; right: 20px; background: transparent;
-    border: none; color: #71717a; font-size: 20px; cursor: pointer; transition: 0.3s;
+    position: absolute; top: 15px; right: 15px; background: transparent;
+    border: none; color: #71717a; font-size: 18px; cursor: pointer; transition: 0.3s;
 }
 .btn-cerrar:hover { color: #fff; }
 
@@ -173,24 +184,50 @@ body {
 }
 
 /* =========================================
-   RESPONSIVIDAD (MÓVILES)
+   RESPONSIVIDAD MÓVIL OPTIMIZADA (TELEGRAM)
    ========================================= */
 @media (max-width: 768px) {
     .navbar { 
-        flex-direction: column; 
-        padding: 15px; 
-        gap: 15px;
+        flex-wrap: wrap; /* Permitir que los elementos fluyan a otra línea */
+        padding: 10px 15px;
+        gap: 10px;
     }
-    .logo { width: 100%; text-align: center; }
-    .search-bar { width: 100%; max-width: 100%; }
-    .user-actions { width: 100%; justify-content: center; }
     
-    .hide-mobile { display: none; } /* Oculta el texto de los botones de arriba, deja solo iconos */
-    .btn-login { padding: 10px 20px; }
+    .logo { 
+        order: 1; /* Primero el logo */
+        flex: 1; /* Ocupa el espacio de la izquierda */
+        text-align: left;
+    }
+    .logo h1 { font-size: 20px; }
 
-    .filtros-container { justify-content: flex-start; padding: 15px; }
+    .user-actions { 
+        order: 2; /* Segundo los botones, se quedan arriba a la derecha */
+        margin-left: auto; /* Mantener alineado a la derecha */
+        width: auto; 
+    }
     
-    .form-grid-complex { grid-template-columns: 1fr; } /* Todo en una columna */
-    .grid-animes { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-    .tarjeta-anime img { height: 200px; }
+    .hide-mobile { display: none; } /* Oculta el texto, deja solo iconos arriba */
+    .btn-login { padding: 8px; font-size: 16px; border-radius: 50%; width: 35px; height: 35px; justify-content: center;}
+
+    .search-bar { 
+        order: 3; /* Tercero el buscador, se mueve abajo solo */
+        width: 100%; 
+        max-width: 100%; 
+        margin-top: 5px;
+    }
+    .search-bar input { padding: 8px 15px 8px 35px; border-radius: 8px;}
+
+    .filtros-container { padding: 10px 15px; gap: 8px;}
+    .btn-filtro { padding: 6px 12px; font-size: 13px; border-radius: 6px;}
+    
+    .contenedor { padding: 15px; }
+    .titulo-seccion { font-size: 18px; margin-bottom: 15px;}
+
+    .header-registro { flex-direction: column; align-items: flex-start; gap: 10px; }
+    
+    .form-grid-complex { grid-template-columns: 1fr; gap: 15px;}
+    
+    .grid-animes { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;}
+    .tarjeta-anime img { height: 180px; }
+    .titulo-tarjeta { font-size: 12px; }
 }
