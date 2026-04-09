@@ -6,38 +6,109 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Inicializar Telegram Web App
 const tg = window.Telegram.WebApp;
-tg.expand(); // Expande la app para ocupar toda la pantalla en Telegram
+tg.expand();
 
 let todasLasObras = []; 
 
-// 2. Función de Registro
-async function ejecutarRegistro() {
-    const titulo = document.getElementById('input-titulo').value;
-    const portada = document.getElementById('input-portada').value;
-    const sinopsis = document.getElementById('input-sinopsis').value;
-    const estado = document.getElementById('input-estado').value;
+// =========================================
+// GESTIÓN DE VISTAS (Pestañas)
+// =========================================
+function cambiarVista(vista) {
+    const vistaCatalogo = document.getElementById('vista-catalogo');
+    const vistaRegistro = document.getElementById('vista-registro');
+    const barraBusqueda = document.getElementById('barra-busqueda');
 
-    if(!titulo || !portada) return alert("El título y la portada son obligatorios");
-    
-    const slug = titulo.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-
-    const { error } = await _supabase
-        .from('obras')
-        .insert([{ titulo, slug, sinopsis, portada_url: portada, estado }]);
-
-    if (error) {
-        if (error.code === '23505') alert("⚠️ Error: Esta obra ya existe.");
-        else console.error("Error:", error.message);
+    if (vista === 'registro') {
+        vistaCatalogo.style.display = 'none';
+        barraBusqueda.style.display = 'none'; // Ocultar buscador al registrar
+        vistaRegistro.style.display = 'block';
+        window.scrollTo(0, 0);
     } else {
-        alert("✅ Obra registrada.");
-        document.getElementById('input-titulo').value = "";
-        document.getElementById('input-portada').value = "";
-        document.getElementById('input-sinopsis').value = "";
-        cargarObras();
+        vistaRegistro.style.display = 'none';
+        vistaCatalogo.style.display = 'block';
+        barraBusqueda.style.display = 'block';
     }
 }
 
-// 3. Cargar Obras desde Supabase
+// =========================================
+// REGISTRO DE OBRA COMPLEJA
+// =========================================
+async function ejecutarRegistro() {
+    // Recolectar datos básicos
+    const titulo = document.getElementById('in-titulo').value;
+    const estado = document.getElementById('in-estado').value;
+    const portada = document.getElementById('in-portada').value;
+    const banner = document.getElementById('in-banner').value;
+    const sinopsis = document.getElementById('in-sinopsis').value;
+    
+    if(!titulo || !portada) return alert("El título y la portada son obligatorios");
+
+    // Construir objetos y arreglos a partir de los inputs
+    const nombresAlternativos = {
+        "Japonés": document.getElementById('in-japones').value || "",
+        "Ingles": document.getElementById('in-ingles').value || ""
+    };
+
+    // Convertir string de géneros a un array limpio
+    const generosStr = document.getElementById('in-generos').value;
+    const generosArray = generosStr ? generosStr.split(',').map(g => g.trim()).filter(g => g) : [];
+
+    const autor = document.getElementById('in-autor').value;
+    const estudio = document.getElementById('in-estudio').value;
+    const tipo = document.getElementById('in-tipo').value;
+    const origen = document.getElementById('in-origen').value;
+    const estreno = document.getElementById('in-estreno').value;
+    const diaEmision = document.getElementById('in-dia').value;
+
+    // Parsear el JSON de temporadas de forma segura
+    let temporadasData = [];
+    const temporadasRaw = document.getElementById('in-temporadas').value;
+    if (temporadasRaw.trim() !== "") {
+        try {
+            temporadasData = JSON.parse(temporadasRaw);
+        } catch (error) {
+            return alert("⚠️ Error: El formato JSON de las Temporadas no es válido. Revisa los corchetes y comillas.");
+        }
+    }
+
+    const slug = titulo.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+
+    // Construir el objeto final a enviar a Supabase
+    const nuevaObra = {
+        titulo: titulo,
+        slug: slug,
+        portada_url: portada,
+        banner_url: banner,
+        nombres_alternativos: nombresAlternativos,
+        sinopsis: sinopsis,
+        estado: estado,
+        generos: generosArray,
+        autor: autor,
+        estudio: estudio,
+        tipo: tipo,
+        origen: origen,
+        estreno: estreno,
+        dia_emision: diaEmision,
+        temporadas: temporadasData
+    };
+
+    const { error } = await _supabase.from('obras').insert([nuevaObra]);
+
+    if (error) {
+        if (error.code === '23505') alert("⚠️ Error: Esta obra ya existe.");
+        else console.error("Error de DB:", error.message);
+    } else {
+        alert("✅ Obra registrada con éxito en el Hub.");
+        // Limpiar el formulario y volver al catálogo
+        document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(input => input.value = '');
+        cargarObras();
+        cambiarVista('catalogo');
+    }
+}
+
+// =========================================
+// CARGA Y RENDERIZADO
+// =========================================
 async function cargarObras() {
     const { data: obras, error } = await _supabase
         .from('obras')
@@ -50,18 +121,17 @@ async function cargarObras() {
     renderizarObras(obras);
 }
 
-// 4. Dibujar el HTML
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
     
     if (obras.length === 0) {
-        grid.innerHTML = "<p style='color: #a1a1aa; grid-column: 1 / -1;'>No se encontraron obras...</p>";
+        grid.innerHTML = "<p style='color: #a1a1aa; grid-column: 1 / -1; text-align: center; padding: 40px;'>No se encontraron obras...</p>";
         return;
     }
 
     grid.innerHTML = obras.map(obra => {
         const claseEstado = obra.estado === 'Finalizado' ? 'estado-finalizado' : 'estado-emision';
-        const estadoTexto = obra.estado || 'Emisión';
+        const estadoTexto = obra.estado || 'En emisión';
 
         return `
             <div class="tarjeta-anime">
@@ -75,7 +145,9 @@ function renderizarObras(obras) {
     }).join('');
 }
 
-// 5. Botones de Filtro
+// =========================================
+// FILTROS Y BUSCADOR
+// =========================================
 function filtrar(estado, evento) {
     document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('active'));
     evento.currentTarget.classList.add('active');
@@ -88,7 +160,6 @@ function filtrar(estado, evento) {
     }
 }
 
-// 6. Buscador Mágico (En tiempo real)
 document.getElementById('buscador').addEventListener('input', (e) => {
     const textoBuscado = e.target.value.toLowerCase();
     const filtradas = todasLasObras.filter(obra => 
@@ -98,30 +169,28 @@ document.getElementById('buscador').addEventListener('input', (e) => {
 });
 
 // =========================================
-// 7. Sistema de Autenticación con Telegram
+// SISTEMA DE AUTENTICACIÓN
 // =========================================
-
-const adminPanel = document.getElementById('panel-admin');
+const btnAdminView = document.getElementById('btn-admin-view');
 const btnAuth = document.getElementById('btn-auth');
 const authMensaje = document.getElementById('auth-mensaje');
 
-// Escuchar cambios en la sesión
 _supabase.auth.onAuthStateChange((event, session) => {
     if (session) {
-        adminPanel.style.display = 'block';
-        btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Salir';
+        btnAdminView.style.display = 'flex';
+        btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
         btnAuth.onclick = cerrarSesion;
         cerrarModalAuth();
     } else {
-        adminPanel.style.display = 'none';
-        btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> Ingresar';
+        btnAdminView.style.display = 'none';
+        btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
         btnAuth.onclick = abrirModalAuth;
+        cambiarVista('catalogo'); // Si cierra sesión mientras está en la vista admin, lo devuelve
     }
 });
 
-// Verificar sesión inicial
 _supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) adminPanel.style.display = 'block';
+    if (session) btnAdminView.style.display = 'flex';
 });
 
 function abrirModalAuth() {
@@ -133,77 +202,49 @@ function cerrarModalAuth() {
     document.getElementById('modal-auth').classList.remove('modal-visible');
 }
 
-// Función auxiliar para crear el usuario basado en Telegram
 function obtenerEmailVirtual() {
     const user = tg.initDataUnsafe?.user;
-    if (!user || !user.id) {
-        return null; // Retorna null si no se abre desde Telegram
-    }
+    if (!user || !user.id) return null; 
     return `${user.id}@kaergsty.hub`;
 }
 
-// Registrar Usuario (Vincular Clave)
 async function registrarUsuario() {
     const virtualEmail = obtenerEmailVirtual();
     const password = document.getElementById('auth-password').value;
 
-    if (!virtualEmail) {
-        authMensaje.style.color = '#ef4444';
-        authMensaje.textContent = 'Error: Abre esto desde la app de Telegram.';
-        return;
-    }
+    if (!virtualEmail) return mostrarErrorAuth('Error: Abre esto desde la app de Telegram.');
+    if (password.length < 6) return mostrarErrorAuth('La clave debe tener al menos 6 caracteres.');
 
-    if (password.length < 6) {
-        authMensaje.style.color = '#ef4444';
-        authMensaje.textContent = 'La clave debe tener al menos 6 caracteres.';
-        return;
-    }
-
-    authMensaje.style.color = '#e0e0e0';
-    authMensaje.textContent = 'Procesando...';
-
-    const { data, error } = await _supabase.auth.signUp({
-        email: virtualEmail,
-        password: password,
-    });
-
-    if (error) {
-        authMensaje.style.color = '#ef4444';
-        authMensaje.textContent = error.message;
-    } else {
-        authMensaje.style.color = '#10b981';
-        authMensaje.textContent = '¡Clave vinculada exitosamente!';
-    }
+    mostrarMensajeAuth('Procesando...', '#e0e0e0');
+    const { error } = await _supabase.auth.signUp({ email: virtualEmail, password: password });
+    
+    if (error) mostrarErrorAuth(error.message);
+    else mostrarMensajeAuth('¡Clave vinculada exitosamente!', '#10b981');
 }
 
-// Iniciar Sesión
 async function iniciarSesion() {
     const virtualEmail = obtenerEmailVirtual();
     const password = document.getElementById('auth-password').value;
 
-    if (!virtualEmail) {
-        authMensaje.style.color = '#ef4444';
-        authMensaje.textContent = 'Error: Abre esto desde la app de Telegram.';
-        return;
-    }
+    if (!virtualEmail) return mostrarErrorAuth('Error: Abre esto desde la app de Telegram.');
 
-    authMensaje.style.color = '#e0e0e0';
-    authMensaje.textContent = 'Iniciando...';
+    mostrarMensajeAuth('Iniciando...', '#e0e0e0');
+    const { error } = await _supabase.auth.signInWithPassword({ email: virtualEmail, password: password });
 
-    const { data, error } = await _supabase.auth.signInWithPassword({
-        email: virtualEmail,
-        password: password,
-    });
-
-    if (error) {
-        authMensaje.style.color = '#ef4444';
-        authMensaje.textContent = 'Error: Contraseña incorrecta.';
-    }
+    if (error) mostrarErrorAuth('Error: Contraseña incorrecta.');
 }
 
-// Cerrar Sesión
 async function cerrarSesion() {
     await _supabase.auth.signOut();
+}
+
+function mostrarErrorAuth(msg) {
+    authMensaje.style.color = '#ef4444';
+    authMensaje.textContent = msg;
+}
+function mostrarMensajeAuth(msg, color) {
+    authMensaje.style.color = color;
+    authMensaje.textContent = msg;
 }
 
 // Arrancar al cargar la página
