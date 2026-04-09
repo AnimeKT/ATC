@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaergsty Hub - Comunidad</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <h1>Kaergsty <span>Hub</span></h1>
+        </div>
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="buscador" placeholder="Buscar anime...">
+        </div>
+        <div class="user-actions">
+            <button id="btn-auth" class="btn-login" onclick="abrirModalAuth()"><i class="fa-solid fa-user"></i> Ingresar</button>
+        </div>
+    </header>
+
+    <nav class="filtros-container">
+        <button class="btn-filtro active" onclick="filtrar('Todos', event)"><i class="fa-solid fa-list"></i> Todos</button>
+        <button class="btn-filtro" onclick="filtrar('Emisión', event)"><i class="fa-solid fa-play"></i> En Emisión</button>
+        <button class="btn-filtro" onclick="filtrar('Finalizado', event)"><i class="fa-solid fa-check-circle"></i> Finalizado</button>
+        <button class="btn-filtro"><i class="fa-solid fa-tags"></i> Categorías</button>
+        <button class="btn-filtro"><i class="fa-solid fa-heart"></i> Favoritos</button>
+    </nav>
+
+    <main class="contenedor">
+        <section class="admin-panel" id="panel-admin" style="display: none;">
+            <h3><i class="fa-solid fa-plus"></i> Registrar Nueva Obra</h3>
+            <div class="form-group">
+                <input type="text" id="input-titulo" placeholder="Título (ej: One Piece)">
+                <input type="text" id="input-portada" placeholder="URL de la imagen (ej: https://...)">
+                <select id="input-estado">
+                    <option value="Emisión">En Emisión</option>
+                    <option value="Finalizado">Finalizado</option>
+                </select>
+                <textarea id="input-sinopsis" placeholder="Breve sinopsis..."></textarea>
+                <button onclick="ejecutarRegistro()" class="btn-enviar">Publicar en el Hub</button>
+            </div>
+        </section>
+
+        <h2 class="titulo-seccion">Catálogo Global</h2>
+        <div id="grid-obras" class="grid-animes">
+            </div>
+    </main>
+
+    <div id="modal-auth" class="modal-oculto">
+        <div class="modal-contenido modal-auth-box">
+            <button class="btn-cerrar" onclick="cerrarModalAuth()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom: 5px; text-align: center; color: #fff;">Acceso al Hub</h2>
+            <p style="text-align: center; color: #a1a1aa; font-size: 13px; margin-bottom: 20px;">Tu cuenta de Telegram se detectará automáticamente.</p>
+            <div class="form-group" style="grid-template-columns: 1fr;">
+                <input type="password" id="auth-password" placeholder="Ingresa tu contraseña">
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="iniciarSesion()" class="btn-enviar" style="flex: 1;">Entrar</button>
+                    <button onclick="registrarUsuario()" class="btn-filtro active" style="flex: 1; justify-content: center;">Vincular Clave</button>
+                </div>
+                <p id="auth-mensaje" style="color: #ef4444; text-align: center; font-size: 14px; margin-top: 10px;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
