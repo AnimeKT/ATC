@@ -21,7 +21,7 @@
         </div>
         
         <div class="user-actions">
-            <button id="btn-admin-view" class="btn-login" style="display: none;" onclick="cambiarVista('registro')">
+            <button id="btn-admin-view" class="btn-login" style="display: none;" onclick="prepararNuevoRegistro()">
                 <i class="fa-solid fa-plus"></i> <span class="hide-mobile">Añadir Obra</span>
             </button>
             <button id="btn-auth" class="btn-login" onclick="abrirModalAuth()">
@@ -165,8 +165,12 @@
                     </div>
 
                     <div class="input-group full-width">
-                        <label>Sinopsis</label>
-                        <textarea id="in-sinopsis" placeholder="Breve descripción de la historia..."></textarea>
+                        <label><i class="fa-solid fa-folder-tree"></i> Contenido (Temporadas, Idiomas y Capítulos)</label>
+                        <div id="builder-temporadas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 5px;"></div>
+                        
+                        <button type="button" class="btn-filtro active" onclick="agregarTemporadaUI()" style="margin-top: 10px; width: fit-content;">
+                            <i class="fa-solid fa-plus"></i> Añadir Nueva Sección / Temporada
+                        </button>
                     </div>
                     
                     <div class="input-group full-width">

@@ -312,15 +312,7 @@ async function ejecutarRegistro() {
     const generosStr = document.getElementById('in-generos').value;
     const generosArray = generosStr ? generosStr.split(',').map(g => g.trim()).filter(g => g) : [];
 
-    let temporadasData = [];
-    try {
-        const tempVal = document.getElementById('in-temporadas').value;
-        temporadasData = tempVal.trim() !== "" ? JSON.parse(tempVal) : [];
-    } catch (e) {
-        btnPublicar.disabled = false;
-        btnPublicar.textContent = 'Publicar en el Hub';
-        return alert("⚠️ Error: El JSON de las temporadas está mal escrito.");
-    }
+    const temporadasData = recolectarDatosTemporadas();
 
     const datosObra = {
         titulo: titulo,
@@ -389,7 +381,7 @@ function prepararEdicion() {
     document.getElementById('in-origen').value = obraActual.origen || '';
     document.getElementById('in-estreno').value = obraActual.estreno || '';
     document.getElementById('in-dia').value = obraActual.dia_emision || '';
-    document.getElementById('in-temporadas').value = JSON.stringify(obraActual.temporadas || [], null, 2);
+    cargarDatosTemporadas(obraActual.temporadas || []);
 
     document.getElementById('vista-registro').dataset.editId = obraActual.id;
     document.getElementById('btn-publicar').textContent = "Actualizar Anime en el Hub";
@@ -469,6 +461,166 @@ function mostrarErrorAuth(msg) {
 function mostrarMensajeAuth(msg, color) {
     authMensaje.style.color = color;
     authMensaje.textContent = msg;
+}
+
+// =========================================
+// CONSTRUCTOR VISUAL DE TEMPORADAS
+// =========================================
+
+function agregarTemporadaUI(datos = null) {
+    const container = document.getElementById('builder-temporadas');
+    const tId = 'temp_' + Math.random().toString(36).substr(2, 9); // ID único
+
+    // Valores por defecto si estamos editando
+    const seccion = datos?.seccion || "Contenido Principal";
+    const nombre = datos?.nombre || "";
+    const imagen = datos?.imagen || "";
+
+    const div = document.createElement('div');
+    div.className = 'admin-panel temporada-block';
+    div.style.padding = '15px';
+    div.style.marginBottom = '10px';
+    div.style.borderLeft = '3px solid #3ba4fa';
+
+    div.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="color: #3ba4fa; margin: 0; font-size: 14px;"><i class="fa-solid fa-folder"></i> Bloque de Contenido</h4>
+            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: transparent; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <div class="form-grid-complex" style="margin-bottom: 15px;">
+            <div class="input-group">
+                <label>Sección (Ej: Principal, Extras)</label>
+                <input type="text" class="temp-seccion" value="${seccion}">
+            </div>
+            <div class="input-group">
+                <label>Nombre (Ej: Temporada 1)</label>
+                <input type="text" class="temp-nombre" value="${nombre}" placeholder="Obligatorio">
+            </div>
+            <div class="input-group full-width">
+                <label>URL de Imagen Portada (Opcional)</label>
+                <input type="text" class="temp-imagen" value="${imagen}" placeholder="https://...">
+            </div>
+        </div>
+        <div id="idiomas_${tId}"></div>
+        <button type="button" class="btn-filtro" onclick="agregarIdiomaUI('${tId}')" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;">
+            <i class="fa-solid fa-language"></i> Añadir Idioma
+        </button>
+    `;
+    container.appendChild(div);
+
+    // Cargar idiomas y capítulos si existen
+    if (datos?.enlaces) {
+        for (const [idioma, capitulos] of Object.entries(datos.enlaces)) {
+            agregarIdiomaUI(tId, idioma, capitulos);
+        }
+    } else if (!datos) {
+        agregarIdiomaUI(tId); // Si es nuevo, añade un idioma vacío por defecto
+    }
+}
+
+function agregarIdiomaUI(tempId, idiomaNombre = "", capitulos = null) {
+    const container = document.getElementById(`idiomas_${tempId}`);
+    const iId = 'idio_' + Math.random().toString(36).substr(2, 9);
+
+    const div = document.createElement('div');
+    div.className = 'idioma-block';
+    div.style.background = '#121214';
+    div.style.padding = '12px';
+    div.style.borderRadius = '8px';
+    div.style.marginTop = '10px';
+    div.style.border = '1px dashed #27272a';
+
+    div.innerHTML = `
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <input type="text" class="idioma-nombre" value="${idiomaNombre}" placeholder="Ej: Japonés Sub Español" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white;">
+            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: transparent; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="caps_${iId}" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <button type="button" onclick="agregarCapituloUI('${iId}')" style="background: transparent; border: 1px solid #10b981; color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-top: 8px;">
+            <i class="fa-solid fa-plus"></i> Añadir Capítulo
+        </button>
+    `;
+    container.appendChild(div);
+
+    if (capitulos) {
+        for (const [capNombre, url] of Object.entries(capitulos)) {
+            agregarCapituloUI(iId, capNombre, url);
+        }
+    } else {
+        agregarCapituloUI(iId); // Capítulo vacío por defecto
+    }
+}
+
+function agregarCapituloUI(idiomaId, nombre = "", url = "") {
+    const container = document.getElementById(`caps_${idiomaId}`);
+    const div = document.createElement('div');
+    div.className = 'capitulo-row';
+    div.style.display = 'flex';
+    div.style.gap = '8px';
+
+    div.innerHTML = `
+        <input type="text" class="cap-nombre" value="${nombre}" placeholder="Ej: Episodio 1" style="width: 120px; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; font-size: 12px;">
+        <input type="text" class="cap-url" value="${url}" placeholder="https://t.me/..." style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; font-size: 12px;">
+        <button type="button" onclick="this.parentElement.remove()" style="background: transparent; border: none; color: #71717a; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+    `;
+    container.appendChild(div);
+}
+
+function recolectarDatosTemporadas() {
+    const datos = [];
+    document.querySelectorAll('.temporada-block').forEach(tempBlock => {
+        const seccion = tempBlock.querySelector('.temp-seccion').value.trim() || "Contenido Principal";
+        const nombre = tempBlock.querySelector('.temp-nombre').value.trim();
+        const imagen = tempBlock.querySelector('.temp-imagen').value.trim();
+
+        if (!nombre) return; // Se salta temporadas sin nombre
+
+        const enlaces = {};
+        tempBlock.querySelectorAll('.idioma-block').forEach(idiomaBlock => {
+            const idiomaNombre = idiomaBlock.querySelector('.idioma-nombre').value.trim();
+            if (!idiomaNombre) return;
+
+            enlaces[idiomaNombre] = {};
+            idiomaBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
+                const capNombre = capRow.querySelector('.cap-nombre').value.trim();
+                const capUrl = capRow.querySelector('.cap-url').value.trim();
+                
+                if (capNombre && capUrl) {
+                    enlaces[idiomaNombre][capNombre] = capUrl;
+                }
+            });
+            
+            // Si el idioma se quedó vacío, lo borra para no subir basura a la BD
+            if (Object.keys(enlaces[idiomaNombre]).length === 0) {
+                delete enlaces[idiomaNombre];
+            }
+        });
+
+        datos.push({ seccion, nombre, imagen, enlaces });
+    });
+    return datos;
+}
+
+function cargarDatosTemporadas(temporadas) {
+    document.getElementById('builder-temporadas').innerHTML = ''; // Limpiar panel
+    if (!temporadas || temporadas.length === 0) {
+        agregarTemporadaUI(); // Empezar con uno vacío
+        return;
+    }
+    temporadas.forEach(temp => agregarTemporadaUI(temp));
+}
+
+// Nueva función para limpiar el panel cuando clickeas "Añadir Obra"
+function prepararNuevoRegistro() {
+    delete document.getElementById('vista-registro').dataset.editId;
+    document.getElementById('btn-publicar').textContent = "Publicar en el Hub";
+    
+    // Limpiar inputs
+    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => i.value = '');
+    
+    // Iniciar con un constructor limpio
+    cargarDatosTemporadas([]); 
+    cambiarVista('registro');
 }
 
 // Arrancar al cargar la página
