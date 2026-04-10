@@ -1,4 +1,4 @@
-// 1. Configuración (Intacta con tus llaves)
+// 1. Configuración de Supabase
 const SUPABASE_URL = "https://urmnngtfoavnmvbwqepq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVybW5uZ3Rmb2F2bm12YndxZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MTE4NzcsImV4cCI6MjA5MTI4Nzg3N30.HnfoffLftMYWt2ZEkv1YEbG0vqRPWjB5IeQunj2I5cs";
 
@@ -12,7 +12,7 @@ tg.expand();
 // ESTADO GLOBAL DE LA APP
 // =========================================
 let todasLasObras = []; 
-let obraActual = null; // Para saber qué obra estamos viendo
+let obraActual = null; 
 let posicionScrollGuardada = 0;
 let timeoutBusqueda = null;
 let listaFavoritos = [];
@@ -24,26 +24,20 @@ let filtrosActuales = {
 };
 
 // =========================================
-// INICIALIZACIÓN Y CLOUD STORAGE
+// INICIALIZACIÓN (A PRUEBA DE MÓVILES)
 // =========================================
 async function inicializarApp() {
-    // Verificamos si hay datos de Telegram para saber si estamos en la App
-    if (tg.initData) {
+    // 1. Cargamos las obras INMEDIATAMENTE para que el móvil no se quede en blanco
+    await cargarObras(); 
+
+    // 2. Cargamos los favoritos en segundo plano sin detener la aplicación
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tg.CloudStorage.getItem('vistos_anime', (err, value) => {
             if (!err && value) {
-                try { 
-                    listaFavoritos = JSON.parse(value); 
-                } catch (e) { 
-                    listaFavoritos = []; 
-                }
+                try { listaFavoritos = JSON.parse(value); } 
+                catch (e) { listaFavoritos = []; }
             }
-            // Cargamos las obras después de intentar leer de la nube
-            cargarObras(); 
         });
-    } else {
-        // Si estamos en VS Code (navegador normal), cargamos las obras directamente
-        console.warn("⚠️ Ejecutando fuera de Telegram: CloudStorage no disponible.");
-        cargarObras();
     }
 }
 
@@ -56,12 +50,10 @@ function cambiarVista(vista) {
     const vistaDetalle = document.getElementById('vista-detalle');
     const barraBusqueda = document.getElementById('barra-busqueda');
 
-    // Preservar scroll si salimos del catálogo
     if (vistaCatalogo.style.display !== 'none') {
         posicionScrollGuardada = window.scrollY;
     }
 
-    // Ocultar todas primero
     vistaCatalogo.style.display = 'none';
     vistaRegistro.style.display = 'none';
     vistaDetalle.style.display = 'none';
@@ -76,7 +68,6 @@ function cambiarVista(vista) {
     } else {
         vistaCatalogo.style.display = 'block';
         barraBusqueda.style.display = 'block';
-        // Restaurar scroll al volver al catálogo
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     }
 }
@@ -89,19 +80,19 @@ function volverAlCatalogo() {
 // =========================================
 // RENDERIZAR VISTA DE DETALLES
 // =========================================
-// NOTA: Ahora busca por Título para evitar errores al filtrar
 function abrirDetalle(tituloObra) {
     tg.HapticFeedback.impactOccurred('medium');
     obraActual = todasLasObras.find(o => o.titulo === tituloObra);
     if (!obraActual) return;
 
-    document.getElementById('det-banner').src = obraActual.banner_url || obraActual.portada_url;
+    // Poblar datos con protección por si falta algún dato en la base de datos
+    document.getElementById('det-banner').src = obraActual.banner_url || obraActual.portada_url || '';
     const imgPort = document.getElementById('det-portada');
-    imgPort.src = obraActual.portada_url;
+    imgPort.src = obraActual.portada_url || '';
     imgPort.style.opacity = 1;
-    document.getElementById('det-titulo').textContent = obraActual.titulo;
+    document.getElementById('det-titulo').textContent = obraActual.titulo || 'Sin título';
     
-    // USAMOS ?. PARA QUE NO CRASHÉE EN CELULARES
+    // Nombres alternativos seguros
     let nombresAlt = [];
     if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
     if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
@@ -124,14 +115,17 @@ function abrirDetalle(tituloObra) {
     document.getElementById('det-autor').textContent = obraActual.autor || '--';
     document.getElementById('det-sinopsis').textContent = obraActual.sinopsis || 'Sin descripción.';
 
-    // --- AQUÍ APARECE EL BOTÓN DE EDITAR SOLO SI ERES ADMIN ---
+    // Botón de edición inteligente
     const panelAdmin = document.getElementById('admin-options-detalle');
     if (panelAdmin) {
-        const esAdmin = document.getElementById('btn-admin-view').style.display === 'flex';
-        panelAdmin.innerHTML = esAdmin ? 
-            `<button onclick="prepararEdicion()" class="btn-editar-discreto">
+        const btnAdminView = document.getElementById('btn-admin-view');
+        const esAdmin = btnAdminView && btnAdminView.style.display !== 'none';
+        
+        panelAdmin.innerHTML = esAdmin ? `
+            <button onclick="prepararEdicion()" class="btn-editar-discreto">
                 <i class="fa-solid fa-pen-to-square"></i> Editar Información
-            </button>` : '';
+            </button>
+        ` : '';
     }
 
     iniciarNavegacionContenido(obraActual.temporadas);
@@ -142,16 +136,14 @@ function abrirDetalle(tituloObra) {
 // JERARQUÍA DINÁMICA (Temporadas -> Idiomas -> Caps)
 // =========================================
 function iniciarNavegacionContenido(temporadasData) {
-    // Usamos el contenedor que ya tienes en tu HTML original
     const contenedor = document.getElementById('det-temporadas');
     contenedor.innerHTML = '';
 
     if (!temporadasData || !Array.isArray(temporadasData) || temporadasData.length === 0) {
-        contenedor.innerHTML = '<p class="text-muted">Aún no hay enlaces disponibles.</p>';
+        contenedor.innerHTML = '<p class="text-muted" style="color: #a1a1aa;">Aún no hay enlaces disponibles.</p>';
         return;
     }
 
-    // Agrupar por "seccion" (ej: "Temporadas", "Universo Anime")
     const seccionesObj = {};
     temporadasData.forEach((temp) => {
         const nombreSeccion = temp.seccion || "Contenido Principal";
@@ -159,13 +151,12 @@ function iniciarNavegacionContenido(temporadasData) {
         seccionesObj[nombreSeccion].push(temp);
     });
 
-    // Renderizar botones agrupados por sección
     for (const [secName, temps] of Object.entries(seccionesObj)) {
         contenedor.innerHTML += `<h4 style="margin-top: 15px; margin-bottom: 10px; color: #3ba4fa; font-size: 14px;">${secName}</h4>`;
         
         temps.forEach((temp) => {
             const btn = document.createElement('button');
-            btn.className = 'btn-dinamico'; // Usa la clase CSS que agregamos
+            btn.className = 'btn-dinamico';
             btn.style.cssText = "display: block; width: 100%; text-align: left; background: #18181b; border: 1px solid #27272a; padding: 12px; border-radius: 8px; color: white; margin-bottom: 8px; cursor: pointer;";
             btn.innerHTML = `<i class="fa-solid fa-folder-open" style="color: #3ba4fa; margin-right: 8px;"></i> ${temp.nombre}`;
             btn.onclick = () => mostrarIdiomas(temp);
@@ -178,20 +169,17 @@ function mostrarIdiomas(temporadaObj) {
     tg.HapticFeedback.impactOccurred('light');
     const contenedor = document.getElementById('det-temporadas');
     
-    // Botón para volver atrás
     contenedor.innerHTML = `<button onclick="iniciarNavegacionContenido(obraActual.temporadas)" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Temporadas</button>`;
 
-    // Cambiar el póster dinámicamente si la temporada trae una imagen
     if(temporadaObj.imagen && temporadaObj.imagen !== "") {
         const imgPortada = document.getElementById('det-portada');
-        imgPortada.style.opacity = 0.3; // Efecto suave
+        imgPortada.style.opacity = 0.3;
         setTimeout(() => {
             imgPortada.src = temporadaObj.imagen;
             imgPortada.style.opacity = 1;
         }, 150);
     }
 
-    // Renderizar Idiomas ("Japonés", "Latino")
     if (temporadaObj.enlaces) {
         for (const [idioma, capitulos] of Object.entries(temporadaObj.enlaces)) {
             const btn = document.createElement('button');
@@ -207,10 +195,8 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
     tg.HapticFeedback.impactOccurred('light');
     const contenedor = document.getElementById('det-temporadas');
     
-    // Botón para volver a los idiomas
     contenedor.innerHTML = `<button onclick="mostrarIdiomas(obraActual.temporadas.find(t => t.nombre === '${temporadaPadre.nombre}'))" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Idiomas</button>`;
 
-    // Renderizar cada capítulo ("CAP 1", "CAP 2")
     for (const [capitulo, url] of Object.entries(capitulosObj)) {
         const btn = document.createElement('button');
         btn.style.cssText = "display: block; width: 100%; text-align: left; background: #18181b; border: 1px solid #3ba4fa; padding: 12px; border-radius: 8px; color: white; margin-bottom: 8px; cursor: pointer;";
@@ -230,61 +216,6 @@ function abrirEnlaceTelegram(url) {
 }
 
 // =========================================
-// FAVORITOS Y COMPARTIR
-// =========================================
-function toggleFavoritoActual() {
-    if (!obraActual) return;
-    tg.HapticFeedback.impactOccurred('medium');
-    
-    const index = listaFavoritos.indexOf(obraActual.titulo);
-    const btnFav = document.getElementById('btn-fav-detalle');
-
-    if (index > -1) {
-        listaFavoritos.splice(index, 1);
-        if(btnFav) {
-            btnFav.classList.remove('favorito-activo');
-            btnFav.innerHTML = '<i class="fa-regular fa-heart"></i>';
-        }
-    } else {
-        listaFavoritos.push(obraActual.titulo);
-        if(btnFav) {
-            btnFav.classList.add('favorito-activo');
-            btnFav.innerHTML = '<i class="fa-solid fa-heart" style="color: #ef4444;"></i>';
-        }
-    }
-
-    // Guardar en la nube de Telegram
-    tg.CloudStorage.setItem('vistos_anime', JSON.stringify(listaFavoritos));
-    if(filtrosActuales.soloFavoritos) aplicarTodosLosFiltros();
-}
-
-function compartirObraActual() {
-    if (!obraActual) return;
-    tg.HapticFeedback.impactOccurred('medium');
-    
-    const botUsername = "TuBotUsername"; // Pon el @ de tu bot aquí si tienes
-    const slugFormateado = obraActual.titulo.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^\w_]+/g, '');
-    const enlaceStartapp = `https://t.me/${botUsername}?startapp=${slugFormateado}`;
-    
-    navigator.clipboard.writeText(enlaceStartapp).then(() => {
-        tg.showAlert("✅ Enlace copiado. ¡Pégalo en cualquier chat de Telegram para compartir este anime!");
-    });
-}
-
-function toggleFiltroFavoritos() {
-    tg.HapticFeedback.impactOccurred('medium');
-    filtrosActuales.soloFavoritos = !filtrosActuales.soloFavoritos;
-    const btn = document.getElementById('btn-filtro-fav');
-    
-    if (filtrosActuales.soloFavoritos) {
-        if(btn) { btn.classList.add('active'); btn.style.color = '#ef4444'; }
-    } else {
-        if(btn) { btn.classList.remove('active'); btn.style.color = ''; }
-    }
-    aplicarTodosLosFiltros();
-}
-
-// =========================================
 // FILTROS, BUSCADOR Y RENDERIZADO CATÁLOGO
 // =========================================
 async function cargarObras() {
@@ -297,37 +228,22 @@ async function cargarObras() {
 
     todasLasObras = obras || []; 
     aplicarTodosLosFiltros();
-
-    // Detección de link compartido (Deep Linking) al abrir la app
-    const startParam = tg.initDataUnsafe?.start_param;
-    if (startParam) {
-        const tituloEsperado = startParam.replace(/_/g, ' '); // Convierte guiones bajos a espacios
-        const obraSolicitada = todasLasObras.find(o => o.titulo.toLowerCase().includes(tituloEsperado));
-        if (obraSolicitada) abrirDetalle(obraSolicitada.titulo);
-    }
 }
 
 function aplicarTodosLosFiltros() {
     const resultado = todasLasObras.filter(obra => {
-        // 1. Filtro Búsqueda
         const tituloMatch = obra.titulo.toLowerCase().includes(filtrosActuales.texto);
         const altJap = obra.nombres_alternativos?.Japonés?.toLowerCase() || '';
         const altIng = obra.nombres_alternativos?.Ingles?.toLowerCase() || '';
         const textoMatch = tituloMatch || altJap.includes(filtrosActuales.texto) || altIng.includes(filtrosActuales.texto);
-
-        // 2. Filtro Estado
         const estadoMatch = filtrosActuales.estado === 'Todos' || obra.estado === filtrosActuales.estado;
 
-        // 3. Filtro Favoritos
-        const favMatch = !filtrosActuales.soloFavoritos || listaFavoritos.includes(obra.titulo);
-
-        return textoMatch && estadoMatch && favMatch;
+        return textoMatch && estadoMatch;
     });
 
     renderizarObras(resultado);
 }
 
-// Optimización Buscador
 document.getElementById('buscador').addEventListener('input', (e) => {
     clearTimeout(timeoutBusqueda);
     timeoutBusqueda = setTimeout(() => {
@@ -336,7 +252,6 @@ document.getElementById('buscador').addEventListener('input', (e) => {
     }, 300);
 });
 
-// Reemplaza tu antigua función de filtrar
 function filtrar(estado, evento) {
     tg.HapticFeedback.impactOccurred('light');
     document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('active'));
@@ -354,12 +269,12 @@ function renderizarObras(obras) {
         return;
     }
 
-    // EL GRAN CAMBIO PARA EVITAR BUGS: Ahora enviamos el TITULO en vez de index numérico
     grid.innerHTML = obras.map(obra => {
         const claseEstado = obra.estado === 'Finalizado' ? 'estado-finalizado' : 'estado-emision';
         const estadoTexto = obra.estado || 'En emisión';
-        // Usamos comillas simples e ignoramos comillas en el título para evitar romper el string
-        const tituloSeguro = obra.titulo.replace(/'/g, "\\'"); 
+        
+        // Evitamos que comillas raras rompan el HTML en celulares
+        const tituloSeguro = obra.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
 
         return `
             <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
@@ -373,18 +288,14 @@ function renderizarObras(obras) {
     }).join('');
 }
 
-
 // =========================================
-// REGISTRO DE OBRA COMPLEJA (INTACTO)
+// REGISTRO Y EDICIÓN DE OBRAS
 // =========================================
 async function ejecutarRegistro() {
     const btnPublicar = document.getElementById('btn-publicar');
     const vistaRegistro = document.getElementById('vista-registro');
     
-    // Aquí detectamos si estamos editando o creando uno nuevo
     const idParaEditar = vistaRegistro.dataset.editId;
-
-    // Recolectar datos de los inputs (usando tus IDs: in-titulo, in-estado, etc.)
     const titulo = document.getElementById('in-titulo').value;
     const estado = document.getElementById('in-estado').value;
     const portada = document.getElementById('in-portada').value;
@@ -435,11 +346,9 @@ async function ejecutarRegistro() {
     try {
         let error;
         if (idParaEditar) {
-            // MODO EDITAR
             const res = await _supabase.from('obras').update(datosObra).eq('id', idParaEditar);
             error = res.error;
         } else {
-            // MODO NUEVO
             const res = await _supabase.from('obras').insert([datosObra]);
             error = res.error;
         }
@@ -448,7 +357,6 @@ async function ejecutarRegistro() {
 
         alert(idParaEditar ? "✅ ¡Actualizado con éxito!" : "✅ ¡Publicado con éxito!");
         
-        // Limpiamos todo
         delete vistaRegistro.dataset.editId;
         document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(i => i.value = '');
         btnPublicar.textContent = 'Publicar en el Hub';
@@ -463,9 +371,32 @@ async function ejecutarRegistro() {
     }
 }
 
+function prepararEdicion() {
+    if (!obraActual) return;
+    cambiarVista('registro');
+
+    document.getElementById('in-titulo').value = obraActual.titulo || '';
+    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
+    document.getElementById('in-portada').value = obraActual.portada_url || '';
+    document.getElementById('in-banner').value = obraActual.banner_url || '';
+    document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
+    document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
+    document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
+    document.getElementById('in-generos').value = (obraActual.generos || []).join(', ');
+    document.getElementById('in-autor').value = obraActual.autor || '';
+    document.getElementById('in-estudio').value = obraActual.estudio || '';
+    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
+    document.getElementById('in-origen').value = obraActual.origen || '';
+    document.getElementById('in-estreno').value = obraActual.estreno || '';
+    document.getElementById('in-dia').value = obraActual.dia_emision || '';
+    document.getElementById('in-temporadas').value = JSON.stringify(obraActual.temporadas || [], null, 2);
+
+    document.getElementById('vista-registro').dataset.editId = obraActual.id;
+    document.getElementById('btn-publicar').textContent = "Actualizar Anime en el Hub";
+}
 
 // =========================================
-// SISTEMA DE AUTENTICACIÓN (INTACTO)
+// SISTEMA DE AUTENTICACIÓN
 // =========================================
 const btnAdminView = document.getElementById('btn-admin-view');
 const btnAuth = document.getElementById('btn-auth');
@@ -500,7 +431,6 @@ function cerrarModalAuth() {
 
 function obtenerEmailVirtual() {
     const user = tg.initDataUnsafe?.user;
-    // Si no hay ID (como en PC), usamos uno de respaldo para que puedas entrar
     if (!user || !user.id) return "admin_pc@kaergsty.hub"; 
     return `${user.id}@kaergsty.hub`;
 }
@@ -509,7 +439,6 @@ async function registrarUsuario() {
     const virtualEmail = obtenerEmailVirtual();
     const password = document.getElementById('auth-password').value;
 
-    if (!virtualEmail) return mostrarErrorAuth('Error: Abre esto desde la app de Telegram.');
     if (password.length < 6) return mostrarErrorAuth('La clave debe tener al menos 6 caracteres.');
 
     mostrarMensajeAuth('Procesando...', '#e0e0e0');
@@ -522,8 +451,6 @@ async function registrarUsuario() {
 async function iniciarSesion() {
     const virtualEmail = obtenerEmailVirtual();
     const password = document.getElementById('auth-password').value;
-
-    if (!virtualEmail) return mostrarErrorAuth('Error: Abre esto desde la app de Telegram.');
 
     mostrarMensajeAuth('Iniciando...', '#e0e0e0');
     const { error } = await _supabase.auth.signInWithPassword({ email: virtualEmail, password: password });
@@ -543,35 +470,6 @@ function mostrarMensajeAuth(msg, color) {
     authMensaje.style.color = color;
     authMensaje.textContent = msg;
 }
-function prepararEdicion() {
-    if (!obraActual) return;
 
-    // 1. Vamos a la vista de registro
-    cambiarVista('registro');
-
-    // 2. Llenamos los campos con la info que ya tiene el anime
-    document.getElementById('in-titulo').value = obraActual.titulo || '';
-    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
-    document.getElementById('in-portada').value = obraActual.portada_url || '';
-    document.getElementById('in-banner').value = obraActual.banner_url || '';
-    document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
-    document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
-    document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
-    document.getElementById('in-generos').value = (obraActual.generos || []).join(', ');
-    document.getElementById('in-autor').value = obraActual.autor || '';
-    document.getElementById('in-estudio').value = obraActual.estudio || '';
-    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
-    document.getElementById('in-origen').value = obraActual.origen || '';
-    document.getElementById('in-estreno').value = obraActual.estreno || '';
-    document.getElementById('in-dia').value = obraActual.dia_emision || '';
-    document.getElementById('in-temporadas').value = JSON.stringify(obraActual.temporadas || [], null, 2);
-
-    // 3. Guardamos el ID para que 'ejecutarRegistro' sepa que es una edición
-    document.getElementById('vista-registro').dataset.editId = obraActual.id;
-    
-    // 4. Cambiamos el texto del botón
-    document.getElementById('btn-publicar').textContent = "Actualizar Anime en el Hub";
-}
-
-// Arrancar al cargar la página (Reemplaza el viejo DOMContentLoaded)
+// Arrancar al cargar la página
 document.addEventListener('DOMContentLoaded', inicializarApp);
