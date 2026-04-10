@@ -27,14 +27,24 @@ let filtrosActuales = {
 // INICIALIZACIÓN Y CLOUD STORAGE
 // =========================================
 async function inicializarApp() {
-    // Cargar Favoritos de CloudStorage de Telegram sin bloquear la app
-    tg.CloudStorage.getItem('vistos_anime', (err, value) => {
-        if (!err && value) {
-            try { listaFavoritos = JSON.parse(value); } 
-            catch (e) { listaFavoritos = []; }
-        }
-        cargarObras(); // Cargar base de datos después de leer favoritos
-    });
+    // Verificamos si hay datos de Telegram para saber si estamos en la App
+    if (tg.initData) {
+        tg.CloudStorage.getItem('vistos_anime', (err, value) => {
+            if (!err && value) {
+                try { 
+                    listaFavoritos = JSON.parse(value); 
+                } catch (e) { 
+                    listaFavoritos = []; 
+                }
+            }
+            // Cargamos las obras después de intentar leer de la nube
+            cargarObras(); 
+        });
+    } else {
+        // Si estamos en VS Code (navegador normal), cargamos las obras directamente
+        console.warn("⚠️ Ejecutando fuera de Telegram: CloudStorage no disponible.");
+        cargarObras();
+    }
 }
 
 // =========================================
@@ -376,7 +386,11 @@ function renderizarObras(obras) {
 // =========================================
 async function ejecutarRegistro() {
     const btnPublicar = document.getElementById('btn-publicar');
+    const vistaRegistro = document.getElementById('vista-registro'); // Contenedor principal
     
+    // IMPORTANTE: Checamos si tenemos un ID guardado para editar
+    const idParaEditar = vistaRegistro.dataset.editId;
+
     // Recolectar datos básicos
     const titulo = document.getElementById('in-titulo').value;
     const estado = document.getElementById('in-estado').value;
@@ -388,11 +402,10 @@ async function ejecutarRegistro() {
         return alert("⚠️ El título y la URL de la portada son obligatorios.");
     }
 
-    // Estado de carga en el botón
     btnPublicar.disabled = true;
-    btnPublicar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
+    btnPublicar.innerHTML = idParaEditar ? '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando...' : '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
 
-    // Construir objetos y arreglos
+    // Construir objetos
     const nombresAlternativos = {
         "Japonés": document.getElementById('in-japones').value || "",
         "Ingles": document.getElementById('in-ingles').value || ""
@@ -401,63 +414,59 @@ async function ejecutarRegistro() {
     const generosStr = document.getElementById('in-generos').value;
     const generosArray = generosStr ? generosStr.split(',').map(g => g.trim()).filter(g => g) : [];
 
-    const autor = document.getElementById('in-autor').value;
-    const estudio = document.getElementById('in-estudio').value;
-    const tipo = document.getElementById('in-tipo').value;
-    const origen = document.getElementById('in-origen').value;
-    const estreno = document.getElementById('in-estreno').value;
-    const diaEmision = document.getElementById('in-dia').value;
-
     let temporadasData = [];
     const temporadasRaw = document.getElementById('in-temporadas').value;
     if (temporadasRaw.trim() !== "") {
-        try {
-            temporadasData = JSON.parse(temporadasRaw);
-        } catch (error) {
+        try { temporadasData = JSON.parse(temporadasRaw); } 
+        catch (e) {
             btnPublicar.disabled = false;
             btnPublicar.textContent = 'Publicar en el Hub';
-            return alert("⚠️ Error: El formato JSON de las Temporadas no es válido. Revisa los corchetes y comillas.");
+            return alert("⚠️ Error en el JSON de Temporadas.");
         }
     }
 
-    const slug = titulo.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-
     const nuevaObra = {
         titulo: titulo,
-        slug: slug,
+        slug: titulo.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
         portada_url: portada,
         banner_url: banner,
         nombres_alternativos: nombresAlternativos,
         sinopsis: sinopsis,
         estado: estado,
         generos: generosArray,
-        autor: autor,
-        estudio: estudio,
-        tipo: tipo,
-        origen: origen,
-        estreno: estreno,
-        dia_emision: diaEmision,
+        autor: document.getElementById('in-autor').value,
+        estudio: document.getElementById('in-estudio').value,
+        tipo: document.getElementById('in-tipo').value,
+        origen: document.getElementById('in-origen').value,
+        estreno: document.getElementById('in-estreno').value,
+        dia_emision: document.getElementById('in-dia').value,
         temporadas: temporadasData
     };
 
     try {
-        const { error } = await _supabase.from('obras').insert([nuevaObra]);
-
-        if (error) {
-            if (error.code === '23505') {
-                alert("⚠️ Error: Esta obra ya existe en la base de datos.");
-            } else {
-                alert("⚠️ Ocurrió un problema al guardar en Supabase: " + error.message);
-                console.error("Detalles del Error de DB:", error);
-            }
+        let resultado;
+        if (idParaEditar) {
+            // MODO EDICIÓN
+            resultado = await _supabase.from('obras').update(nuevaObra).eq('id', idParaEditar);
         } else {
-            alert("✅ Obra registrada con éxito en el Hub.");
+            // MODO NUEVO
+            resultado = await _supabase.from('obras').insert([nuevaObra]);
+        }
+
+        if (resultado.error) {
+            alert("⚠️ Error: " + resultado.error.message);
+        } else {
+            alert(idParaEditar ? "✅ Obra actualizada con éxito." : "✅ Obra registrada con éxito.");
+            
+            // Limpiar ID de edición y campos
+            delete vistaRegistro.dataset.editId;
             document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(input => input.value = '');
+            
             cargarObras();
             cambiarVista('catalogo');
         }
     } catch(e) {
-        alert("⚠️ Error de conexión: " + e.message);
+        alert("⚠️ Error de conexión.");
     } finally {
         btnPublicar.disabled = false;
         btnPublicar.textContent = 'Publicar en el Hub';
@@ -542,6 +551,40 @@ function mostrarErrorAuth(msg) {
 function mostrarMensajeAuth(msg, color) {
     authMensaje.style.color = color;
     authMensaje.textContent = msg;
+}
+function prepararEdicion() {
+    if (!obraActual) return;
+
+    cambiarVista('registro');
+
+    // Rellenamos los campos con la info real de tu HTML
+    document.getElementById('in-titulo').value = obraActual.titulo || '';
+    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
+    document.getElementById('in-portada').value = obraActual.portada_url || '';
+    document.getElementById('in-banner').value = obraActual.banner_url || '';
+    document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
+    
+    // Nombres alternativos
+    document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
+    document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
+    
+    // Otros campos
+    document.getElementById('in-generos').value = (obraActual.generos || []).join(', ');
+    document.getElementById('in-autor').value = obraActual.autor || '';
+    document.getElementById('in-estudio').value = obraActual.estudio || '';
+    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
+    document.getElementById('in-origen').value = obraActual.origen || '';
+    document.getElementById('in-estreno').value = obraActual.estreno || '';
+    document.getElementById('in-dia').value = obraActual.dia_emision || '';
+    
+    // Temporadas (lo convertimos a texto bonito para el cuadro)
+    document.getElementById('in-temporadas').value = JSON.stringify(obraActual.temporadas || [], null, 2);
+
+    // Guardamos el ID en el contenedor de la vista
+    document.getElementById('vista-registro').dataset.editId = obraActual.id;
+    
+    // Cambiamos el texto del botón
+    document.getElementById('btn-publicar').textContent = "Actualizar Anime";
 }
 
 // Arrancar al cargar la página (Reemplaza el viejo DOMContentLoaded)
