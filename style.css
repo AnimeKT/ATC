@@ -231,3 +231,82 @@ body {
     .tarjeta-anime img { height: 180px; }
     .titulo-tarjeta { font-size: 12px; }
 }
+
+/* ... [MANTÉN TUS ESTILOS BASE Y DE NAVBAR AQUÍ] ... */
+
+/* Actualización de Tarjetas (Diseño Móvil-Primero y Aspect Ratio) */
+.grid-animes {
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+    gap: 15px;
+}
+.tarjeta-anime {
+    background-color: #18181b; border-radius: 10px; overflow: hidden;
+    transition: all 0.3s ease; border: 1px solid #27272a; position: relative; cursor: pointer;
+}
+.tarjeta-anime img { 
+    width: 100%; 
+    height: auto; /* Se elimina el alto fijo */
+    aspect-ratio: 2 / 3; /* Forzar proporción 2:3 */
+    object-fit: cover; 
+}
+
+/* Controles Flotantes Detalles */
+.controles-flotantes {
+    position: absolute; top: 15px; left: 15px; right: 15px;
+    display: flex; justify-content: space-between; z-index: 100;
+}
+.acciones-derecha { display: flex; gap: 10px; }
+.btn-flotante {
+    background: rgba(15, 15, 17, 0.8); backdrop-filter: blur(5px);
+    border: 1px solid #27272a; color: #fff; width: 40px; height: 40px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: 0.3s;
+}
+.btn-flotante:hover { background: #3ba4fa; border-color: #3ba4fa; }
+.btn-flotante.favorito-activo i { color: #ef4444; font-weight: 900; }
+
+/* Botones Dinámicos (Temporadas/Idiomas) */
+.btn-dinamico {
+    display: block; width: 100%; text-align: left; background: #18181b;
+    border: 1px solid #27272a; padding: 12px 15px; border-radius: 8px;
+    color: #e0e0e0; margin-bottom: 8px; cursor: pointer; transition: 0.2s;
+}
+.btn-dinamico:hover { border-color: #3ba4fa; background: #1f1f23; }
+.btn-volver-dinamico {
+    background: transparent; border: none; color: #a1a1aa; padding: 0 0 15px 0;
+    cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;
+}
+
+/* Responsividad Móvil Optimizada (Telegram) */
+@media (max-width: 768px) {
+    /* ... [Mantén tus reglas navbar mobile] ... */
+    
+    .grid-animes { 
+        /* Sistema de grid de 3 columnas exactas para pantallas pequeñas */
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 8px;
+    }
+    .titulo-tarjeta { font-size: 11px; padding: 8px 5px; text-align: center;}
+}
+
+/* Modo Horizontal y Desktop */
+@media (orientation: landscape) and (min-width: 600px), (min-width: 900px) {
+    .detalle-grid {
+        display: flex;
+        flex-direction: row-reverse; /* Sidebar derecha, main izquierda */
+        gap: 30px;
+        align-items: flex-start;
+    }
+    .detalle-main-info { flex: 1; }
+    .detalle-sidebar { 
+        width: 300px; 
+        position: sticky; 
+        top: 20px; 
+        background: #18181b; 
+        padding: 20px; 
+        border-radius: 12px; 
+        border: 1px solid #27272a;
+    }
+    .detalle-banner { height: 300px; } /* Banner más grande en PC/Landscape */
+}
