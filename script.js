@@ -95,28 +95,26 @@ function abrirDetalle(tituloObra) {
     obraActual = todasLasObras.find(o => o.titulo === tituloObra);
     if (!obraActual) return;
 
-    // Poblar datos visuales
     document.getElementById('det-banner').src = obraActual.banner_url || obraActual.portada_url;
-    document.getElementById('det-portada').src = obraActual.portada_url;
-    document.getElementById('det-portada').style.opacity = 1; // Resetear opacidad por si cambió
+    const imgPort = document.getElementById('det-portada');
+    imgPort.src = obraActual.portada_url;
+    imgPort.style.opacity = 1;
     document.getElementById('det-titulo').textContent = obraActual.titulo;
     
-    // Nombres alternativos
+    // USAMOS ?. PARA QUE NO CRASHÉE EN CELULARES
     let nombresAlt = [];
     if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
     if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
     document.getElementById('det-nombres-alt').textContent = nombresAlt.join(' • ');
 
-    // Géneros (Mantenido exactamente como lo tenías)
     const tagsContainer = document.getElementById('det-tags');
     tagsContainer.innerHTML = '';
-    if(obraActual.generos && Array.isArray(obraActual.generos)) {
+    if(Array.isArray(obraActual.generos)) {
         obraActual.generos.forEach(g => {
             tagsContainer.innerHTML += `<span class="tag">${g}</span>`;
         });
     }
 
-    // Información Lateral
     document.getElementById('det-estado').textContent = obraActual.estado || '--';
     document.getElementById('det-tipo').textContent = obraActual.tipo || '--';
     document.getElementById('det-estudio').textContent = obraActual.estudio || '--';
@@ -124,43 +122,20 @@ function abrirDetalle(tituloObra) {
     document.getElementById('det-dia').textContent = obraActual.dia_emision || '--';
     document.getElementById('det-estreno').textContent = obraActual.estreno || '--';
     document.getElementById('det-autor').textContent = obraActual.autor || '--';
+    document.getElementById('det-sinopsis').textContent = obraActual.sinopsis || 'Sin descripción.';
 
-    // Sinopsis
-    document.getElementById('det-sinopsis').textContent = obraActual.sinopsis || 'No hay sinopsis registrada para esta obra.';
-
-    // Estado del botón favorito si existe en el HTML
-    const btnFav = document.getElementById('btn-fav-detalle');
-    if(btnFav) {
-        if (listaFavoritos.includes(obraActual.titulo)) {
-            btnFav.classList.add('favorito-activo');
-            btnFav.innerHTML = '<i class="fa-solid fa-heart"></i>';
-        } else {
-            btnFav.classList.remove('favorito-activo');
-            btnFav.innerHTML = '<i class="fa-regular fa-heart"></i>';
-        }
+    // --- AQUÍ APARECE EL BOTÓN DE EDITAR SOLO SI ERES ADMIN ---
+    const panelAdmin = document.getElementById('admin-options-detalle');
+    if (panelAdmin) {
+        const esAdmin = document.getElementById('btn-admin-view').style.display === 'flex';
+        panelAdmin.innerHTML = esAdmin ? 
+            `<button onclick="prepararEdicion()" class="btn-editar-discreto">
+                <i class="fa-solid fa-pen-to-square"></i> Editar Información
+            </button>` : '';
     }
-    
 
-    // Iniciar el renderizado de Temporadas y Capítulos
     iniciarNavegacionContenido(obraActual.temporadas);
     cambiarVista('detalle');
-
-    const panelAdminDetalle = document.getElementById('admin-options-detalle');
-    if (panelAdminDetalle) {
-        // Si el botón de "Añadir Obra" es visible, significa que eres Admin
-        const esAdmin = document.getElementById('btn-admin-view').style.display === 'flex';
-        
-        if (esAdmin) {
-            panelAdminDetalle.innerHTML = `
-                <button onclick="prepararEdicion()" class="btn-editar-anime">
-                    <i class="fa-solid fa-pen-to-square"></i> Editar este Anime
-                </button>
-            `;
-        } else {
-            panelAdminDetalle.innerHTML = ''; // Si no es admin, no ve nada
-        }
-    }
-    
 }
 
 // =========================================
@@ -525,12 +500,8 @@ function cerrarModalAuth() {
 
 function obtenerEmailVirtual() {
     const user = tg.initDataUnsafe?.user;
-    
-    // Si estamos en PC y no detecta el ID, usamos uno de prueba para que no te bloquee
-    if (!user || !user.id) {
-        console.warn("⚠️ No se detectó ID de Telegram. Usando modo desarrollo.");
-        return "admin@test.com"; // O pon aquí un correo fijo para tus pruebas en PC
-    } 
+    // Si no hay ID (como en PC), usamos uno de respaldo para que puedas entrar
+    if (!user || !user.id) return "admin_pc@kaergsty.hub"; 
     return `${user.id}@kaergsty.hub`;
 }
 

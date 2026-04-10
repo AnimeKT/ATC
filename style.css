@@ -485,3 +485,20 @@ body {
     background: #ca8a04;
     transform: translateY(-2px);
 }
+
+.btn-editar-discreto {
+    width: 100%;
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(234, 179, 8, 0.1); /* Amarillo muy suave */
+    color: #eab308;
+    border: 1px dashed #eab308;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
