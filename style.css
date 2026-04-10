@@ -310,3 +310,157 @@ body {
     }
     .detalle-banner { height: 300px; } /* Banner más grande en PC/Landscape */
 }
+
+/* =========================================
+   VISTA DETALLE (INTERFAZ INDEPENDIENTE)aaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+   ========================================= */
+#vista-detalle {
+    background-color: #050505; /* Fondo casi negro */
+    min-height: 100vh;
+    animation: fadeIn 0.4s ease-out;
+    position: relative;
+    padding-bottom: 40px;
+}
+
+/* Botón flotante para volver */
+.btn-flotante {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    background: rgba(10, 10, 12, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid #27272a; /* Borde ultra-fino */
+    color: #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.btn-flotante:hover {
+    background: #3ba4fa;
+    color: #fff;
+    border-color: #3ba4fa;
+}
+
+/* Banner con gradiente sutil */
+.detalle-banner {
+    width: 100%;
+    height: 250px;
+    position: relative;
+}
+.detalle-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.detalle-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, #050505 5%, transparent 90%);
+}
+
+/* Contenedor principal de info solapado */
+.contenedor-detalle {
+    position: relative;
+    margin-top: -70px; /* Hace que la portada pise el banner */
+    z-index: 10;
+}
+
+/* Cabecera (Portada + Títulos) */
+.detalle-header {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    margin-bottom: 30px;
+}
+
+.detalle-portada {
+    width: 130px;
+    height: 190px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #27272a;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+    background-color: #0f0f11;
+}
+
+.detalle-titulos {
+    flex: 1;
+    padding-bottom: 10px;
+}
+
+#det-titulo {
+    font-size: 24px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+#det-nombres-alt {
+    font-size: 13px;
+    color: #71717a;
+    margin-bottom: 12px;
+}
+
+/* Etiquetas (Tags) limpias */
+.detalle-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.detalle-tags .tag {
+    background: rgba(59, 164, 250, 0.08);
+    color: #3ba4fa;
+    border: 1px solid rgba(59, 164, 250, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Layout en Grid para móvil */
+.detalle-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+/* Sinopsis y Títulos internos */
+.detalle-main-info h3, .titulo-temporadas {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #27272a;
+    padding-bottom: 8px;
+}
+
+#det-sinopsis {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #a1a1aa;
+    margin-bottom: 30px;
+}
+
+/* Sidebar Lateral Minimalista */
+.detalle-sidebar {
+    background: #0a0a0c;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #1f1f22;
+    font-size: 13px;
+}
+.info-item:last-child { border-bottom: none; }
+.info-item span { color: #71717a; }
+.info-item strong { color: #e0e0e0; font-weight: 600; text-align: right; max-width: 60%; }
