@@ -16,24 +16,99 @@ let todasLasObras = [];
 function cambiarVista(vista) {
     const vistaCatalogo = document.getElementById('vista-catalogo');
     const vistaRegistro = document.getElementById('vista-registro');
+    const vistaDetalle = document.getElementById('vista-detalle');
     const barraBusqueda = document.getElementById('barra-busqueda');
 
+    // Ocultar todas primero
+    vistaCatalogo.style.display = 'none';
+    vistaRegistro.style.display = 'none';
+    vistaDetalle.style.display = 'none';
+    barraBusqueda.style.display = 'none';
+
     if (vista === 'registro') {
-        vistaCatalogo.style.display = 'none';
-        barraBusqueda.style.display = 'none'; // Ocultar buscador al registrar
         vistaRegistro.style.display = 'block';
-        window.scrollTo(0, 0);
+    } else if (vista === 'detalle') {
+        vistaDetalle.style.display = 'block';
     } else {
-        vistaRegistro.style.display = 'none';
         vistaCatalogo.style.display = 'block';
         barraBusqueda.style.display = 'block';
     }
+    
+    window.scrollTo(0, 0);
+}
+
+// =========================================
+// RENDERIZAR VISTA DE DETALLES
+// =========================================
+function abrirDetalle(index) {
+    const obra = todasLasObras[index];
+    if (!obra) return;
+
+    // Poblar datos visuales
+    document.getElementById('det-banner').src = obra.banner_url || obra.portada_url;
+    document.getElementById('det-portada').src = obra.portada_url;
+    document.getElementById('det-titulo').textContent = obra.titulo;
+    
+    // Nombres alternativos
+    let nombresAlt = [];
+    if(obra.nombres_alternativos?.Japonés) nombresAlt.push(obra.nombres_alternativos.Japonés);
+    if(obra.nombres_alternativos?.Ingles) nombresAlt.push(obra.nombres_alternativos.Ingles);
+    document.getElementById('det-nombres-alt').textContent = nombresAlt.join(' • ');
+
+    // Géneros
+    const tagsContainer = document.getElementById('det-tags');
+    tagsContainer.innerHTML = '';
+    if(obra.generos && Array.isArray(obra.generos)) {
+        obra.generos.forEach(g => {
+            tagsContainer.innerHTML += `<span class="tag">${g}</span>`;
+        });
+    }
+
+    // Información Lateral
+    document.getElementById('det-estado').textContent = obra.estado || '--';
+    document.getElementById('det-tipo').textContent = obra.tipo || '--';
+    document.getElementById('det-estudio').textContent = obra.estudio || '--';
+    document.getElementById('det-origen').textContent = obra.origen || '--';
+    document.getElementById('det-dia').textContent = obra.dia_emision || '--';
+    document.getElementById('det-estreno').textContent = obra.estreno || '--';
+    document.getElementById('det-autor').textContent = obra.autor || '--';
+
+    // Sinopsis
+    document.getElementById('det-sinopsis').textContent = obra.sinopsis || 'No hay sinopsis registrada para esta obra.';
+
+    // Temporadas y Enlaces (con integración de Telegram)
+    const tempContainer = document.getElementById('det-temporadas');
+    tempContainer.innerHTML = '';
+    
+    if(obra.temporadas && Array.isArray(obra.temporadas) && obra.temporadas.length > 0) {
+        obra.temporadas.forEach(temp => {
+            let enlacesHtml = '';
+            if(temp.enlaces) {
+                for(const [idioma, url] of Object.entries(temp.enlaces)) {
+                    enlacesHtml += `<a href="${url}" target="_blank" class="btn-enlace"><i class="fa-brands fa-telegram"></i> ${idioma}</a>`;
+                }
+            }
+            
+            tempContainer.innerHTML += `
+                <div class="temporada-card">
+                    <h4>${temp.nombre || 'Temporada'}</h4>
+                    <div class="enlaces-grid">${enlacesHtml}</div>
+                </div>
+            `;
+        });
+    } else {
+        tempContainer.innerHTML = '<p class="text-muted">Aún no hay enlaces disponibles.</p>';
+    }
+
+    cambiarVista('detalle');
 }
 
 // =========================================
 // REGISTRO DE OBRA COMPLEJA
 // =========================================
 async function ejecutarRegistro() {
+    const btnPublicar = document.getElementById('btn-publicar');
+    
     // Recolectar datos básicos
     const titulo = document.getElementById('in-titulo').value;
     const estado = document.getElementById('in-estado').value;
@@ -41,15 +116,20 @@ async function ejecutarRegistro() {
     const banner = document.getElementById('in-banner').value;
     const sinopsis = document.getElementById('in-sinopsis').value;
     
-    if(!titulo || !portada) return alert("El título y la portada son obligatorios");
+    if(!titulo || !portada) {
+        return alert("⚠️ El título y la URL de la portada son obligatorios.");
+    }
 
-    // Construir objetos y arreglos a partir de los inputs
+    // Estado de carga en el botón
+    btnPublicar.disabled = true;
+    btnPublicar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
+
+    // Construir objetos y arreglos
     const nombresAlternativos = {
         "Japonés": document.getElementById('in-japones').value || "",
         "Ingles": document.getElementById('in-ingles').value || ""
     };
 
-    // Convertir string de géneros a un array limpio
     const generosStr = document.getElementById('in-generos').value;
     const generosArray = generosStr ? generosStr.split(',').map(g => g.trim()).filter(g => g) : [];
 
@@ -60,20 +140,20 @@ async function ejecutarRegistro() {
     const estreno = document.getElementById('in-estreno').value;
     const diaEmision = document.getElementById('in-dia').value;
 
-    // Parsear el JSON de temporadas de forma segura
     let temporadasData = [];
     const temporadasRaw = document.getElementById('in-temporadas').value;
     if (temporadasRaw.trim() !== "") {
         try {
             temporadasData = JSON.parse(temporadasRaw);
         } catch (error) {
+            btnPublicar.disabled = false;
+            btnPublicar.textContent = 'Publicar en el Hub';
             return alert("⚠️ Error: El formato JSON de las Temporadas no es válido. Revisa los corchetes y comillas.");
         }
     }
 
     const slug = titulo.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
 
-    // Construir el objeto final a enviar a Supabase
     const nuevaObra = {
         titulo: titulo,
         slug: slug,
@@ -92,17 +172,29 @@ async function ejecutarRegistro() {
         temporadas: temporadasData
     };
 
-    const { error } = await _supabase.from('obras').insert([nuevaObra]);
+    try {
+        const { error } = await _supabase.from('obras').insert([nuevaObra]);
 
-    if (error) {
-        if (error.code === '23505') alert("⚠️ Error: Esta obra ya existe.");
-        else console.error("Error de DB:", error.message);
-    } else {
-        alert("✅ Obra registrada con éxito en el Hub.");
-        // Limpiar el formulario y volver al catálogo
-        document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(input => input.value = '');
-        cargarObras();
-        cambiarVista('catalogo');
+        if (error) {
+            if (error.code === '23505') {
+                alert("⚠️ Error: Esta obra ya existe en la base de datos.");
+            } else {
+                // Notificación visual del error de base de datos
+                alert("⚠️ Ocurrió un problema al guardar en Supabase: " + error.message);
+                console.error("Detalles del Error de DB:", error);
+            }
+        } else {
+            alert("✅ Obra registrada con éxito en el Hub.");
+            document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(input => input.value = '');
+            cargarObras();
+            cambiarVista('catalogo');
+        }
+    } catch(e) {
+        alert("⚠️ Error de conexión: " + e.message);
+    } finally {
+        // Restaurar estado del botón
+        btnPublicar.disabled = false;
+        btnPublicar.textContent = 'Publicar en el Hub';
     }
 }
 
@@ -117,8 +209,8 @@ async function cargarObras() {
 
     if (error) return console.error("Error cargando obras:", error);
 
-    todasLasObras = obras; 
-    renderizarObras(obras);
+    todasLasObras = obras || []; 
+    renderizarObras(todasLasObras);
 }
 
 function renderizarObras(obras) {
@@ -129,12 +221,13 @@ function renderizarObras(obras) {
         return;
     }
 
-    grid.innerHTML = obras.map(obra => {
+    // Ahora pasamos el index de cada obra para poder abrir el detalle correcto
+    grid.innerHTML = obras.map((obra, index) => {
         const claseEstado = obra.estado === 'Finalizado' ? 'estado-finalizado' : 'estado-emision';
         const estadoTexto = obra.estado || 'En emisión';
 
         return `
-            <div class="tarjeta-anime">
+            <div class="tarjeta-anime" onclick="abrirDetalle(${index})">
                 <div class="estado-badge ${claseEstado}">${estadoTexto}</div>
                 <img src="${obra.portada_url}" alt="${obra.titulo}">
                 <div class="info-tarjeta">
@@ -185,7 +278,7 @@ _supabase.auth.onAuthStateChange((event, session) => {
         btnAdminView.style.display = 'none';
         btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
         btnAuth.onclick = abrirModalAuth;
-        cambiarVista('catalogo'); // Si cierra sesión mientras está en la vista admin, lo devuelve
+        cambiarVista('catalogo');
     }
 });
 

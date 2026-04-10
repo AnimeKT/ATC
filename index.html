@@ -11,7 +11,7 @@
 </head>
 <body>
     <header class="navbar">
-        <div class="logo">
+        <div class="logo" onclick="cambiarVista('catalogo')">
             <h1>Kaergsty <span>Hub</span></h1>
         </div>
         
@@ -43,6 +43,46 @@
             <h2 class="titulo-seccion">Catálogo Global</h2>
             <div id="grid-obras" class="grid-animes">
                 </div>
+        </main>
+    </div>
+
+    <div id="vista-detalle" style="display: none;">
+        <button onclick="cambiarVista('catalogo')" class="btn-volver btn-flotante"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+        
+        <div class="detalle-banner">
+            <img id="det-banner" src="" alt="Banner">
+            <div class="detalle-banner-overlay"></div>
+        </div>
+        
+        <main class="contenedor contenedor-detalle">
+            <div class="detalle-header">
+                <img id="det-portada" class="detalle-portada" src="" alt="Portada">
+                <div class="detalle-titulos">
+                    <h2 id="det-titulo"></h2>
+                    <p id="det-nombres-alt" class="text-muted"></p>
+                    <div class="detalle-tags" id="det-tags"></div>
+                </div>
+            </div>
+            
+            <div class="detalle-grid">
+                <div class="detalle-main-info">
+                    <h3>Sinopsis</h3>
+                    <p id="det-sinopsis"></p>
+                    
+                    <h3 class="titulo-temporadas">Temporadas y Episodios</h3>
+                    <div id="det-temporadas" class="temporadas-list"></div>
+                </div>
+                
+                <div class="detalle-sidebar">
+                    <div class="info-item"><span>Estado:</span> <strong id="det-estado"></strong></div>
+                    <div class="info-item"><span>Tipo:</span> <strong id="det-tipo"></strong></div>
+                    <div class="info-item"><span>Estudio:</span> <strong id="det-estudio"></strong></div>
+                    <div class="info-item"><span>Origen:</span> <strong id="det-origen"></strong></div>
+                    <div class="info-item"><span>Día emisión:</span> <strong id="det-dia"></strong></div>
+                    <div class="info-item"><span>Estreno:</span> <strong id="det-estreno"></strong></div>
+                    <div class="info-item"><span>Autor:</span> <strong id="det-autor"></strong></div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -143,7 +183,7 @@
 ]'></textarea>
                     </div>
 
-                    <button onclick="ejecutarRegistro()" class="btn-enviar full-width">Publicar en el Hub</button>
+                    <button id="btn-publicar" onclick="ejecutarRegistro()" class="btn-enviar full-width">Publicar en el Hub</button>
                 </div>
             </section>
         </main>
@@ -155,10 +195,10 @@
             <h2 style="margin-bottom: 5px; text-align: center; color: #fff;">Acceso al Hub</h2>
             <p style="text-align: center; color: #a1a1aa; font-size: 13px; margin-bottom: 20px;">Tu cuenta de Telegram se detectará automáticamente.</p>
             <div class="form-group" style="grid-template-columns: 1fr;">
-                <input type="password" id="auth-password" placeholder="Ingresa tu contraseña">
+                <input type="password" id="auth-password" placeholder="Ingresa tu contraseña" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #27272a; background-color: #0f0f11; color: #fff; outline: none; transition: 0.3s;">
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button onclick="iniciarSesion()" class="btn-enviar" style="flex: 1;">Entrar</button>
-                    <button onclick="registrarUsuario()" class="btn-filtro active" style="flex: 1; justify-content: center;">Vincular Clave</button>
+                    <button onclick="iniciarSesion()" class="btn-enviar" style="flex: 1; margin-top: 0;">Entrar</button>
+                    <button onclick="registrarUsuario()" class="btn-filtro active" style="flex: 1; justify-content: center; height: 100%;">Vincular Clave</button>
                 </div>
                 <p id="auth-mensaje" style="color: #ef4444; text-align: center; font-size: 14px; margin-top: 10px;"></p>
             </div>
