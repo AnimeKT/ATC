@@ -139,10 +139,27 @@ function abrirDetalle(tituloObra) {
             btnFav.innerHTML = '<i class="fa-regular fa-heart"></i>';
         }
     }
+    
 
     // Iniciar el renderizado de Temporadas y Capítulos
     iniciarNavegacionContenido(obraActual.temporadas);
     cambiarVista('detalle');
+
+    const btnAdmin = document.getElementById('btn-admin-view');
+    const panelAdminDetalle = document.getElementById('admin-options-detalle');
+    
+    if (panelAdminDetalle) {
+        if (btnAdmin.style.display === 'flex') {
+            panelAdminDetalle.innerHTML = `
+                <button onclick="prepararEdicion()" class="btn-flotante-edit">
+                    <i class="fa-solid fa-pen-to-square"></i> Editar Información
+                </button>
+            `;
+        } else {
+            panelAdminDetalle.innerHTML = '';
+        }
+
+    
 }
 
 // =========================================
@@ -386,12 +403,12 @@ function renderizarObras(obras) {
 // =========================================
 async function ejecutarRegistro() {
     const btnPublicar = document.getElementById('btn-publicar');
-    const vistaRegistro = document.getElementById('vista-registro'); // Contenedor principal
+    const vistaRegistro = document.getElementById('vista-registro');
     
-    // IMPORTANTE: Checamos si tenemos un ID guardado para editar
+    // Aquí detectamos si estamos editando o creando uno nuevo
     const idParaEditar = vistaRegistro.dataset.editId;
 
-    // Recolectar datos básicos
+    // Recolectar datos de los inputs (usando tus IDs: in-titulo, in-estado, etc.)
     const titulo = document.getElementById('in-titulo').value;
     const estado = document.getElementById('in-estado').value;
     const portada = document.getElementById('in-portada').value;
@@ -405,32 +422,28 @@ async function ejecutarRegistro() {
     btnPublicar.disabled = true;
     btnPublicar.innerHTML = idParaEditar ? '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando...' : '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
 
-    // Construir objetos
-    const nombresAlternativos = {
-        "Japonés": document.getElementById('in-japones').value || "",
-        "Ingles": document.getElementById('in-ingles').value || ""
-    };
-
     const generosStr = document.getElementById('in-generos').value;
     const generosArray = generosStr ? generosStr.split(',').map(g => g.trim()).filter(g => g) : [];
 
     let temporadasData = [];
-    const temporadasRaw = document.getElementById('in-temporadas').value;
-    if (temporadasRaw.trim() !== "") {
-        try { temporadasData = JSON.parse(temporadasRaw); } 
-        catch (e) {
-            btnPublicar.disabled = false;
-            btnPublicar.textContent = 'Publicar en el Hub';
-            return alert("⚠️ Error en el JSON de Temporadas.");
-        }
+    try {
+        const tempVal = document.getElementById('in-temporadas').value;
+        temporadasData = tempVal.trim() !== "" ? JSON.parse(tempVal) : [];
+    } catch (e) {
+        btnPublicar.disabled = false;
+        btnPublicar.textContent = 'Publicar en el Hub';
+        return alert("⚠️ Error: El JSON de las temporadas está mal escrito.");
     }
 
-    const nuevaObra = {
+    const datosObra = {
         titulo: titulo,
         slug: titulo.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
         portada_url: portada,
         banner_url: banner,
-        nombres_alternativos: nombresAlternativos,
+        nombres_alternativos: {
+            "Japonés": document.getElementById('in-japones').value || "",
+            "Ingles": document.getElementById('in-ingles').value || ""
+        },
         sinopsis: sinopsis,
         estado: estado,
         generos: generosArray,
@@ -444,32 +457,33 @@ async function ejecutarRegistro() {
     };
 
     try {
-        let resultado;
+        let error;
         if (idParaEditar) {
-            // MODO EDICIÓN
-            resultado = await _supabase.from('obras').update(nuevaObra).eq('id', idParaEditar);
+            // MODO EDITAR
+            const res = await _supabase.from('obras').update(datosObra).eq('id', idParaEditar);
+            error = res.error;
         } else {
             // MODO NUEVO
-            resultado = await _supabase.from('obras').insert([nuevaObra]);
+            const res = await _supabase.from('obras').insert([datosObra]);
+            error = res.error;
         }
 
-        if (resultado.error) {
-            alert("⚠️ Error: " + resultado.error.message);
-        } else {
-            alert(idParaEditar ? "✅ Obra actualizada con éxito." : "✅ Obra registrada con éxito.");
-            
-            // Limpiar ID de edición y campos
-            delete vistaRegistro.dataset.editId;
-            document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(input => input.value = '');
-            
-            cargarObras();
-            cambiarVista('catalogo');
-        }
+        if (error) throw error;
+
+        alert(idParaEditar ? "✅ ¡Actualizado con éxito!" : "✅ ¡Publicado con éxito!");
+        
+        // Limpiamos todo
+        delete vistaRegistro.dataset.editId;
+        document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(i => i.value = '');
+        btnPublicar.textContent = 'Publicar en el Hub';
+        
+        cargarObras();
+        cambiarVista('catalogo');
+
     } catch(e) {
-        alert("⚠️ Error de conexión.");
+        alert("⚠️ Error: " + e.message);
     } finally {
         btnPublicar.disabled = false;
-        btnPublicar.textContent = 'Publicar en el Hub';
     }
 }
 
@@ -555,20 +569,17 @@ function mostrarMensajeAuth(msg, color) {
 function prepararEdicion() {
     if (!obraActual) return;
 
+    // 1. Vamos a la vista de registro
     cambiarVista('registro');
 
-    // Rellenamos los campos con la info real de tu HTML
+    // 2. Llenamos los campos con la info que ya tiene el anime
     document.getElementById('in-titulo').value = obraActual.titulo || '';
     document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
     document.getElementById('in-portada').value = obraActual.portada_url || '';
     document.getElementById('in-banner').value = obraActual.banner_url || '';
     document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
-    
-    // Nombres alternativos
     document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
-    
-    // Otros campos
     document.getElementById('in-generos').value = (obraActual.generos || []).join(', ');
     document.getElementById('in-autor').value = obraActual.autor || '';
     document.getElementById('in-estudio').value = obraActual.estudio || '';
@@ -576,15 +587,13 @@ function prepararEdicion() {
     document.getElementById('in-origen').value = obraActual.origen || '';
     document.getElementById('in-estreno').value = obraActual.estreno || '';
     document.getElementById('in-dia').value = obraActual.dia_emision || '';
-    
-    // Temporadas (lo convertimos a texto bonito para el cuadro)
     document.getElementById('in-temporadas').value = JSON.stringify(obraActual.temporadas || [], null, 2);
 
-    // Guardamos el ID en el contenedor de la vista
+    // 3. Guardamos el ID para que 'ejecutarRegistro' sepa que es una edición
     document.getElementById('vista-registro').dataset.editId = obraActual.id;
     
-    // Cambiamos el texto del botón
-    document.getElementById('btn-publicar').textContent = "Actualizar Anime";
+    // 4. Cambiamos el texto del botón
+    document.getElementById('btn-publicar').textContent = "Actualizar Anime en el Hub";
 }
 
 // Arrancar al cargar la página (Reemplaza el viejo DOMContentLoaded)
