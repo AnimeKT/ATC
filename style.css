@@ -464,3 +464,24 @@ body {
 .info-item:last-child { border-bottom: none; }
 .info-item span { color: #71717a; }
 .info-item strong { color: #e0e0e0; font-weight: 600; text-align: right; max-width: 60%; }
+
+.btn-editar-anime {
+    width: 100%;
+    padding: 12px;
+    background: #eab308; /* Color amarillento/naranja para distinguir de "Guardar" */
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-editar-anime:hover {
+    background: #ca8a04;
+    transform: translateY(-2px);
+}

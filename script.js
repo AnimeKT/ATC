@@ -145,20 +145,21 @@ function abrirDetalle(tituloObra) {
     iniciarNavegacionContenido(obraActual.temporadas);
     cambiarVista('detalle');
 
-    const btnAdmin = document.getElementById('btn-admin-view');
     const panelAdminDetalle = document.getElementById('admin-options-detalle');
-    
     if (panelAdminDetalle) {
-        if (btnAdmin.style.display === 'flex') {
+        // Si el botón de "Añadir Obra" es visible, significa que eres Admin
+        const esAdmin = document.getElementById('btn-admin-view').style.display === 'flex';
+        
+        if (esAdmin) {
             panelAdminDetalle.innerHTML = `
-                <button onclick="prepararEdicion()" class="btn-flotante-edit">
-                    <i class="fa-solid fa-pen-to-square"></i> Editar Información
+                <button onclick="prepararEdicion()" class="btn-editar-anime">
+                    <i class="fa-solid fa-pen-to-square"></i> Editar este Anime
                 </button>
             `;
         } else {
-            panelAdminDetalle.innerHTML = '';
+            panelAdminDetalle.innerHTML = ''; // Si no es admin, no ve nada
         }
-
+    }
     
 }
 
@@ -524,7 +525,12 @@ function cerrarModalAuth() {
 
 function obtenerEmailVirtual() {
     const user = tg.initDataUnsafe?.user;
-    if (!user || !user.id) return null; 
+    
+    // Si estamos en PC y no detecta el ID, usamos uno de prueba para que no te bloquee
+    if (!user || !user.id) {
+        console.warn("⚠️ No se detectó ID de Telegram. Usando modo desarrollo.");
+        return "admin@test.com"; // O pon aquí un correo fijo para tus pruebas en PC
+    } 
     return `${user.id}@kaergsty.hub`;
 }
 
