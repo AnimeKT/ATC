@@ -382,32 +382,37 @@ function cargarDatosTemporadas(temporadas) {
 
 function agregarTemporadaUI(datos = null) {
     const container = document.getElementById('builder-temporadas');
-    const bloque = document.createElement('div');
-    bloque.className = 'temporada-block'; // Clase corregida y única
-
-    bloque.innerHTML = `
+    const tempDiv = document.createElement('div');
+    tempDiv.className = 'temporada-block';
+    
+    // El botón de eliminar ahora está integrado en el header del bloque
+    tempDiv.innerHTML = `
         <div class="header-bloque-dinamico">
-            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1, Ovas...)" value="${datos ? (datos.nombre || datos.seccion || '') : ''}">
-            <button type="button" class="btn-delete" onclick="confirmarBorrado(this, '.temporada-block')"><i class="fa-solid fa-trash"></i></button>
-        </div>
-        <input type="text" class="temp-img" placeholder="URL Imagen Miniatura (Opcional)" value="${datos?.imagen || ''}">
-        
-        <div class="idiomas-wrapper">
-            <label><i class="fa-solid fa-language"></i> Audios Disponibles</label>
-            <div class="lista-idiomas"></div>
-            <button type="button" class="btn-add-mini" onclick="agregarIdiomaUI(this.parentElement.querySelector('.lista-idiomas'))">
-                <i class="fa-solid fa-plus"></i> Añadir Idioma
+            <input type="text" class="temp-nombre" placeholder="Nombre de la Temporada (Ej: Temporada 1)" value="${datos ? datos.nombre : ''}">
+            <button type="button" class="btn-delete-block" onclick="this.closest('.temporada-block').remove()">
+                <i class="fa-solid fa-trash"></i>
             </button>
         </div>
+        <div class="input-group">
+            <label>URL Imagen Miniatura (Opcional)</label>
+            <input type="text" class="temp-imagen" placeholder="URL de imagen para esta temporada" value="${datos ? datos.imagen : ''}">
+        </div>
+        <div class="idiomas-wrapper">
+            </div>
+        <button type="button" class="btn-add-idioma" onclick="agregarIdiomaUI(this.previousElementSibling)">
+            <i class="fa-solid fa-plus"></i> Añadir Idioma/Servidor
+        </button>
     `;
 
-    container.appendChild(bloque);
-    const listaIdiomas = bloque.querySelector('.lista-idiomas');
+    container.appendChild(tempDiv);
 
-    if (datos?.enlaces && Object.keys(datos.enlaces).length > 0) {
-        Object.entries(datos.enlaces).forEach(([lang, caps]) => agregarIdiomaUI(listaIdiomas, lang, caps));
+    if (datos && datos.enlaces) {
+        const wrapper = tempDiv.querySelector('.idiomas-wrapper');
+        for (const idioma in datos.enlaces) {
+            agregarIdiomaUI(wrapper, { nombre: idioma, caps: datos.enlaces[idioma] });
+        }
     } else {
-        agregarIdiomaUI(listaIdiomas);
+        agregarIdiomaUI(tempDiv.querySelector('.idiomas-wrapper'));
     }
 }
 
