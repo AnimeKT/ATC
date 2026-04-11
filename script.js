@@ -282,20 +282,18 @@ function renderizarObras(obras) {
 // =========================================
 
 function prepararNuevoRegistro() {
-    document.getElementById('btn-publicar').textContent = "Publicar en el Hub";
+    idAnimeEnEdicion = null; // Resetear ID de edición
+    document.getElementById('btn-publicar').textContent = "Publicar";
     
-    // Limpiar todos los inputs y textareas
+    // Limpiar inputs
     document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => i.value = '');
     
-    // Reiniciar el constructor de temporadas
     cargarDatosTemporadas([]); 
     cambiarVista('registro');
 }
 
 async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
-    
-    // Recolección de datos básicos
     const titulo = document.getElementById('in-titulo').value.trim();
     const portada = document.getElementById('in-portada').value.trim();
 
@@ -305,58 +303,50 @@ async function ejecutarRegistro() {
     }
 
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Publicando...`;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
 
-    // Recolección de datos (los inputs extra que tenías originalmente o los que agregues luego)
-    const sinopsisInput = document.getElementById('in-sinopsis');
-    const generosInput = document.getElementById('in-generos');
-    const autorInput = document.getElementById('in-autor');
-    const estudioInput = document.getElementById('in-estudio');
-    const origenInput = document.getElementById('in-origen');
-    const estrenoInput = document.getElementById('in-estreno');
-    const diaInput = document.getElementById('in-dia');
-    const japonesInput = document.getElementById('in-japones');
-    const inglesInput = document.getElementById('in-ingles');
-
-    const generosRaw = generosInput ? generosInput.value : '';
-    
+    // Recolectar datos del formulario
     const datosObra = {
         titulo: titulo,
-        slug: titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/g, "").replace(/\s+/g, "-"),
         portada_url: portada,
         banner_url: document.getElementById('in-banner').value.trim(),
-        sinopsis: sinopsisInput ? sinopsisInput.value.trim() : '',
         estado: document.getElementById('in-estado').value,
         tipo: document.getElementById('in-tipo').value,
-        autor: autorInput ? autorInput.value.trim() : '',
-        estudio: estudioInput ? estudioInput.value.trim() : '',
-        origen: origenInput ? origenInput.value : '',
-        estreno: estrenoInput ? estrenoInput.value.trim() : '',
-        dia_emision: diaInput ? diaInput.value : '',
-        generos: generosRaw ? generosRaw.split(',').map(g => g.trim()).filter(g => g !== "") : [],
-        nombres_alternativos: {
-            "Japonés": japonesInput ? japonesInput.value.trim() : '',
-            "Ingles": inglesInput ? inglesInput.value.trim() : ''
-        },
-        temporadas: recolectarDatosTemporadas()
+        temporadas: recolectarDatosTemporadas(),
+        // Agrega aquí el resto de campos (sinopsis, géneros, etc.)
     };
 
     try {
-        const { error } = await _supabase.from('obras').insert([datosObra]);
+        let resultado;
+        
+        if (idAnimeEnEdicion) {
+            // MODO EDICIÓN: Actualizar registro existente
+            resultado = await _supabase
+                .from('obras')
+                .update(datosObra)
+                .eq('id', idAnimeEnEdicion);
+        } else {
+            // MODO CREACIÓN: Insertar nuevo
+            resultado = await _supabase
+                .from('obras')
+                .insert([datosObra]);
+        }
 
-        if (error) throw error;
+        if (resultado.error) throw resultado.error;
 
         tg.HapticFeedback.notificationOccurred('success');
-        alert("✅ Publicado en el Hub");
+        alert(idAnimeEnEdicion ? "✅ Cambios guardados" : "✅ Publicado con éxito");
         
-        cargarObras(); // Refrescar catálogo
+        // Limpiar estado y volver
+        idAnimeEnEdicion = null;
+        await cargarObras(); 
         cambiarVista('catalogo');
     } catch (err) {
         console.error(err);
         alert("❌ Error: " + err.message);
     } finally {
         btn.disabled = false;
-        btn.textContent = "Publicar en el Hub";
+        btn.textContent = "Publicar";
     }
 }
 
@@ -592,6 +582,38 @@ function abrirEditorParaEditar(id) {
 
     // 5. Abrimos el modal/sección del editor
     abrirEditor(); // Llama a la función que ya usas para abrir esa pantalla
+}
+
+function prepararEdicionDesdeDetalle() {
+    if (!obraActual) return;
+
+    // 1. Guardamos el ID para saber que estamos editando y no creando uno nuevo
+    idAnimeEnEdicion = obraActual.id;
+
+    // 2. Cambiamos el texto del botón de acción
+    const btnPublicar = document.getElementById('btn-publicar');
+    btnPublicar.textContent = "Guardar Cambios";
+
+    // 3. Llenamos los campos básicos
+    document.getElementById('in-titulo').value = obraActual.titulo || '';
+    document.getElementById('in-portada').value = obraActual.portada_url || '';
+    document.getElementById('in-banner').value = obraActual.banner_url || '';
+    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
+    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
+
+    // 4. Llenamos los campos adicionales (Asegúrate de que estos IDs existan en tu HTML)
+    if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
+    if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
+    
+    // 5. Nombres alternativos
+    if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
+    if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
+
+    // 6. Cargamos las temporadas en el constructor visual
+    cargarDatosTemporadas(obraActual.temporadas || []);
+
+    // 7. Cambiamos a la vista de registro (que ahora actúa como editor)
+    cambiarVista('registro');
 }
 
 function abrirEditorDesdeDetalle() {
