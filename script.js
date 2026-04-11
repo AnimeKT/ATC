@@ -11,6 +11,7 @@ tg.expand();
 // =========================================
 // ESTADO GLOBAL DE LA APP
 // =========================================
+let idAnimeEnEdicion = null;
 let todasLasObras = []; 
 let obraActual = null; 
 let posicionScrollGuardada = 0;
@@ -563,6 +564,71 @@ function cargarDatosTemporadas(temporadas) {
         return;
     }
     temporadas.forEach(temp => agregarTemporadaUI(temp));
+}
+
+function abrirEditorParaEditar(id) {
+    // 1. Guardamos el ID para saber que estamos editando
+    idAnimeEnEdicion = id;
+
+    // 2. Buscamos los datos del anime (asumiendo que tienes un array 'listaAnimes')
+    const anime = listaAnimes.find(a => a.id === id); 
+
+    if (!anime) return;
+
+    // 3. Llenamos los campos del formulario con los datos existentes
+    // NOTA: Asegúrate de que los selectores (ej. '#titulo') coincidan con los IDs de tus inputs
+    document.getElementById('titulo').value = anime.titulo;
+    document.getElementById('estado').value = anime.estado;
+    document.getElementById('tipo').value = anime.tipo;
+    document.getElementById('url-portada').value = anime.urlPortada;
+    document.getElementById('url-banner').value = anime.urlBanner;
+
+    // (Aquí también deberías cargar las temporadas, limpiando primero el contenedor y luego usando tu función agregarTemporadaUI con los datos)
+
+    // 4. Cambiamos el texto del botón azul para que sea intuitivo
+    const btnPublicar = document.querySelector('.btn-publicar-hub'); // Cambia por tu clase/id real
+    btnPublicar.innerText = "Guardar Cambios";
+
+    // 5. Abrimos el modal/sección del editor
+    abrirEditor(); // Llama a la función que ya usas para abrir esa pantalla
+}
+
+async function guardarAnime() {
+    // Recolectas los datos del formulario
+    const datosAnime = {
+        titulo: document.getElementById('titulo').value,
+        estado: document.getElementById('estado').value,
+        tipo: document.getElementById('tipo').value,
+        urlPortada: document.getElementById('url-portada').value,
+        urlBanner: document.getElementById('url-banner').value,
+        // ... recolección de temporadas ...
+    };
+
+    if (idAnimeEnEdicion) {
+        // MODO EDICIÓN: Actualizamos en Supabase
+        const { data, error } = await supabase
+            .from('animes') // Cambia 'animes' por el nombre real de tu tabla
+            .update(datosAnime)
+            .eq('id', idAnimeEnEdicion);
+
+        if (!error) {
+            console.log("Anime actualizado con éxito");
+        }
+    } else {
+        // MODO CREACIÓN: Insertamos nuevo en Supabase
+        const { data, error } = await supabase
+            .from('animes')
+            .insert([datosAnime]);
+            
+        if (!error) {
+            console.log("Nuevo anime publicado");
+        }
+    }
+
+    // Al terminar de guardar o editar, reiniciamos todo:
+    idAnimeEnEdicion = null;
+    document.querySelector('.btn-publicar-hub').innerText = "Publicar en el Hub";
+    // Limpiar formulario y recargar la lista de animes...
 }
 
 // Arrancar al cargar la página

@@ -140,6 +140,20 @@ body {
     object-fit: cover; 
 }
 
+.btn-editar {
+    background: #18181b; /* Tono oscuro */
+    color: #a1a1aa;
+    border: 1px solid #27272a;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-editar:hover {
+    color: #fff;
+    border-color: #3f3f46;
+}
+
 .estado-badge {
     position: absolute; top: 10px; left: 10px; padding: 4px 8px;
     border-radius: 4px; font-size: 10px; font-weight: bold; color: white;
