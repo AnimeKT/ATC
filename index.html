@@ -87,104 +87,88 @@
         </main>
     </div>
 
-    <div id="vista-registro" style="display: none;">
-        <main class="contenedor">
-            <div class="header-registro">
-                <button onclick="cambiarVista('catalogo')" class="btn-volver"><i class="fa-solid fa-arrow-left"></i> Volver al Catálogo</button>
-                <h2 class="titulo-seccion"><i class="fa-solid fa-database"></i> Registrar Nueva Obra</h2>
-            </div>
-
-            <section class="admin-panel">
-                <div class="form-grid-complex">
-                    <div class="input-group">
-                        <label>Título Principal</label>
-                        <input type="text" id="in-titulo" placeholder="ej: Akane-banashi">
-                    </div>
-                    <div class="input-group">
-                        <label>Estado</label>
-                        <select id="in-estado">
-                            <option value="En emisión">En emisión</option>
-                            <option value="Finalizado">Finalizado</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label>URL Portada (Vertical)</label>
-                        <input type="text" id="in-portada" placeholder="https://...">
-                    </div>
-                    <div class="input-group">
-                        <label>URL Banner (Horizontal)</label>
-                        <input type="text" id="in-banner" placeholder="https://...">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Nombre en Japonés</label>
-                        <input type="text" id="in-japones" placeholder="ej: あかね噺">
-                    </div>
-                    <div class="input-group">
-                        <label>Nombre en Inglés</label>
-                        <input type="text" id="in-ingles" placeholder="ej: Akane-banashi">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Géneros (separados por coma)</label>
-                        <input type="text" id="in-generos" placeholder="ej: Drama, Shounen">
-                    </div>
-                    <div class="input-group">
-                        <label>Autor / Creador</label>
-                        <input type="text" id="in-autor" placeholder="ej: Yūki Suenaga">
-                    </div>
-                    <div class="input-group">
-                        <label>Estudio de Animación</label>
-                        <input type="text" id="in-estudio" placeholder="ej: ZEXCS">
-                    </div>
-                    <div class="input-group">
-                        <label>Tipo</label>
-                        <select id="in-tipo">
-                            <option value="Serie">Serie</option>
-                            <option value="Película">Película</option>
-                            <option value="OVA">OVA</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Origen</label>
-                        <select id="in-origen">
-                            <option value="Manga">Manga</option>
-                            <option value="Novela Ligera">Novela Ligera</option>
-                            <option value="Original">Original</option>
-                            <option value="Videojuego">Videojuego</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Fecha de Estreno</label>
-                        <input type="text" id="in-estreno" placeholder="ej: 4 de Abril 2026">
-                    </div>
-                    <div class="input-group">
-                        <label>Día de Emisión</label>
-                        <input type="text" id="in-dia" placeholder="ej: Sábados">
-                    </div>
-
-                    <div class="input-group full-width">
-                        <label>Sinopsis</label>
-                        <textarea id="in-sinopsis" placeholder="Escribe la sinopsis del anime aquí..."></textarea>
-                    </div>
-
-                    <div class="input-group full-width bloque-maestro">
-                        <label><i class="fa-solid fa-folder-tree"></i> Contenido (Temporadas, Idiomas y Capítulos)</label>
-                        
-                        <div id="builder-temporadas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 5px;"></div>
-                        
-                        <button type="button" class="btn-filtro active" onclick="agregarTemporadaUI()" style="margin-top: 10px; width: fit-content;">
-                            <i class="fa-solid fa-plus"></i> Añadir Nueva Sección / Temporada
-                        </button>
-                    </div>
-
-                    <button id="btn-publicar" onclick="ejecutarRegistro()" class="btn-enviar full-width">Publicar en Universo Anime</button>
-                </div>
-            </section>
-        </main>
+    <section id="vista-registro" style="display: none;">
+    <div class="header-fijo">
+        <button class="btn-atras" onclick="volverAlCatalogo()">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <h2 id="titulo-registro-header">Editor de Contenido</h2>
+        <button id="btn-publicar" class="btn-guardar-principal" onclick="ejecutarRegistro()">
+            Publicar
+        </button>
     </div>
+
+    <div class="contenedor-formulario">
+        <div class="form-seccion">
+            <h3><i class="fa-solid fa-info-circle"></i> Información Básica</h3>
+            <div class="input-group">
+                <label>Título del Anime *</label>
+                <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
+            </div>
+            
+            <div class="grid-2-col">
+                <div class="input-group">
+                    <label>Estado</label>
+                    <select id="in-estado">
+                        <option value="En emisión">En emisión</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Próximamente">Próximamente</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Tipo</label>
+                    <select id="in-tipo">
+                        <option value="TV">TV (Serie)</option>
+                        <option value="Película">Película</option>
+                        <option value="OVA">OVA</option>
+                        <option value="Especial">Especial</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-seccion">
+            <h3><i class="fa-solid fa-image"></i> Multimedia</h3>
+            <div class="input-group">
+                <label>URL Portada (Vertical 2:3)</label>
+                <input type="text" id="in-portada" placeholder="https://imagen.com/portada.jpg">
+            </div>
+            <div class="input-group">
+                <label>URL Banner (Horizontal)</label>
+                <input type="text" id="in-banner" placeholder="https://imagen.com/banner.jpg">
+            </div>
+        </div>
+
+        <div class="form-seccion">
+            <h3><i class="fa-solid fa-list"></i> Detalles y Géneros</h3>
+            <div class="input-group">
+                <label>Géneros (Separados por coma)</label>
+                <input type="text" id="in-generos" placeholder="Acción, Aventura, Fantasía">
+            </div>
+            <div class="input-group">
+                <label>Sinopsis</label>
+                <textarea id="in-sinopsis" rows="4" placeholder="Escribe un resumen..."></textarea>
+            </div>
+            
+            <div class="grid-2-col">
+                <input type="text" id="in-japones" placeholder="Nombre Japonés">
+                <input type="text" id="in-ingles" placeholder="Nombre Inglés">
+            </div>
+        </div>
+
+        <div class="form-seccion">
+            <div class="header-flex">
+                <h3><i class="fa-solid fa-layer-group"></i> Temporadas y Enlaces</h3>
+                <button type="button" class="btn-add-seccion" onclick="agregarTemporadaUI()">
+                    <i class="fa-solid fa-plus"></i> Añadir
+                </button>
+            </div>
+            
+            <div id="builder-temporadas">
+                </div>
+        </div>
+    </div>
+</section>
 
     <div id="modal-auth" class="modal-oculto">
         <div class="modal-contenido modal-auth-box">

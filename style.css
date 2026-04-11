@@ -578,3 +578,109 @@ body {
     margin-top: 5px;
     cursor: pointer;
 }
+
+#vista-registro {
+    padding-top: 70px; /* Espacio para el header fijo */
+    padding-bottom: 40px;
+    background-color: #0f0f11;
+    min-height: 100vh;
+}
+
+.header-fijo {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background: #18181b;
+    border-bottom: 1px solid #27272a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    z-index: 1000;
+}
+
+.header-fijo h2 { font-size: 16px; color: #fff; }
+
+.btn-guardar-principal {
+    background: #3ba4fa;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.contenedor-formulario {
+    padding: 15px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-seccion {
+    background: #18181b;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #27272a;
+}
+
+.form-seccion h3 {
+    font-size: 14px;
+    color: #3ba4fa;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 12px;
+    color: #a1a1aa;
+    margin-bottom: 5px;
+}
+
+.input-group input, 
+.input-group select, 
+.input-group textarea {
+    width: 100%;
+    background: #0f0f11;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    outline: none;
+    font-size: 14px;
+}
+
+.input-group input:focus { border-color: #3ba4fa; }
+
+/* Grid para móviles */
+.grid-2-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.btn-add-seccion {
+    background: #3ba4fa20;
+    color: #3ba4fa;
+    border: 1px solid #3ba4fa;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
