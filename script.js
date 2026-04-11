@@ -264,15 +264,20 @@ function renderizarObras(obras) {
         // Evitamos que comillas raras rompan el HTML en celulares
         const tituloSeguro = obra.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
 
-        return `
-            <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
-                <div class="estado-badge ${claseEstado}">${estadoTexto}</div>
-                <img src="${obra.portada_url}" alt="${obra.titulo}">
-                <div class="info-tarjeta">
-                    <div class="titulo-tarjeta">${obra.titulo}</div>
-                </div>
-            </div>
-        `;
+       return `
+    <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
+        <div class="estado-badge ${claseEstado}">${estadoTexto}</div>
+        
+        <button onclick="event.stopPropagation(); abrirEditorParaEditar('${obra.id}')" class="btn-editar">
+            <i class="fa-solid fa-pen"></i>
+        </button>
+        
+        <img src="${obra.portada_url}" alt="${obra.titulo}">
+        <div class="info-tarjeta">
+            <div class="titulo-tarjeta">${obra.titulo}</div>
+        </div>
+    </div>
+`;
     }).join('');
 }
 
