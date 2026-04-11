@@ -115,19 +115,6 @@ function abrirDetalle(tituloObra) {
     document.getElementById('det-autor').textContent = obraActual.autor || '--';
     document.getElementById('det-sinopsis').textContent = obraActual.sinopsis || 'Sin descripción.';
 
-    // Botón de edición inteligente
-    const panelAdmin = document.getElementById('admin-options-detalle');
-    if (panelAdmin) {
-        const btnAdminView = document.getElementById('btn-admin-view');
-        const esAdmin = btnAdminView && btnAdminView.style.display !== 'none';
-        
-        panelAdmin.innerHTML = esAdmin ? `
-            <button onclick="prepararEdicion()" class="btn-editar-discreto">
-                <i class="fa-solid fa-pen-to-square"></i> Editar Información
-            </button>
-        ` : '';
-    }
-
     iniciarNavegacionContenido(obraActual.temporadas);
     cambiarVista('detalle');
 }
@@ -230,31 +217,6 @@ async function cargarObras() {
     aplicarTodosLosFiltros();
 }
 
-function cargarObraParaEditar(id) {
-    const obra = todasLasObras.find(o => o.id === id);
-    if (!obra) return;
-
-    // ... (tus otras asignaciones de inputs) ...
-
-    // MOSTRAR el botón de eliminar porque estamos editando
-    document.getElementById('btn-eliminar-obra').style.display = 'block';
-    
-    // Cambiar texto del botón principal
-    document.getElementById('btn-publicar').textContent = "Actualizar";
-    
-    cambiarVista('registro');
-}
-
-function prepararNuevoRegistro() {
-    // ... (limpiar inputs) ...
-    
-    // OCULTAR el botón de eliminar porque es una obra nueva
-    document.getElementById('btn-eliminar-obra').style.display = 'none';
-    document.getElementById('btn-publicar').textContent = "Publicar";
-    
-    cambiarVista('registro');
-}
-
 function aplicarTodosLosFiltros() {
     const resultado = todasLasObras.filter(obra => {
         const tituloMatch = obra.titulo.toLowerCase().includes(filtrosActuales.texto);
@@ -286,232 +248,6 @@ function filtrar(estado, evento) {
     aplicarTodosLosFiltros();
 }
 
-function prepararNuevoRegistro() {
-    const vista = document.getElementById('vista-registro');
-    delete vista.dataset.editId;
-    
-    document.getElementById('btn-publicar').textContent = "Publicar en el Hub";
-    
-    // Limpiar todos los inputs y textareas
-    vista.querySelectorAll('input, select, textarea').forEach(i => i.value = '');
-    
-    // Reiniciar el constructor de temporadas
-    cargarDatosTemporadas([]); 
-    cambiarVista('registro');
-}
-
-function prepararEdicion() {
-    if (!obraActual) return;
-    
-    const vista = document.getElementById('vista-registro');
-    vista.dataset.editId = obraActual.id;
-    document.getElementById('btn-publicar').textContent = "Actualizar Anime en el Hub";
-
-    // Mapeo de campos básicos
-    const campos = {
-        'in-titulo': obraActual.titulo,
-        'in-estado': obraActual.estado || 'En emisión',
-        'in-portada': obraActual.portada_url,
-        'in-banner': obraActual.banner_url,
-        'in-sinopsis': obraActual.sinopsis,
-        'in-japones': obraActual.nombres_alternativos?.Japonés,
-        'in-ingles': obraActual.nombres_alternativos?.Ingles,
-        'in-generos': (obraActual.generos || []).join(', '),
-        'in-autor': obraActual.autor,
-        'in-estudio': obraActual.estudio,
-        'in-tipo': obraActual.tipo || 'TV',
-        'in-origen': obraActual.origen,
-        'in-estreno': obraActual.estreno,
-        'in-dia': obraActual.dia_emision
-    };
-
-    for (let id in campos) {
-        const el = document.getElementById(id);
-        if (el) el.value = campos[id] || '';
-    }
-
-    cargarDatosTemporadas(obraActual.temporadas || []);
-    cambiarVista('registro');
-}
-
-async function ejecutarRegistro() {
-    const btn = document.getElementById('btn-publicar');
-    const vista = document.getElementById('vista-registro');
-    const idEdicion = vista.dataset.editId;
-
-    // Recolección de datos básicos
-    const titulo = document.getElementById('in-titulo').value.trim();
-    const portada = document.getElementById('in-portada').value.trim();
-
-    if (!titulo || !portada) {
-        tg.HapticFeedback.notificationOccurred('error');
-        return alert("⚠️ Título y Portada son obligatorios.");
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${idEdicion ? 'Actualizando...' : 'Publicando...'}`;
-
-    const generosRaw = document.getElementById('in-generos').value;
-    const datosObra = {
-        titulo: titulo,
-        slug: titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/g, "").replace(/\s+/g, "-"),
-        portada_url: portada,
-        banner_url: document.getElementById('in-banner').value.trim(),
-        sinopsis: document.getElementById('in-sinopsis').value.trim(),
-        estado: document.getElementById('in-estado').value,
-        tipo: document.getElementById('in-tipo').value,
-        autor: document.getElementById('in-autor').value.trim(),
-        estudio: document.getElementById('in-estudio').value.trim(),
-        origen: document.getElementById('in-origen').value,
-        estreno: document.getElementById('in-estreno').value.trim(),
-        dia_emision: document.getElementById('in-dia').value,
-        generos: generosRaw.split(',').map(g => g.trim()).filter(g => g !== ""),
-        nombres_alternativos: {
-            "Japonés": document.getElementById('in-japones').value.trim(),
-            "Ingles": document.getElementById('in-ingles').value.trim()
-        },
-        temporadas: recolectarDatosTemporadas()
-    };
-
-    try {
-        const { error } = idEdicion 
-            ? await _supabase.from('obras').update(datosObra).eq('id', idEdicion)
-            : await _supabase.from('obras').insert([datosObra]);
-
-        if (error) throw error;
-
-        tg.HapticFeedback.notificationOccurred('success');
-        alert(idEdicion ? "✅ Actualizado correctamente" : "✅ Publicado en el Hub");
-        
-        cargarObras(); // Refrescar catálogo
-        cambiarVista('catalogo');
-    } catch (err) {
-        console.error(err);
-        alert("❌ Error: " + err.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = "Publicar en el Hub";
-    }
-}
-
-function cargarDatosTemporadas(temporadas) {
-    const contenedor = document.getElementById('builder-temporadas');
-    contenedor.innerHTML = '';
-    
-    if (!temporadas || temporadas.length === 0) {
-        agregarTemporadaUI();
-    } else {
-        temporadas.forEach(t => agregarTemporadaUI(t));
-    }
-}
-
-function agregarTemporadaUI(datos = null) {
-    const container = document.getElementById('builder-temporadas');
-    const tempDiv = document.createElement('div');
-    tempDiv.className = 'temporada-block';
-    
-    // El botón de eliminar ahora está integrado en el header del bloque
-    tempDiv.innerHTML = `
-        <div class="header-bloque-dinamico">
-            <input type="text" class="temp-nombre" placeholder="Nombre de la Temporada (Ej: Temporada 1)" value="${datos ? datos.nombre : ''}">
-            <button type="button" class="btn-delete-block" onclick="this.closest('.temporada-block').remove()">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        </div>
-        <div class="input-group">
-            <label>URL Imagen Miniatura (Opcional)</label>
-            <input type="text" class="temp-imagen" placeholder="URL de imagen para esta temporada" value="${datos ? datos.imagen : ''}">
-        </div>
-        <div class="idiomas-wrapper">
-            </div>
-        <button type="button" class="btn-add-idioma" onclick="agregarIdiomaUI(this.previousElementSibling)">
-            <i class="fa-solid fa-plus"></i> Añadir Idioma/Servidor
-        </button>
-    `;
-
-    container.appendChild(tempDiv);
-
-    if (datos && datos.enlaces) {
-        const wrapper = tempDiv.querySelector('.idiomas-wrapper');
-        for (const idioma in datos.enlaces) {
-            agregarIdiomaUI(wrapper, { nombre: idioma, caps: datos.enlaces[idioma] });
-        }
-    } else {
-        agregarIdiomaUI(tempDiv.querySelector('.idiomas-wrapper'));
-    }
-}
-
-function agregarIdiomaUI(container, nombre = '', caps = null) {
-    const div = document.createElement('div');
-    div.className = 'idioma-bloque';
-    div.innerHTML = `
-        <div class="header-bloque-dinamico">
-            <input type="text" class="idioma-nombre" placeholder="Ej: Sub Español" value="${nombre}">
-            <button type="button" class="btn-delete-mini" onclick="this.closest('.idioma-bloque').remove()"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="lista-capitulos"></div>
-        <button type="button" class="btn-add-micro" onclick="agregarCapituloUI(this.parentElement.querySelector('.lista-capitulos'))">
-            + Capítulo
-        </button>
-    `;
-
-    container.appendChild(div);
-    const listaCaps = div.querySelector('.lista-capitulos');
-
-    if (caps) {
-        Object.entries(caps).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u));
-    } else {
-        agregarCapituloUI(listaCaps);
-    }
-}
-
-function agregarCapituloUI(container, num = '', url = '') {
-    const div = document.createElement('div');
-    div.className = 'capitulo-row';
-    div.innerHTML = `
-        <input type="text" class="cap-nombre" placeholder="N°" value="${num}">
-        <input type="text" class="cap-url" placeholder="URL de Telegram/Web" value="${url}">
-        <button type="button" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
-    `;
-    container.appendChild(div);
-}
-
-function recolectarDatosTemporadas() {
-    const resultado = [];
-    document.querySelectorAll('.temporada-block').forEach(tBlock => {
-        const nombre = tBlock.querySelector('.temp-nombre').value.trim();
-        if (!nombre) return;
-
-        const temporada = {
-            nombre: nombre,
-            imagen: tBlock.querySelector('.temp-img').value.trim(),
-            enlaces: {}
-        };
-
-        tBlock.querySelectorAll('.idioma-bloque').forEach(iBlock => {
-            const lang = iBlock.querySelector('.idioma-nombre').value.trim();
-            if (!lang) return;
-
-            temporada.enlaces[lang] = {};
-            iBlock.querySelectorAll('.capitulo-row').forEach(cRow => {
-                const n = cRow.querySelector('.cap-nombre').value.trim();
-                const u = cRow.querySelector('.cap-url').value.trim();
-                if (n && u) temporada.enlaces[lang][n] = u;
-            });
-        });
-
-        resultado.push(temporada);
-    });
-    return resultado;
-}
-
-function confirmarBorrado(btn, selector) {
-    tg.HapticFeedback.impactOccurred('medium');
-    if(confirm("¿Estás seguro de borrar este elemento?")) {
-        btn.closest(selector).remove();
-    }
-}
-
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
     
@@ -540,12 +276,87 @@ function renderizarObras(obras) {
 }
 
 // =========================================
-// REGISTRO Y EDICIÓN DE OBRAS
+// REGISTRO DE NUEVAS OBRAS
 // =========================================
 
-//////////////////////////////////////////////////////////////////////
+function prepararNuevoRegistro() {
+    document.getElementById('btn-publicar').textContent = "Publicar en el Hub";
+    
+    // Limpiar todos los inputs y textareas
+    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => i.value = '');
+    
+    // Reiniciar el constructor de temporadas
+    cargarDatosTemporadas([]); 
+    cambiarVista('registro');
+}
 
-///////////////////////////////////////////////////////////////
+async function ejecutarRegistro() {
+    const btn = document.getElementById('btn-publicar');
+    
+    // Recolección de datos básicos
+    const titulo = document.getElementById('in-titulo').value.trim();
+    const portada = document.getElementById('in-portada').value.trim();
+
+    if (!titulo || !portada) {
+        tg.HapticFeedback.notificationOccurred('error');
+        return alert("⚠️ Título y Portada son obligatorios.");
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Publicando...`;
+
+    // Recolección de datos (los inputs extra que tenías originalmente o los que agregues luego)
+    const sinopsisInput = document.getElementById('in-sinopsis');
+    const generosInput = document.getElementById('in-generos');
+    const autorInput = document.getElementById('in-autor');
+    const estudioInput = document.getElementById('in-estudio');
+    const origenInput = document.getElementById('in-origen');
+    const estrenoInput = document.getElementById('in-estreno');
+    const diaInput = document.getElementById('in-dia');
+    const japonesInput = document.getElementById('in-japones');
+    const inglesInput = document.getElementById('in-ingles');
+
+    const generosRaw = generosInput ? generosInput.value : '';
+    
+    const datosObra = {
+        titulo: titulo,
+        slug: titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/g, "").replace(/\s+/g, "-"),
+        portada_url: portada,
+        banner_url: document.getElementById('in-banner').value.trim(),
+        sinopsis: sinopsisInput ? sinopsisInput.value.trim() : '',
+        estado: document.getElementById('in-estado').value,
+        tipo: document.getElementById('in-tipo').value,
+        autor: autorInput ? autorInput.value.trim() : '',
+        estudio: estudioInput ? estudioInput.value.trim() : '',
+        origen: origenInput ? origenInput.value : '',
+        estreno: estrenoInput ? estrenoInput.value.trim() : '',
+        dia_emision: diaInput ? diaInput.value : '',
+        generos: generosRaw ? generosRaw.split(',').map(g => g.trim()).filter(g => g !== "") : [],
+        nombres_alternativos: {
+            "Japonés": japonesInput ? japonesInput.value.trim() : '',
+            "Ingles": inglesInput ? inglesInput.value.trim() : ''
+        },
+        temporadas: recolectarDatosTemporadas()
+    };
+
+    try {
+        const { error } = await _supabase.from('obras').insert([datosObra]);
+
+        if (error) throw error;
+
+        tg.HapticFeedback.notificationOccurred('success');
+        alert("✅ Publicado en el Hub");
+        
+        cargarObras(); // Refrescar catálogo
+        cambiarVista('catalogo');
+    } catch (err) {
+        console.error(err);
+        alert("❌ Error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Publicar en el Hub";
+    }
+}
 
 // =========================================
 // SISTEMA DE AUTENTICACIÓN
@@ -630,7 +441,6 @@ function mostrarMensajeAuth(msg, color) {
 function agregarTemporadaUI(datos = null) {
     const container = document.getElementById('builder-temporadas');
     
-    // Creamos un elemento real en el DOM en lugar de sumar strings
     const bloque = document.createElement('div');
     bloque.className = 'temporada-block';
     bloque.style.border = "1px solid #27272a";
@@ -639,35 +449,31 @@ function agregarTemporadaUI(datos = null) {
     bloque.style.marginBottom = "15px";
     bloque.style.background = "#18181b";
 
-    // Insertamos la estructura base del bloque
     bloque.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <input type="text" class="temp-nombre" placeholder="Nombre de Sección (Ej: Principal, Extras)" value="${datos ? datos.nombre || datos.seccion || '' : ''}" style="width: 80%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
-            <button type="button" class="btn-cerrar" onclick="this.closest('.temporada-bloque').remove()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+            <button type="button" class="btn-cerrar" onclick="this.closest('.temporada-block').remove()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
         </div>
         <input type="text" class="temp-img" placeholder="URL de Imagen para esta sección (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px;">
         
         <div class="idiomas-container">
             <h4 style="color: #a1a1aa; margin-bottom: 10px; font-size: 14px;"><i class="fa-solid fa-language"></i> Idiomas Disponibles</h4>
             <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
-            <button type="button" class="btn-filtro" onclick="agregarIdiomaUI(this.closest('.temporada-bloque').querySelector('.lista-idiomas'))" style="margin-top: 10px; padding: 8px 15px; font-size: 13px;">
+            <button type="button" class="btn-filtro" onclick="agregarIdiomaUI(this.closest('.temporada-block').querySelector('.lista-idiomas'))" style="margin-top: 10px; padding: 8px 15px; font-size: 13px;">
                 <i class="fa-solid fa-plus"></i> Añadir Idioma
             </button>
         </div>
     `;
 
-    // Lo añadimos de forma segura sin afectar a los demás bloques
     container.appendChild(bloque);
 
     const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
-    // Si estamos editando y vienen datos de la base de datos, los reconstruimos
     if (datos && datos.enlaces && Object.keys(datos.enlaces).length > 0) {
         Object.entries(datos.enlaces).forEach(([idioma, capitulos]) => {
             agregarIdiomaUI(listaIdiomas, idioma, capitulos);
         });
     } else {
-        // Si es un bloque nuevo, le ponemos un idioma vacío para empezar
         agregarIdiomaUI(listaIdiomas);
     }
 }
@@ -721,10 +527,9 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
 
 function recolectarDatosTemporadas() {
     const datos = [];
-    // Asegúrate de que la clase aquí coincida con la que creas en el UI
     document.querySelectorAll('.temporada-block').forEach(tempBlock => {
         const nombre = tempBlock.querySelector('.temp-nombre').value.trim();
-        const imagen = tempBlock.querySelector('.temp-img').value.trim(); // Cambiado de temp-imagen a temp-img
+        const imagen = tempBlock.querySelector('.temp-img').value.trim(); 
 
         if (!nombre) return; 
 
@@ -750,25 +555,12 @@ function recolectarDatosTemporadas() {
 }
 
 function cargarDatosTemporadas(temporadas) {
-    document.getElementById('builder-temporadas').innerHTML = ''; // Limpiar panel
+    document.getElementById('builder-temporadas').innerHTML = ''; 
     if (!temporadas || temporadas.length === 0) {
-        agregarTemporadaUI(); // Empezar con uno vacío
+        agregarTemporadaUI(); 
         return;
     }
     temporadas.forEach(temp => agregarTemporadaUI(temp));
-}
-
-// Nueva función para limpiar el panel cuando clickeas "Añadir Obra"
-function prepararNuevoRegistro() {
-    delete document.getElementById('vista-registro').dataset.editId;
-    document.getElementById('btn-publicar').textContent = "Publicar en el Hub";
-    
-    // Limpiar inputs
-    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => i.value = '');
-    
-    // Iniciar con un constructor limpio
-    cargarDatosTemporadas([]); 
-    cambiarVista('registro');
 }
 
 // Arrancar al cargar la página

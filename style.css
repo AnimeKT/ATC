@@ -18,11 +18,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 25px; /* Padding ajustado */
+    padding: 10px 25px;
     background-color: #18181b;
     border-bottom: 1px solid #27272a;
     gap: 15px;
-    position: sticky; top: 0; z-index: 900; /* Sticky para mejor UX */
+    position: sticky; top: 0; z-index: 900;
 }
 
 .logo h1 { font-size: 22px; color: #fff; white-space: nowrap; cursor: pointer;}
@@ -31,7 +31,7 @@ body {
 .search-bar { 
     position: relative; 
     flex: 1; 
-    max-width: 350px; /* Un poco más compacto */
+    max-width: 350px;
 }
 .search-bar i {
     position: absolute; left: 15px; top: 50%;
@@ -49,21 +49,20 @@ body {
 .user-actions { 
     display: flex; 
     gap: 10px; 
-    margin-left: auto; /* Mágico: empuja todo a la derecha del contenedor flex */
+    margin-left: auto;
 }
 
 /* Filtros - Optimizados para deslizar en móvil */
 .filtros-container {
     display: flex; 
-    justify-content: flex-start; /* Alineado a la izquierda para scroll móvil */
+    justify-content: flex-start;
     gap: 12px;
     padding: 15px 20px; 
     background-color: #121214;
-    overflow-x: auto; /* Permite scroll horizontal */
+    overflow-x: auto;
     white-space: nowrap;
     border-bottom: 1px solid #27272a;
 }
-/* Oculta la barra de scroll visualmente pero mantiene la función */
 .filtros-container::-webkit-scrollbar { display: none; }
 
 .btn-filtro {
@@ -124,18 +123,22 @@ body {
 
 /* Tarjetas de Anime */
 .grid-animes {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;
 }
 .tarjeta-anime {
     background-color: #18181b; border-radius: 10px; overflow: hidden;
-    transition: all 0.3s ease;
-    border: 1px solid #27272a; position: relative; cursor: pointer;
+    transition: all 0.3s ease; border: 1px solid #27272a; position: relative; cursor: pointer;
 }
 .tarjeta-anime:hover {
     transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.8);
     border-color: #3ba4fa;
 }
-.tarjeta-anime img { width: 100%; height: 230px; object-fit: cover; }
+.tarjeta-anime img { 
+    width: 100%; 
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: cover; 
+}
 
 .estado-badge {
     position: absolute; top: 10px; left: 10px; padding: 4px 8px;
@@ -183,74 +186,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================
-   RESPONSIVIDAD MÓVIL OPTIMIZADA (TELEGRAM)
-   ========================================= */
-@media (max-width: 768px) {
-    .navbar { 
-        flex-wrap: wrap; /* Permitir que los elementos fluyan a otra línea */
-        padding: 10px 15px;
-        gap: 10px;
-    }
-    
-    .logo { 
-        order: 1; /* Primero el logo */
-        flex: 1; /* Ocupa el espacio de la izquierda */
-        text-align: left;
-    }
-    .logo h1 { font-size: 20px; }
-
-    .user-actions { 
-        order: 2; /* Segundo los botones, se quedan arriba a la derecha */
-        margin-left: auto; /* Mantener alineado a la derecha */
-        width: auto; 
-    }
-    
-    .hide-mobile { display: none; } /* Oculta el texto, deja solo iconos arriba */
-    .btn-login { padding: 8px; font-size: 16px; border-radius: 50%; width: 35px; height: 35px; justify-content: center;}
-
-    .search-bar { 
-        order: 3; /* Tercero el buscador, se mueve abajo solo */
-        width: 100%; 
-        max-width: 100%; 
-        margin-top: 5px;
-    }
-    .search-bar input { padding: 8px 15px 8px 35px; border-radius: 8px;}
-
-    .filtros-container { padding: 10px 15px; gap: 8px;}
-    .btn-filtro { padding: 6px 12px; font-size: 13px; border-radius: 6px;}
-    
-    .contenedor { padding: 15px; }
-    .titulo-seccion { font-size: 18px; margin-bottom: 15px;}
-
-    .header-registro { flex-direction: column; align-items: flex-start; gap: 10px; }
-    
-    .form-grid-complex { grid-template-columns: 1fr; gap: 15px;}
-    
-    .grid-animes { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;}
-    .tarjeta-anime img { height: 180px; }
-    .titulo-tarjeta { font-size: 12px; }
-}
-
-/* ... [MANTÉN TUS ESTILOS BASE Y DE NAVBAR AQUÍ] ... */
-
-/* Actualización de Tarjetas (Diseño Móvil-Primero y Aspect Ratio) */
-.grid-animes {
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-    gap: 15px;
-}
-.tarjeta-anime {
-    background-color: #18181b; border-radius: 10px; overflow: hidden;
-    transition: all 0.3s ease; border: 1px solid #27272a; position: relative; cursor: pointer;
-}
-.tarjeta-anime img { 
-    width: 100%; 
-    height: auto; /* Se elimina el alto fijo */
-    aspect-ratio: 2 / 3; /* Forzar proporción 2:3 */
-    object-fit: cover; 
-}
-
 /* Controles Flotantes Detalles */
 .controles-flotantes {
     position: absolute; top: 15px; left: 15px; right: 15px;
@@ -258,13 +193,25 @@ body {
 }
 .acciones-derecha { display: flex; gap: 10px; }
 .btn-flotante {
-    background: rgba(15, 15, 17, 0.8); backdrop-filter: blur(5px);
-    border: 1px solid #27272a; color: #fff; width: 40px; height: 40px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: 0.3s;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    background: rgba(10, 10, 12, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid #27272a;
+    color: #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
 }
-.btn-flotante:hover { background: #3ba4fa; border-color: #3ba4fa; }
-.btn-flotante.favorito-activo i { color: #ef4444; font-weight: 900; }
+.btn-flotante:hover { background: #3ba4fa; color: #fff; border-color: #3ba4fa; }
 
 /* Botones Dinámicos (Temporadas/Idiomas) */
 .btn-dinamico {
@@ -278,75 +225,17 @@ body {
     cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;
 }
 
-/* Responsividad Móvil Optimizada (Telegram) */
-@media (max-width: 768px) {
-    /* ... [Mantén tus reglas navbar mobile] ... */
-    
-    .grid-animes { 
-        /* Sistema de grid de 3 columnas exactas para pantallas pequeñas */
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 8px;
-    }
-    .titulo-tarjeta { font-size: 11px; padding: 8px 5px; text-align: center;}
-}
-
-/* Modo Horizontal y Desktop */
-@media (orientation: landscape) and (min-width: 600px), (min-width: 900px) {
-    .detalle-grid {
-        display: flex;
-        flex-direction: row-reverse; /* Sidebar derecha, main izquierda */
-        gap: 30px;
-        align-items: flex-start;
-    }
-    .detalle-main-info { flex: 1; }
-    .detalle-sidebar { 
-        width: 300px; 
-        position: sticky; 
-        top: 20px; 
-        background: #18181b; 
-        padding: 20px; 
-        border-radius: 12px; 
-        border: 1px solid #27272a;
-    }
-    .detalle-banner { height: 300px; } /* Banner más grande en PC/Landscape */
-}
-
 /* =========================================
-   VISTA DETALLE (INTERFAZ INDEPENDIENTE)aaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+   VISTA DETALLE
    ========================================= */
 #vista-detalle {
-    background-color: #050505; /* Fondo casi negro */
+    background-color: #050505;
     min-height: 100vh;
     animation: fadeIn 0.4s ease-out;
     position: relative;
     padding-bottom: 40px;
 }
 
-/* Botón flotante para volver */
-.btn-flotante {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 100;
-    background: rgba(10, 10, 12, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid #27272a; /* Borde ultra-fino */
-    color: #e0e0e0;
-    padding: 8px 16px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 600;
-}
-.btn-flotante:hover {
-    background: #3ba4fa;
-    color: #fff;
-    border-color: #3ba4fa;
-}
-
-/* Banner con gradiente sutil */
 .detalle-banner {
     width: 100%;
     height: 250px;
@@ -363,14 +252,12 @@ body {
     background: linear-gradient(to top, #050505 5%, transparent 90%);
 }
 
-/* Contenedor principal de info solapado */
 .contenedor-detalle {
     position: relative;
-    margin-top: -70px; /* Hace que la portada pise el banner */
+    margin-top: -70px;
     z-index: 10;
 }
 
-/* Cabecera (Portada + Títulos) */
 .detalle-header {
     display: flex;
     gap: 20px;
@@ -407,7 +294,6 @@ body {
     margin-bottom: 12px;
 }
 
-/* Etiquetas (Tags) limpias */
 .detalle-tags {
     display: flex;
     flex-wrap: wrap;
@@ -423,14 +309,12 @@ body {
     font-weight: 600;
 }
 
-/* Layout en Grid para móvil */
 .detalle-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 30px;
 }
 
-/* Sinopsis y Títulos internos */
 .detalle-main-info h3, .titulo-temporadas {
     font-size: 18px;
     color: #fff;
@@ -446,7 +330,6 @@ body {
     margin-bottom: 30px;
 }
 
-/* Sidebar Lateral Minimalista */
 .detalle-sidebar {
     background: #0a0a0c;
     border: 1px solid #27272a;
@@ -465,270 +348,131 @@ body {
 .info-item span { color: #71717a; }
 .info-item strong { color: #e0e0e0; font-weight: 600; text-align: right; max-width: 60%; }
 
-.btn-editar-anime {
-    width: 100%;
-    padding: 12px;
-    background: #eab308; /* Color amarillento/naranja para distinguir de "Guardar" */
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: 0.3s;
-}
-
-.btn-editar-anime:hover {
-    background: #ca8a04;
-    transform: translateY(-2px);
-}
-
-.btn-editar-discreto {
-    width: 100%;
-    margin: 15px 0;
-    padding: 10px;
-    background: rgba(234, 179, 8, 0.1); /* Amarillo muy suave */
-    color: #eab308;
-    border: 1px dashed #eab308;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
 /* Estilos para el Constructor */
-
 .header-bloque-dinamico {
     display: flex;
     gap: 10px;
     margin-bottom: 15px;
 }
-
-.header-bloque-dinamico input {
-    flex: 1;
-}
-
+.header-bloque-dinamico input { flex: 1; }
 .btn-delete {
-    background: #ef4444;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    cursor: pointer;
+    background: #ef4444; color: white; border: none; padding: 10px 15px;
+    border-radius: 8px; cursor: pointer;
 }
 
 .idiomas-wrapper {
-    margin-top: 15px;
-    padding-left: 10px;
-    border-left: 2px solid #3ba4fa;
+    margin-top: 15px; padding-left: 10px; border-left: 2px solid #3ba4fa;
 }
-
 .idioma-bloque {
-    background: #0f0f11;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #27272a;
+    background: #0f0f11; padding: 10px; border-radius: 8px;
+    margin-bottom: 10px; border: 1px solid #27272a;
 }
-
 .capitulo-row {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 5px;
+    display: flex; gap: 5px; margin-bottom: 5px;
 }
-
 .capitulo-row input {
-    background: #18181b;
-    border: 1px solid #27272a;
-    color: white;
-    padding: 6px;
-    border-radius: 4px;
-    font-size: 13px;
+    background: #18181b; border: 1px solid #27272a; color: white;
+    padding: 6px; border-radius: 4px; font-size: 13px;
 }
-
 .cap-nombre { width: 60px; }
 .cap-url { flex: 1; }
 
 .btn-add-mini {
-    width: 100%;
-    background: #27272a;
-    color: #3ba4fa;
-    border: 1px dashed #3ba4fa;
-    padding: 8px;
-    border-radius: 6px;
-    margin-top: 5px;
-    cursor: pointer;
+    width: 100%; background: #27272a; color: #3ba4fa; border: 1px dashed #3ba4fa;
+    padding: 8px; border-radius: 6px; margin-top: 5px; cursor: pointer;
 }
 
 #vista-registro {
-    background-color: #0f0f11;
-    min-height: 100vh;
-    padding-top: 80px; /* Suficiente espacio para que el header no tape nada */
-    position: relative;
+    background-color: #0f0f11; min-height: 100vh; padding-top: 80px; position: relative;
 }
 
 .header-fijo {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 70px;
-    background: #18181b;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    border-bottom: 1px solid #27272a;
+    position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #18181b;
+    z-index: 9999; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; border-bottom: 1px solid #27272a;
 }
-
 .header-fijo h2 { font-size: 16px; color: #fff; }
 
 .btn-guardar-principal {
-    background: #3ba4fa;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
+    background: #3ba4fa; color: white; border: none; padding: 8px 16px;
+    border-radius: 8px; font-weight: 600; font-size: 14px;
 }
 
 .form-seccion h3 {
-    font-size: 14px;
-    color: #3ba4fa;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 14px; color: #3ba4fa; margin-bottom: 15px; display: flex;
+    align-items: center; gap: 8px;
 }
 
-.input-group {
-    margin-bottom: 15px;
-}
-
+.input-group { margin-bottom: 15px; }
 .input-group label {
-    display: block;
-    font-size: 12px;
-    color: #a1a1aa;
-    margin-bottom: 5px;
+    display: block; font-size: 12px; color: #a1a1aa; margin-bottom: 5px;
 }
-
-.input-group input, 
-.input-group select, 
-.input-group textarea {
-    width: 100%;
-    background: #0f0f11;
-    border: 1px solid #27272a;
-    border-radius: 8px;
-    padding: 12px;
-    color: white;
-    outline: none;
-    font-size: 14px;
+.input-group input, .input-group select, .input-group textarea {
+    width: 100%; background: #0f0f11; border: 1px solid #27272a; border-radius: 8px;
+    padding: 12px; color: white; outline: none; font-size: 14px;
 }
-
 .input-group input:focus { border-color: #3ba4fa; }
 
-/* Grid para móviles */
 .grid-2-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;
 }
-
 .header-flex {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
 }
-
 .btn-add-seccion {
-    background: #3ba4fa20;
-    color: #3ba4fa;
-    border: 1px solid #3ba4fa;
-    padding: 5px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
+    background: #3ba4fa20; color: #3ba4fa; border: 1px solid #3ba4fa;
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
 }
-
 .btn-delete-block {
-    background: #ef4444;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 45px;
+    background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px;
+    cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; width: 45px;
 }
-
-.btn-delete-block:hover {
-    background: #b91c1c;
-}
+.btn-delete-block:hover { background: #b91c1c; }
 
 .btn-add-idioma {
-    width: 100%;
-    background: transparent;
-    color: #3ba4fa;
-    border: 1px dashed #3ba4fa;
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 10px;
-    cursor: pointer;
-    font-size: 13px;
+    width: 100%; background: transparent; color: #3ba4fa; border: 1px dashed #3ba4fa;
+    padding: 10px; border-radius: 8px; margin-top: 10px; cursor: pointer; font-size: 13px;
 }
 
-.temporada-block input, 
-.temporada-block select, 
-.temporada-block textarea {
-    background: #0f0f11 !important;
-    border: 1px solid #27272a !important;
-    color: white !important;
+.temporada-block input, .temporada-block select, .temporada-block textarea {
+    background: #0f0f11 !important; border: 1px solid #27272a !important; color: white !important;
 }
 
-.contenedor-formulario input, 
-.contenedor-formulario select, 
-.contenedor-formulario textarea {
-    background-color: #18181b !important;
-    color: #ffffff !important;
-    border: 1px solid #3f3f46 !important;
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
+.contenedor-formulario input, .contenedor-formulario select, .contenedor-formulario textarea {
+    background-color: #18181b !important; color: #ffffff !important; border: 1px solid #3f3f46 !important;
+    width: 100%; padding: 12px; border-radius: 8px; font-size: 14px;
 }
 
-.area-peligro {
-    margin-top: 30px;
-    padding: 20px 0;
-    border-top: 1px solid #27272a;
-    text-align: center;
+/* Responsividad Móvil Optimizada (Telegram) */
+@media (max-width: 768px) {
+    .navbar { flex-wrap: wrap; padding: 10px 15px; gap: 10px; }
+    .logo { order: 1; flex: 1; text-align: left; }
+    .logo h1 { font-size: 20px; }
+    .user-actions { order: 2; margin-left: auto; width: auto; }
+    .hide-mobile { display: none; }
+    .btn-login { padding: 8px; font-size: 16px; border-radius: 50%; width: 35px; height: 35px; justify-content: center;}
+    .search-bar { order: 3; width: 100%; max-width: 100%; margin-top: 5px; }
+    .search-bar input { padding: 8px 15px 8px 35px; border-radius: 8px;}
+    .filtros-container { padding: 10px 15px; gap: 8px;}
+    .btn-filtro { padding: 6px 12px; font-size: 13px; border-radius: 6px;}
+    .contenedor { padding: 15px; }
+    .titulo-seccion { font-size: 18px; margin-bottom: 15px;}
+    .header-registro { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .form-grid-complex { grid-template-columns: 1fr; gap: 15px;}
+    
+    .grid-animes { grid-template-columns: repeat(3, 1fr); gap: 8px;}
+    .titulo-tarjeta { font-size: 11px; padding: 8px 5px; text-align: center;}
 }
 
-.btn-eliminar-hub {
-    background: #450a0a;
-    color: #f87171;
-    border: 1px solid #991b1b;
-    padding: 15px;
-    width: 100%;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.btn-eliminar-hub:hover {
-    background: #7f1d1d;
-    color: white;
+/* Modo Horizontal y Desktop */
+@media (orientation: landscape) and (min-width: 600px), (min-width: 900px) {
+    .detalle-grid {
+        display: flex; flex-direction: row-reverse; gap: 30px; align-items: flex-start;
+    }
+    .detalle-main-info { flex: 1; }
+    .detalle-sidebar { 
+        width: 300px; position: sticky; top: 20px; background: #18181b; 
+        padding: 20px; border-radius: 12px; border: 1px solid #27272a;
+    }
+    .detalle-banner { height: 300px; }
 }
