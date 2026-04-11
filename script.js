@@ -261,6 +261,227 @@ function filtrar(estado, evento) {
     aplicarTodosLosFiltros();
 }
 
+function prepararNuevoRegistro() {
+    const vista = document.getElementById('vista-registro');
+    delete vista.dataset.editId;
+    
+    document.getElementById('btn-publicar').textContent = "Publicar en el Hub";
+    
+    // Limpiar todos los inputs y textareas
+    vista.querySelectorAll('input, select, textarea').forEach(i => i.value = '');
+    
+    // Reiniciar el constructor de temporadas
+    cargarDatosTemporadas([]); 
+    cambiarVista('registro');
+}
+
+function prepararEdicion() {
+    if (!obraActual) return;
+    
+    const vista = document.getElementById('vista-registro');
+    vista.dataset.editId = obraActual.id;
+    document.getElementById('btn-publicar').textContent = "Actualizar Anime en el Hub";
+
+    // Mapeo de campos básicos
+    const campos = {
+        'in-titulo': obraActual.titulo,
+        'in-estado': obraActual.estado || 'En emisión',
+        'in-portada': obraActual.portada_url,
+        'in-banner': obraActual.banner_url,
+        'in-sinopsis': obraActual.sinopsis,
+        'in-japones': obraActual.nombres_alternativos?.Japonés,
+        'in-ingles': obraActual.nombres_alternativos?.Ingles,
+        'in-generos': (obraActual.generos || []).join(', '),
+        'in-autor': obraActual.autor,
+        'in-estudio': obraActual.estudio,
+        'in-tipo': obraActual.tipo || 'TV',
+        'in-origen': obraActual.origen,
+        'in-estreno': obraActual.estreno,
+        'in-dia': obraActual.dia_emision
+    };
+
+    for (let id in campos) {
+        const el = document.getElementById(id);
+        if (el) el.value = campos[id] || '';
+    }
+
+    cargarDatosTemporadas(obraActual.temporadas || []);
+    cambiarVista('registro');
+}
+
+async function ejecutarRegistro() {
+    const btn = document.getElementById('btn-publicar');
+    const vista = document.getElementById('vista-registro');
+    const idEdicion = vista.dataset.editId;
+
+    // Recolección de datos básicos
+    const titulo = document.getElementById('in-titulo').value.trim();
+    const portada = document.getElementById('in-portada').value.trim();
+
+    if (!titulo || !portada) {
+        tg.HapticFeedback.notificationOccurred('error');
+        return alert("⚠️ Título y Portada son obligatorios.");
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${idEdicion ? 'Actualizando...' : 'Publicando...'}`;
+
+    const generosRaw = document.getElementById('in-generos').value;
+    const datosObra = {
+        titulo: titulo,
+        slug: titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/g, "").replace(/\s+/g, "-"),
+        portada_url: portada,
+        banner_url: document.getElementById('in-banner').value.trim(),
+        sinopsis: document.getElementById('in-sinopsis').value.trim(),
+        estado: document.getElementById('in-estado').value,
+        tipo: document.getElementById('in-tipo').value,
+        autor: document.getElementById('in-autor').value.trim(),
+        estudio: document.getElementById('in-estudio').value.trim(),
+        origen: document.getElementById('in-origen').value,
+        estreno: document.getElementById('in-estreno').value.trim(),
+        dia_emision: document.getElementById('in-dia').value,
+        generos: generosRaw.split(',').map(g => g.trim()).filter(g => g !== ""),
+        nombres_alternativos: {
+            "Japonés": document.getElementById('in-japones').value.trim(),
+            "Ingles": document.getElementById('in-ingles').value.trim()
+        },
+        temporadas: recolectarDatosTemporadas()
+    };
+
+    try {
+        const { error } = idEdicion 
+            ? await _supabase.from('obras').update(datosObra).eq('id', idEdicion)
+            : await _supabase.from('obras').insert([datosObra]);
+
+        if (error) throw error;
+
+        tg.HapticFeedback.notificationOccurred('success');
+        alert(idEdicion ? "✅ Actualizado correctamente" : "✅ Publicado en el Hub");
+        
+        cargarObras(); // Refrescar catálogo
+        cambiarVista('catalogo');
+    } catch (err) {
+        console.error(err);
+        alert("❌ Error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Publicar en el Hub";
+    }
+}
+
+function cargarDatosTemporadas(temporadas) {
+    const contenedor = document.getElementById('builder-temporadas');
+    contenedor.innerHTML = '';
+    
+    if (!temporadas || temporadas.length === 0) {
+        agregarTemporadaUI();
+    } else {
+        temporadas.forEach(t => agregarTemporadaUI(t));
+    }
+}
+
+function agregarTemporadaUI(datos = null) {
+    const container = document.getElementById('builder-temporadas');
+    const bloque = document.createElement('div');
+    bloque.className = 'temporada-block'; // Clase corregida y única
+
+    bloque.innerHTML = `
+        <div class="header-bloque-dinamico">
+            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1, Ovas...)" value="${datos ? (datos.nombre || datos.seccion || '') : ''}">
+            <button type="button" class="btn-delete" onclick="confirmarBorrado(this, '.temporada-block')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <input type="text" class="temp-img" placeholder="URL Imagen Miniatura (Opcional)" value="${datos?.imagen || ''}">
+        
+        <div class="idiomas-wrapper">
+            <label><i class="fa-solid fa-language"></i> Audios Disponibles</label>
+            <div class="lista-idiomas"></div>
+            <button type="button" class="btn-add-mini" onclick="agregarIdiomaUI(this.parentElement.querySelector('.lista-idiomas'))">
+                <i class="fa-solid fa-plus"></i> Añadir Idioma
+            </button>
+        </div>
+    `;
+
+    container.appendChild(bloque);
+    const listaIdiomas = bloque.querySelector('.lista-idiomas');
+
+    if (datos?.enlaces && Object.keys(datos.enlaces).length > 0) {
+        Object.entries(datos.enlaces).forEach(([lang, caps]) => agregarIdiomaUI(listaIdiomas, lang, caps));
+    } else {
+        agregarIdiomaUI(listaIdiomas);
+    }
+}
+
+function agregarIdiomaUI(container, nombre = '', caps = null) {
+    const div = document.createElement('div');
+    div.className = 'idioma-bloque';
+    div.innerHTML = `
+        <div class="header-bloque-dinamico">
+            <input type="text" class="idioma-nombre" placeholder="Ej: Sub Español" value="${nombre}">
+            <button type="button" class="btn-delete-mini" onclick="this.closest('.idioma-bloque').remove()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="lista-capitulos"></div>
+        <button type="button" class="btn-add-micro" onclick="agregarCapituloUI(this.parentElement.querySelector('.lista-capitulos'))">
+            + Capítulo
+        </button>
+    `;
+
+    container.appendChild(div);
+    const listaCaps = div.querySelector('.lista-capitulos');
+
+    if (caps) {
+        Object.entries(caps).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u));
+    } else {
+        agregarCapituloUI(listaCaps);
+    }
+}
+
+function agregarCapituloUI(container, num = '', url = '') {
+    const div = document.createElement('div');
+    div.className = 'capitulo-row';
+    div.innerHTML = `
+        <input type="text" class="cap-nombre" placeholder="N°" value="${num}">
+        <input type="text" class="cap-url" placeholder="URL de Telegram/Web" value="${url}">
+        <button type="button" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+    `;
+    container.appendChild(div);
+}
+
+function recolectarDatosTemporadas() {
+    const resultado = [];
+    document.querySelectorAll('.temporada-block').forEach(tBlock => {
+        const nombre = tBlock.querySelector('.temp-nombre').value.trim();
+        if (!nombre) return;
+
+        const temporada = {
+            nombre: nombre,
+            imagen: tBlock.querySelector('.temp-img').value.trim(),
+            enlaces: {}
+        };
+
+        tBlock.querySelectorAll('.idioma-bloque').forEach(iBlock => {
+            const lang = iBlock.querySelector('.idioma-nombre').value.trim();
+            if (!lang) return;
+
+            temporada.enlaces[lang] = {};
+            iBlock.querySelectorAll('.capitulo-row').forEach(cRow => {
+                const n = cRow.querySelector('.cap-nombre').value.trim();
+                const u = cRow.querySelector('.cap-url').value.trim();
+                if (n && u) temporada.enlaces[lang][n] = u;
+            });
+        });
+
+        resultado.push(temporada);
+    });
+    return resultado;
+}
+
+function confirmarBorrado(btn, selector) {
+    tg.HapticFeedback.impactOccurred('medium');
+    if(confirm("¿Estás seguro de borrar este elemento?")) {
+        btn.closest(selector).remove();
+    }
+}
+
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
     
@@ -291,101 +512,10 @@ function renderizarObras(obras) {
 // =========================================
 // REGISTRO Y EDICIÓN DE OBRAS
 // =========================================
-async function ejecutarRegistro() {
-    const btnPublicar = document.getElementById('btn-publicar');
-    const vistaRegistro = document.getElementById('vista-registro');
-    
-    const idParaEditar = vistaRegistro.dataset.editId;
-    const titulo = document.getElementById('in-titulo').value;
-    const estado = document.getElementById('in-estado').value;
-    const portada = document.getElementById('in-portada').value;
-    const banner = document.getElementById('in-banner').value;
-    const sinopsis = document.getElementById('in-sinopsis').value;
-    
-    if(!titulo || !portada) {
-        return alert("⚠️ El título y la URL de la portada son obligatorios.");
-    }
 
-    btnPublicar.disabled = true;
-    btnPublicar.innerHTML = idParaEditar ? '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando...' : '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
+//////////////////////////////////////////////////////////////////////
 
-    const generosStr = document.getElementById('in-generos').value;
-    const generosArray = generosStr ? generosStr.split(',').map(g => g.trim()).filter(g => g) : [];
-
-    const temporadasData = recolectarDatosTemporadas();
-
-    const datosObra = {
-        titulo: titulo,
-        slug: titulo.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
-        portada_url: portada,
-        banner_url: banner,
-        nombres_alternativos: {
-            "Japonés": document.getElementById('in-japones').value || "",
-            "Ingles": document.getElementById('in-ingles').value || ""
-        },
-        sinopsis: sinopsis,
-        estado: estado,
-        generos: generosArray,
-        autor: document.getElementById('in-autor').value,
-        estudio: document.getElementById('in-estudio').value,
-        tipo: document.getElementById('in-tipo').value,
-        origen: document.getElementById('in-origen').value,
-        estreno: document.getElementById('in-estreno').value,
-        dia_emision: document.getElementById('in-dia').value,
-        temporadas: temporadasData
-    };
-
-    try {
-        let error;
-        if (idParaEditar) {
-            const res = await _supabase.from('obras').update(datosObra).eq('id', idParaEditar);
-            error = res.error;
-        } else {
-            const res = await _supabase.from('obras').insert([datosObra]);
-            error = res.error;
-        }
-
-        if (error) throw error;
-
-        alert(idParaEditar ? "✅ ¡Actualizado con éxito!" : "✅ ¡Publicado con éxito!");
-        
-        delete vistaRegistro.dataset.editId;
-        document.querySelectorAll('#vista-registro input, #vista-registro textarea').forEach(i => i.value = '');
-        btnPublicar.textContent = 'Publicar en el Hub';
-        
-        cargarObras();
-        cambiarVista('catalogo');
-
-    } catch(e) {
-        alert("⚠️ Error: " + e.message);
-    } finally {
-        btnPublicar.disabled = false;
-    }
-}
-
-function prepararEdicion() {
-    if (!obraActual) return;
-    cambiarVista('registro');
-
-    document.getElementById('in-titulo').value = obraActual.titulo || '';
-    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
-    document.getElementById('in-portada').value = obraActual.portada_url || '';
-    document.getElementById('in-banner').value = obraActual.banner_url || '';
-    document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
-    document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
-    document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
-    document.getElementById('in-generos').value = (obraActual.generos || []).join(', ');
-    document.getElementById('in-autor').value = obraActual.autor || '';
-    document.getElementById('in-estudio').value = obraActual.estudio || '';
-    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
-    document.getElementById('in-origen').value = obraActual.origen || '';
-    document.getElementById('in-estreno').value = obraActual.estreno || '';
-    document.getElementById('in-dia').value = obraActual.dia_emision || '';
-    cargarDatosTemporadas(obraActual.temporadas || []);
-
-    document.getElementById('vista-registro').dataset.editId = obraActual.id;
-    document.getElementById('btn-publicar').textContent = "Actualizar Anime en el Hub";
-}
+///////////////////////////////////////////////////////////////
 
 // =========================================
 // SISTEMA DE AUTENTICACIÓN
@@ -472,7 +602,7 @@ function agregarTemporadaUI(datos = null) {
     
     // Creamos un elemento real en el DOM en lugar de sumar strings
     const bloque = document.createElement('div');
-    bloque.className = 'temporada-bloque';
+    bloque.className = 'temporada-block';
     bloque.style.border = "1px solid #27272a";
     bloque.style.padding = "15px";
     bloque.style.borderRadius = "8px";
@@ -561,15 +691,15 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
 
 function recolectarDatosTemporadas() {
     const datos = [];
+    // Asegúrate de que la clase aquí coincida con la que creas en el UI
     document.querySelectorAll('.temporada-block').forEach(tempBlock => {
-        const seccion = tempBlock.querySelector('.temp-seccion').value.trim() || "Contenido Principal";
         const nombre = tempBlock.querySelector('.temp-nombre').value.trim();
-        const imagen = tempBlock.querySelector('.temp-imagen').value.trim();
+        const imagen = tempBlock.querySelector('.temp-img').value.trim(); // Cambiado de temp-imagen a temp-img
 
-        if (!nombre) return; // Se salta temporadas sin nombre
+        if (!nombre) return; 
 
         const enlaces = {};
-        tempBlock.querySelectorAll('.idioma-block').forEach(idiomaBlock => {
+        tempBlock.querySelectorAll('.idioma-bloque').forEach(idiomaBlock => {
             const idiomaNombre = idiomaBlock.querySelector('.idioma-nombre').value.trim();
             if (!idiomaNombre) return;
 
@@ -582,14 +712,9 @@ function recolectarDatosTemporadas() {
                     enlaces[idiomaNombre][capNombre] = capUrl;
                 }
             });
-            
-            // Si el idioma se quedó vacío, lo borra para no subir basura a la BD
-            if (Object.keys(enlaces[idiomaNombre]).length === 0) {
-                delete enlaces[idiomaNombre];
-            }
         });
 
-        datos.push({ seccion, nombre, imagen, enlaces });
+        datos.push({ nombre, imagen, enlaces });
     });
     return datos;
 }

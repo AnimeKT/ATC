@@ -502,3 +502,79 @@ body {
     justify-content: center;
     gap: 8px;
 }
+
+/* Estilos para el Constructor */
+.temporada-block {
+    background: #18181b;
+    border: 1px solid #27272a;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.header-bloque-dinamico {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.header-bloque-dinamico input {
+    flex: 1;
+    background: #0f0f11;
+    border: 1px solid #27272a;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.idiomas-wrapper {
+    margin-top: 15px;
+    padding-left: 10px;
+    border-left: 2px solid #3ba4fa;
+}
+
+.idioma-bloque {
+    background: #0f0f11;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #27272a;
+}
+
+.capitulo-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.capitulo-row input {
+    background: #18181b;
+    border: 1px solid #27272a;
+    color: white;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.cap-nombre { width: 60px; }
+.cap-url { flex: 1; }
+
+.btn-add-mini {
+    width: 100%;
+    background: #27272a;
+    color: #3ba4fa;
+    border: 1px dashed #3ba4fa;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 5px;
+    cursor: pointer;
+}
