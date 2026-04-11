@@ -250,34 +250,39 @@ function filtrar(estado, evento) {
 }
 
 function renderizarObras(obras) {
-    const grid = document.getElementById('grid-obras');
-    
+    const grid = document.getElementById('grid-animes');
+    if (!grid) return;
+
     if (obras.length === 0) {
-        grid.innerHTML = "<p style='color: #a1a1aa; grid-column: 1 / -1; text-align: center; padding: 40px;'>No se encontraron obras...</p>";
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #a1a1aa;">No se encontraron resultados</div>';
         return;
     }
 
-    grid.innerHTML = obras.map(obra => {
-        const claseEstado = obra.estado === 'Finalizado' ? 'estado-finalizado' : 'estado-emision';
-        const estadoTexto = obra.estado || 'En emisión';
-        
-        // Evitamos que comillas raras rompan el HTML en celulares
-        const tituloSeguro = obra.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+    // --- ESTA ES LA CLAVE ---
+    // Verificamos si el botón de admin está visible
+    const esAdmin = document.getElementById('btn-admin-view').style.display !== 'none';
 
-       return `
-    <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
-        <div class="estado-badge ${claseEstado}">${estadoTexto}</div>
-        
-        <button onclick="event.stopPropagation(); abrirEditorParaEditar('${obra.id}')" class="btn-editar">
-            <i class="fa-solid fa-pen"></i>
-        </button>
-        
-        <img src="${obra.portada_url}" alt="${obra.titulo}">
-        <div class="info-tarjeta">
-            <div class="titulo-tarjeta">${obra.titulo}</div>
-        </div>
-    </div>
-`;
+    grid.innerHTML = obras.map(obra => {
+        const tituloSeguro = obra.titulo.replace(/'/g, "\\'");
+        const estadoTexto = obra.estado || 'Desconocido';
+        const claseEstado = 'estado-' + (obra.estado ? obra.estado.toLowerCase().replace(/\s+/g, '-') : 'desconocido');
+
+        // Solo creamos el HTML del botón si esAdmin es true
+        const botonEditar = esAdmin ? `
+            <button onclick="event.stopPropagation(); abrirEditorParaEditar('${obra.id}')" class="btn-editar">
+                <i class="fa-solid fa-pen"></i>
+            </button>` : '';
+
+        return `
+            <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
+                <div class="estado-badge ${claseEstado}">${estadoTexto}</div>
+                
+                ${botonEditar} <img src="${obra.portada_url}" alt="${obra.titulo}">
+                <div class="info-tarjeta">
+                    <div class="titulo-tarjeta">${obra.titulo}</div>
+                </div>
+            </div>
+        `;
     }).join('');
 }
 
