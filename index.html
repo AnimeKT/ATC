@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kaergsty Hub - Comunidad</title>
+    <title>Universo Anime - Comunidad</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,7 +12,7 @@
 <body>
     <header class="navbar">
         <div class="logo" onclick="cambiarVista('catalogo')">
-            <h1>Kaergsty <span>Hub</span></h1>
+            <h1>Universo <span>Anime</span></h1>
         </div>
         
         <div class="search-bar" id="barra-busqueda">
@@ -67,7 +67,8 @@
             <div class="detalle-grid">
                 <div class="detalle-main-info">
                     <h3>Sinopsis</h3>
-                    <p id="det-sinopsis"></p> <div id="admin-options-detalle" style="margin-top: 20px;"></div>
+                    <p id="det-sinopsis"></p> 
+                    <div id="admin-options-detalle" style="margin-top: 20px;"></div>
 
                     <h3 class="titulo-temporadas">Temporadas y Episodios</h3>
                     <div id="det-temporadas" class="temporadas-list"></div>
@@ -169,8 +170,9 @@
                         <textarea id="in-sinopsis" placeholder="Escribe la sinopsis del anime aquí..."></textarea>
                     </div>
 
-                    <div class="input-group full-width">
+                    <div class="input-group full-width bloque-maestro">
                         <label><i class="fa-solid fa-folder-tree"></i> Contenido (Temporadas, Idiomas y Capítulos)</label>
+                        
                         <div id="builder-temporadas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 5px;"></div>
                         
                         <button type="button" class="btn-filtro active" onclick="agregarTemporadaUI()" style="margin-top: 10px; width: fit-content;">
@@ -178,7 +180,7 @@
                         </button>
                     </div>
 
-                    <button id="btn-publicar" onclick="ejecutarRegistro()" class="btn-enviar full-width">Publicar en el Hub</button>
+                    <button id="btn-publicar" onclick="ejecutarRegistro()" class="btn-enviar full-width">Publicar en Universo Anime</button>
                 </div>
             </section>
         </main>
@@ -187,7 +189,7 @@
     <div id="modal-auth" class="modal-oculto">
         <div class="modal-contenido modal-auth-box">
             <button class="btn-cerrar" onclick="cerrarModalAuth()"><i class="fa-solid fa-xmark"></i></button>
-            <h2 style="margin-bottom: 5px; text-align: center; color: #fff;">Acceso al Hub</h2>
+            <h2 style="margin-bottom: 5px; text-align: center; color: #fff;">Acceso</h2>
             <p style="text-align: center; color: #a1a1aa; font-size: 13px; margin-bottom: 20px;">Tu cuenta de Telegram se detectará automáticamente.</p>
             <div class="form-group" style="grid-template-columns: 1fr;">
                 <input type="password" id="auth-password" placeholder="Ingresa tu contraseña" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #27272a; background-color: #0f0f11; color: #fff; outline: none; transition: 0.3s;">
