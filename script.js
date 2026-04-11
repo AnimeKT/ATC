@@ -310,10 +310,10 @@ async function ejecutarRegistro() {
         titulo: titulo,
         portada_url: portada,
         banner_url: document.getElementById('in-banner').value.trim(),
+        sinopsis: document.getElementById('in-sinopsis').value.trim(), // <--- Agregado
         estado: document.getElementById('in-estado').value,
         tipo: document.getElementById('in-tipo').value,
-        temporadas: recolectarDatosTemporadas(),
-        // Agrega aquí el resto de campos (sinopsis, géneros, etc.)
+        temporadas: recolectarDatosTemporadas()
     };
 
     try {
