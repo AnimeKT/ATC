@@ -230,6 +230,31 @@ async function cargarObras() {
     aplicarTodosLosFiltros();
 }
 
+function cargarObraParaEditar(id) {
+    const obra = todasLasObras.find(o => o.id === id);
+    if (!obra) return;
+
+    // ... (tus otras asignaciones de inputs) ...
+
+    // MOSTRAR el botón de eliminar porque estamos editando
+    document.getElementById('btn-eliminar-obra').style.display = 'block';
+    
+    // Cambiar texto del botón principal
+    document.getElementById('btn-publicar').textContent = "Actualizar";
+    
+    cambiarVista('registro');
+}
+
+function prepararNuevoRegistro() {
+    // ... (limpiar inputs) ...
+    
+    // OCULTAR el botón de eliminar porque es una obra nueva
+    document.getElementById('btn-eliminar-obra').style.display = 'none';
+    document.getElementById('btn-publicar').textContent = "Publicar";
+    
+    cambiarVista('registro');
+}
+
 function aplicarTodosLosFiltros() {
     const resultado = todasLasObras.filter(obra => {
         const tituloMatch = obra.titulo.toLowerCase().includes(filtrosActuales.texto);

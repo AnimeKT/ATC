@@ -567,22 +567,24 @@ body {
     cursor: pointer;
 }
 
-#vista-registro, .contenedor-formulario, .form-seccion, .temporada-block {
-    background-color: #18181b !important;
-    color: #e0e0e0;
+#vista-registro {
+    background-color: #0f0f11;
+    min-height: 100vh;
+    padding-top: 80px; /* Suficiente espacio para que el header no tape nada */
+    position: relative;
 }
 
 .header-fijo {
     position: fixed;
     top: 0; left: 0; right: 0;
-    height: 60px;
+    height: 70px;
     background: #18181b;
-    border-bottom: 1px solid #27272a;
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 15px;
-    z-index: 1000;
+    padding: 0 20px;
+    border-bottom: 1px solid #27272a;
 }
 
 .header-fijo h2 { font-size: 16px; color: #fff; }
@@ -693,4 +695,40 @@ body {
     background: #0f0f11 !important;
     border: 1px solid #27272a !important;
     color: white !important;
+}
+
+.contenedor-formulario input, 
+.contenedor-formulario select, 
+.contenedor-formulario textarea {
+    background-color: #18181b !important;
+    color: #ffffff !important;
+    border: 1px solid #3f3f46 !important;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.area-peligro {
+    margin-top: 30px;
+    padding: 20px 0;
+    border-top: 1px solid #27272a;
+    text-align: center;
+}
+
+.btn-eliminar-hub {
+    background: #450a0a;
+    color: #f87171;
+    border: 1px solid #991b1b;
+    padding: 15px;
+    width: 100%;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-eliminar-hub:hover {
+    background: #7f1d1d;
+    color: white;
 }
