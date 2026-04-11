@@ -443,6 +443,12 @@ body {
     width: 100%; padding: 12px; border-radius: 8px; font-size: 14px;
 }
 
+.contenedor-formulario {
+    padding: 0 20px 40px 20px; /* 20px de espacio a los lados */
+    max-width: 900px; /* Evita que se estire demasiado en pantallas grandes */
+    margin: 0 auto; /* Lo mantiene centrado */
+}
+
 /* Responsividad Móvil Optimizada (Telegram) */
 @media (max-width: 768px) {
     .navbar { flex-wrap: wrap; padding: 10px 15px; gap: 10px; }

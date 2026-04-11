@@ -450,9 +450,11 @@ function agregarTemporadaUI(datos = null) {
     bloque.style.background = "#18181b";
 
     bloque.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre de Sección (Ej: Principal, Extras)" value="${datos ? datos.nombre || datos.seccion || '' : ''}" style="width: 80%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
-            <button type="button" class="btn-cerrar" onclick="this.closest('.temporada-block').remove()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+            <input type="text" class="temp-nombre" placeholder="Nombre de Sección (Ej: Principal, Extras)" value="${datos ? datos.nombre || datos.seccion || '' : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
+            <button type="button" class="btn-delete-block" onclick="this.closest('.temporada-block').remove()">
+                <i class="fa-solid fa-trash"></i>
+            </button>
         </div>
         <input type="text" class="temp-img" placeholder="URL de Imagen para esta sección (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px;">
         
