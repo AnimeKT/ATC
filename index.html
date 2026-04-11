@@ -87,67 +87,67 @@
     </div>
 
     <section id="vista-registro" style="display: none;">
-        <div class="header-fijo">
-            <button class="btn-atras" onclick="volverAlCatalogo()">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <h2 id="titulo-registro-header">Editor de Contenido</h2>
-            <button id="btn-publicar" class="btn-guardar-principal" onclick="ejecutarRegistro()">
-                Publicar
-            </button>
-        </div>
+    <div class="header-fijo">
+        <button class="btn-atras" onclick="volverAlCatalogo()">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <h2 id="titulo-registro-header">Editor de Contenido</h2>
+        <button id="btn-publicar" class="btn-guardar-principal" onclick="ejecutarRegistro()">
+            Publicar
+        </button>
+    </div>
 
-        <div class="contenedor-formulario">
-            <div class="form-seccion">
-                <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
-                <div class="input-group">
-                    <label>Título del Anime</label>
-                    <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
-                </div>
-                <div class="grid-2-col">
-                    <div class="input-group">
-                        <label>Estado</label>
-                        <select id="in-estado">
-                            <option value="En emisión">En emisión</option>
-                            <option value="Finalizado">Finalizado</option>
-                            <option value="Próximamente">Próximamente</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Tipo</label>
-                        <select id="in-tipo">
-                            <option value="TV">TV</option>
-                            <option value="Película">Película</option>
-                            <option value="OVA">OVA</option>
-                        </select>
-                    </div>
-                </div>
+    <div class="contenedor-formulario">
+        <div class="form-seccion">
+            <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
+            <div class="input-group">
+                <label>Título del Anime</label>
+                <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
             </div>
-
-            <div class="form-seccion">
-                <h3><i class="fa-solid fa-image"></i> Multimedia</h3>
+            <div class="grid-2-col">
                 <div class="input-group">
-                    <label>URL Portada</label>
-                    <input type="text" id="in-portada">
+                    <label>Estado</label>
+                    <select id="in-estado">
+                        <option value="En emisión">En emisión</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Próximamente">Próximamente</option>
+                    </select>
                 </div>
                 <div class="input-group">
-                    <label>URL Banner</label>
-                    <input type="text" id="in-banner">
+                    <label>Tipo</label>
+                    <select id="in-tipo">
+                        <option value="TV">TV</option>
+                        <option value="Película">Película</option>
+                        <option value="OVA">OVA</option>
+                    </select>
                 </div>
-            </div>
-
-            <div class="form-seccion">
-                <div class="header-flex">
-                    <h3><i class="fa-solid fa-list-ol"></i> Temporadas y Enlaces</h3>
-                    <button type="button" class="btn-add-seccion" onclick="agregarTemporadaUI()">
-                        <i class="fa-solid fa-plus"></i> Añadir
-                    </button>
-                </div>
-                <div id="builder-temporadas">
-                    </div>
             </div>
         </div>
-    </section>
+
+        <div class="form-seccion">
+            <h3><i class="fa-solid fa-image"></i> Multimedia</h3>
+            <div class="input-group">
+                <label>URL Portada</label>
+                <input type="text" id="in-portada">
+            </div>
+            <div class="input-group">
+                <label>URL Banner</label>
+                <input type="text" id="in-banner">
+            </div>
+        </div>
+
+        <div class="form-seccion">
+            <div class="header-flex">
+                <h3><i class="fa-solid fa-list-ol"></i> Temporadas y Enlaces</h3>
+                <button type="button" class="btn-add-seccion" onclick="agregarTemporadaUI()">
+                    <i class="fa-solid fa-plus"></i> Añadir
+                </button>
+            </div>
+            <div id="builder-temporadas">
+                </div>
+        </div>
+    </div>
+</section>
 
     <div id="modal-auth" class="modal-oculto">
         <div class="modal-contenido modal-auth-box">
