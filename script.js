@@ -467,55 +467,98 @@ function mostrarMensajeAuth(msg, color) {
 // CONSTRUCTOR VISUAL DE TEMPORADAS
 // =========================================
 
+// REEMPLAZA TUS FUNCIONES ACTUALES POR ESTAS TRES:
+
 function agregarTemporadaUI(datos = null) {
     const container = document.getElementById('builder-temporadas');
-    const tId = 'temp_' + Math.random().toString(36).substr(2, 9); // ID único
+    
+    // Creamos un elemento real en el DOM en lugar de sumar strings
+    const bloque = document.createElement('div');
+    bloque.className = 'temporada-bloque';
+    bloque.style.border = "1px solid #27272a";
+    bloque.style.padding = "15px";
+    bloque.style.borderRadius = "8px";
+    bloque.style.marginBottom = "15px";
+    bloque.style.background = "#18181b";
 
-    // Valores por defecto si estamos editando
-    const seccion = datos?.seccion || "Contenido Principal";
-    const nombre = datos?.nombre || "";
-    const imagen = datos?.imagen || "";
-
-    const div = document.createElement('div');
-    div.className = 'admin-panel temporada-block';
-    div.style.padding = '15px';
-    div.style.marginBottom = '10px';
-    div.style.borderLeft = '3px solid #3ba4fa';
-
-    div.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h4 style="color: #3ba4fa; margin: 0; font-size: 14px;"><i class="fa-solid fa-folder"></i> Bloque de Contenido</h4>
-            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: transparent; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+    // Insertamos la estructura base del bloque
+    bloque.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <input type="text" class="temp-nombre" placeholder="Nombre de Sección (Ej: Principal, Extras)" value="${datos ? datos.nombre || datos.seccion || '' : ''}" style="width: 80%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
+            <button type="button" class="btn-cerrar" onclick="this.closest('.temporada-bloque').remove()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
         </div>
-        <div class="form-grid-complex" style="margin-bottom: 15px;">
-            <div class="input-group">
-                <label>Sección (Ej: Principal, Extras)</label>
-                <input type="text" class="temp-seccion" value="${seccion}">
-            </div>
-            <div class="input-group">
-                <label>Nombre (Ej: Temporada 1)</label>
-                <input type="text" class="temp-nombre" value="${nombre}" placeholder="Obligatorio">
-            </div>
-            <div class="input-group full-width">
-                <label>URL de Imagen Portada (Opcional)</label>
-                <input type="text" class="temp-imagen" value="${imagen}" placeholder="https://...">
-            </div>
+        <input type="text" class="temp-img" placeholder="URL de Imagen para esta sección (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px;">
+        
+        <div class="idiomas-container">
+            <h4 style="color: #a1a1aa; margin-bottom: 10px; font-size: 14px;"><i class="fa-solid fa-language"></i> Idiomas Disponibles</h4>
+            <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <button type="button" class="btn-filtro" onclick="agregarIdiomaUI(this.closest('.temporada-bloque').querySelector('.lista-idiomas'))" style="margin-top: 10px; padding: 8px 15px; font-size: 13px;">
+                <i class="fa-solid fa-plus"></i> Añadir Idioma
+            </button>
         </div>
-        <div id="idiomas_${tId}"></div>
-        <button type="button" class="btn-filtro" onclick="agregarIdiomaUI('${tId}')" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;">
-            <i class="fa-solid fa-language"></i> Añadir Idioma
+    `;
+
+    // Lo añadimos de forma segura sin afectar a los demás bloques
+    container.appendChild(bloque);
+
+    const listaIdiomas = bloque.querySelector('.lista-idiomas');
+
+    // Si estamos editando y vienen datos de la base de datos, los reconstruimos
+    if (datos && datos.enlaces && Object.keys(datos.enlaces).length > 0) {
+        Object.entries(datos.enlaces).forEach(([idioma, capitulos]) => {
+            agregarIdiomaUI(listaIdiomas, idioma, capitulos);
+        });
+    } else {
+        // Si es un bloque nuevo, le ponemos un idioma vacío para empezar
+        agregarIdiomaUI(listaIdiomas);
+    }
+}
+
+function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
+    const divIdioma = document.createElement('div');
+    divIdioma.className = 'idioma-bloque';
+    divIdioma.style.padding = "10px";
+    divIdioma.style.background = "#0c0c0f";
+    divIdioma.style.border = "1px solid #27272a";
+    divIdioma.style.borderRadius = "6px";
+
+    divIdioma.innerHTML = `
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" class="idioma-nombre" placeholder="Ej: Sub Español, Latino, Castellano" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
+            <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
+        <button type="button" onclick="agregarCapituloUI(this.closest('.idioma-bloque').querySelector('.lista-capitulos'))" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
+            + Añadir Capítulo
         </button>
     `;
-    container.appendChild(div);
 
-    // Cargar idiomas y capítulos si existen
-    if (datos?.enlaces) {
-        for (const [idioma, capitulos] of Object.entries(datos.enlaces)) {
-            agregarIdiomaUI(tId, idioma, capitulos);
-        }
-    } else if (!datos) {
-        agregarIdiomaUI(tId); // Si es nuevo, añade un idioma vacío por defecto
+    containerLista.appendChild(divIdioma);
+    
+    const listaCaps = divIdioma.querySelector('.lista-capitulos');
+
+    if (capitulos && Object.keys(capitulos).length > 0) {
+        Object.entries(capitulos).forEach(([capNombre, capUrl]) => {
+            agregarCapituloUI(listaCaps, capNombre, capUrl);
+        });
+    } else {
+        agregarCapituloUI(listaCaps);
     }
+}
+
+function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
+    const divCap = document.createElement('div');
+    divCap.className = 'capitulo-row';
+    divCap.style.display = "flex";
+    divCap.style.gap = "8px";
+
+    divCap.innerHTML = `
+        <input type="text" class="cap-nombre" placeholder="N° / Nombre" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px; outline: none;">
+        <input type="text" class="cap-url" placeholder="Enlace (https://...)" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px; outline: none;">
+        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer; padding: 0 5px;"><i class="fa-solid fa-trash"></i></button>
+    `;
+    
+    containerCaps.appendChild(divCap);
 }
 
 function agregarIdiomaUI(tempId, idiomaNombre = "", capitulos = null) {
