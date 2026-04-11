@@ -430,6 +430,10 @@ async function iniciarSesion() {
     const { error } = await _supabase.auth.signInWithPassword({ email: virtualEmail, password: password });
 
     if (error) mostrarErrorAuth('Error: Contraseña incorrecta.');
+
+    if (logueadoCorrectamente) 
+        document.getElementById('btn-admin-view').style.display = 'flex'; // Muestra el botón de añadir
+        cerrarModalAuth();
 }
 
 async function cerrarSesion() {
