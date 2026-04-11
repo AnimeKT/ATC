@@ -27,10 +27,8 @@ let filtrosActuales = {
 // INICIALIZACIÓN (A PRUEBA DE MÓVILES)
 // =========================================
 async function inicializarApp() {
-    // 1. Cargamos las obras INMEDIATAMENTE para que el móvil no se quede en blanco
     await cargarObras(); 
 
-    // 2. Cargamos los favoritos en segundo plano sin detener la aplicación
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tg.CloudStorage.getItem('vistos_anime', (err, value) => {
             if (!err && value) {
@@ -85,14 +83,12 @@ function abrirDetalle(tituloObra) {
     obraActual = todasLasObras.find(o => o.titulo === tituloObra);
     if (!obraActual) return;
 
-    // Poblar datos con protección por si falta algún dato en la base de datos
     document.getElementById('det-banner').src = obraActual.banner_url || obraActual.portada_url || '';
     const imgPort = document.getElementById('det-portada');
     imgPort.src = obraActual.portada_url || '';
     imgPort.style.opacity = 1;
     document.getElementById('det-titulo').textContent = obraActual.titulo || 'Sin título';
     
-    // Nombres alternativos seguros
     let nombresAlt = [];
     if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
     if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
@@ -259,8 +255,6 @@ function renderizarObras(obras) {
     grid.innerHTML = obras.map(obra => {
         const claseEstado = obra.estado === 'Finalizado' ? 'estado-finalizado' : 'estado-emision';
         const estadoTexto = obra.estado || 'En emisión';
-        
-        // Evitamos que comillas raras rompan el HTML en celulares
         const tituloSeguro = obra.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
 
         return `
@@ -282,10 +276,8 @@ function renderizarObras(obras) {
 function prepararNuevoRegistro() {
     document.getElementById('btn-publicar').textContent = "Publicar en el Hub";
     
-    // Limpiar todos los inputs y textareas
     document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => i.value = '');
     
-    // Reiniciar el constructor de temporadas
     cargarDatosTemporadas([]); 
     cambiarVista('registro');
 }
@@ -293,7 +285,6 @@ function prepararNuevoRegistro() {
 async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
     
-    // Recolección de datos básicos
     const titulo = document.getElementById('in-titulo').value.trim();
     const portada = document.getElementById('in-portada').value.trim();
 
@@ -305,7 +296,6 @@ async function ejecutarRegistro() {
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Publicando...`;
 
-    // Recolección de datos (los inputs extra que tenías originalmente o los que agregues luego)
     const sinopsisInput = document.getElementById('in-sinopsis');
     const generosInput = document.getElementById('in-generos');
     const autorInput = document.getElementById('in-autor');
@@ -347,7 +337,7 @@ async function ejecutarRegistro() {
         tg.HapticFeedback.notificationOccurred('success');
         alert("✅ Publicado en el Hub");
         
-        cargarObras(); // Refrescar catálogo
+        cargarObras(); 
         cambiarVista('catalogo');
     } catch (err) {
         console.error(err);
@@ -563,5 +553,4 @@ function cargarDatosTemporadas(temporadas) {
     temporadas.forEach(temp => agregarTemporadaUI(temp));
 }
 
-// Arrancar al cargar la página
 document.addEventListener('DOMContentLoaded', inicializarApp);
