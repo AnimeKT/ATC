@@ -31,41 +31,46 @@ tg.BackButton.onClick(() => {
 });
 
 // 3. Función de navegación corregida
-function cambiarVista(vista) {
-    const vistaCatalogo = document.getElementById('vista-catalogo');
-    const vistaRegistro = document.getElementById('vista-registro');
-    const vistaDetalle = document.getElementById('vista-detalle');
-    const barraBusqueda = document.getElementById('barra-busqueda');
+function cambiarVista(vista, guardarEnHistorial = true) {
+    const vistas = ['catalogo', 'detalle', 'registro'];
+    let vistaActual = null;
 
-    // 1. Guardar scroll si salimos del catálogo
-    if (vistaCatalogo.style.display !== 'none') {
-        posicionScrollGuardada = window.scrollY;
+    // 1. Identificar qué vista está visible actualmente antes de cambiar
+    vistas.forEach(v => {
+        const el = document.getElementById(`vista-${v}`);
+        if (el && !el.classList.contains('oculto')) {
+            vistaActual = v;
+        }
+    });
+
+    // 2. Si debemos guardar historial y la vista actual es distinta a la nueva
+    if (guardarEnHistorial && vistaActual && vistaActual !== vista) {
+        historialVistas.push(vistaActual);
     }
 
-    // 2. Ocultar todas las vistas
-    vistaCatalogo.style.display = 'none';
-    vistaRegistro.style.display = 'none';
-    vistaDetalle.style.display = 'none';
-    barraBusqueda.style.display = 'none';
+    // 3. Ocultar todas las vistas
+    vistas.forEach(v => {
+        const el = document.getElementById(`vista-${v}`);
+        if (el) el.classList.add('oculto');
+    });
 
-    // 3. Lógica de visibilidad y Botón de Telegram
+    // 4. Mostrar la vista seleccionada
+    const vistaDestino = document.getElementById(`vista-${vista}`);
+    if (vistaDestino) {
+        vistaDestino.classList.remove('oculto');
+    }
+
+    // 5. Lógica inteligente del botón de retroceso
+    // Si estamos en el catálogo, vaciamos historial y escondemos el botón
     if (vista === 'catalogo') {
-        vistaCatalogo.style.display = 'block';
-        barraBusqueda.style.display = 'block';
-        
-        // OCULTAR botón en el catálogo
+        historialVistas = []; 
         tg.BackButton.hide();
-        
-        // Recuperar scroll
-        setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     } else {
-        // MOSTRAR botón en cualquier otra vista (detalle o registro)
-        if (vista === 'registro') vistaRegistro.style.display = 'block';
-        if (vista === 'detalle') vistaDetalle.style.display = 'block';
-
         tg.BackButton.show();
-        window.scrollTo(0, 0);
     }
+
+    // Scroll al inicio al cambiar de pantalla
+    window.scrollTo(0, 0);
 }
 
 
