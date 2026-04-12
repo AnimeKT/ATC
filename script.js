@@ -14,13 +14,45 @@ tg.ready();
 tg.expand();
 
 // Configurar la acción global del botón de retroceso
+// =========================================
+// SISTEMA DE HISTORIAL DE NAVEGACIÓN
+// =========================================
+let historialNavegacion = ['catalogo'];
+
+// Configurar la acción global del botón de retroceso
 tg.BackButton.onClick(() => {
-    // Si el usuario pulsa la flecha nativa de Telegram, lo mandamos al catálogo
-    cambiarVista('catalogo');
+    if (historialNavegacion.length > 1) {
+        // 1. Sacamos la vista actual (la que estamos viendo) del historial
+        historialNavegacion.pop();
+        
+        // 2. Obtenemos cuál era la vista anterior
+        const vistaAnterior = historialNavegacion[historialNavegacion.length - 1];
+        
+        // 3. Renderizamos esa vista anterior sin afectar el historial
+        ejecutarCambioVista(vistaAnterior);
+    } else {
+        // Si el historial se queda vacío por alguna razón, forzamos catálogo
+        ejecutarCambioVista('catalogo');
+    }
 });
 
-// 3. Función de navegación corregida
+// 3. Función de navegación principal (Gestiona a dónde vamos)
 function cambiarVista(vista) {
+    // Si volvemos al catálogo directamente (ej: clic en tu logo o al publicar), limpiamos historial
+    if (vista === 'catalogo') {
+        historialNavegacion = ['catalogo'];
+    } 
+    // Si la nueva vista es diferente a la que estamos actualmente, la añadimos al historial
+    else if (historialNavegacion[historialNavegacion.length - 1] !== vista) {
+        historialNavegacion.push(vista);
+    }
+    
+    // Cambiamos el DOM
+    ejecutarCambioVista(vista);
+}
+
+// 3.1. Función que solo maneja el DOM (Visibilidad de HTML y Scroll)
+function ejecutarCambioVista(vista) {
     const vistaCatalogo = document.getElementById('vista-catalogo');
     const vistaRegistro = document.getElementById('vista-registro');
     const vistaDetalle = document.getElementById('vista-detalle');
@@ -42,7 +74,7 @@ function cambiarVista(vista) {
         vistaCatalogo.style.display = 'block';
         barraBusqueda.style.display = 'block';
         
-        // OCULTAR botón en el catálogo
+        // OCULTAR botón nativo de retroceso en el menú principal
         tg.BackButton.hide();
         
         // Recuperar scroll
