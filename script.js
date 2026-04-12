@@ -511,12 +511,15 @@ function agregarTemporadaUI(datos = null) {
     bloque.style.background = "#18181b";
 
     bloque.innerHTML = `
+    
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre de Sección (Ej: Principal, Extras)" value="${datos ? datos.nombre || datos.seccion || '' : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
+            <input type="text" class="temp-seccion" placeholder="Sección (Ej: Creado por...)" value="${datos && datos.seccion ? datos.seccion : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
+            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos && datos.nombre ? datos.nombre : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
             <button type="button" class="btn-delete-block" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
+
         <input type="text" class="temp-img" placeholder="URL de Imagen para esta sección (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
         
         <div class="idiomas-container">
@@ -526,6 +529,8 @@ function agregarTemporadaUI(datos = null) {
                 <i class="fa-solid fa-plus"></i> Añadir Idioma
             </button>
         </div>
+
+        
     `;
 
     container.appendChild(bloque);
@@ -591,6 +596,7 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
 function recolectarDatosTemporadas() {
     const datos = [];
     document.querySelectorAll('.temporada-block').forEach(tempBlock => {
+        const seccion = tempBlock.querySelector('.temp-seccion').value.trim(); // <-- LÍNEA NUEVA
         const nombre = tempBlock.querySelector('.temp-nombre').value.trim();
         const imagen = tempBlock.querySelector('.temp-img').value.trim(); 
 
@@ -612,7 +618,8 @@ function recolectarDatosTemporadas() {
             });
         });
 
-        datos.push({ nombre, imagen, enlaces });
+        // <-- LÍNEA ACTUALIZADA (agregamos 'seccion')
+        datos.push({ seccion, nombre, imagen, enlaces }); 
     });
     return datos;
 }
