@@ -11,34 +11,34 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // =========================================
 const tg = window.Telegram.WebApp;
 
-// Configurar qué pasa cuando se presiona el botón nativo
+// 1. Avisar a Telegram que la app está lista
+tg.ready();
+tg.expand();
+
+// 2. Configurar el botón de retroceso UNA SOLA VEZ al inicio
 tg.BackButton.onClick(() => {
-    // Si estamos en detalle o registro, siempre volvemos al catálogo
+    // Esta función detecta si estamos en el registro o detalle y nos manda al catálogo
     cambiarVista('catalogo');
 });
 
-// 2. Actualizar la función cambiarVista para controlar el botón
+// 3. Función de navegación corregida
 function cambiarVista(vista) {
     const vCatalogo = document.getElementById('vista-catalogo');
     const vDetalle = document.getElementById('vista-detalle');
     const vRegistro = document.getElementById('vista-registro');
 
-    // Ocultamos todo primero
     vCatalogo.style.display = 'none';
     vDetalle.style.display = 'none';
     vRegistro.style.display = 'none';
 
-    // Mostramos la vista deseada
     if (vista === 'catalogo') {
         vCatalogo.style.display = 'block';
-        tg.BackButton.hide(); // Ocultar botón nativo en el inicio
-    } else if (vista === 'detalle') {
-        vDetalle.style.display = 'block';
-        tg.BackButton.show(); // Mostrar botón nativo
-        window.scrollTo(0, 0);
-    } else if (vista === 'registro') {
-        vRegistro.style.display = 'block';
-        tg.BackButton.show(); // Mostrar botón nativo
+        tg.BackButton.hide(); // Oculta la flecha en la pantalla principal
+    } else {
+        if (vista === 'detalle') vDetalle.style.display = 'block';
+        if (vista === 'registro') vRegistro.style.display = 'block';
+        
+        tg.BackButton.show(); // MUESTRA la flecha de Telegram
         window.scrollTo(0, 0);
     }
 }
