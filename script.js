@@ -500,191 +500,166 @@ function mostrarMensajeAuth(msg, color) {
 // =========================================
 
 // Crea el bloque contenedor principal (La Carpeta)
+// =========================================
+// 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES (VERSION BLINDADA)
+// =========================================
+
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
     
     const secBlock = document.createElement('div');
     secBlock.className = 'seccion-block';
-    secBlock.style.border = "1px solid #3ba4fa";
-    secBlock.style.padding = "15px";
-    secBlock.style.borderRadius = "8px";
-    secBlock.style.marginBottom = "20px";
-    secBlock.style.background = "#0f0f11";
+    secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
-            <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Creado por Universo Anime)" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
+            <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Películas / Ovas)" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
             <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
-                <i class="fa-solid fa-trash"></i> Eliminar Sección
+                <i class="fa-solid fa-trash"></i>
             </button>
         </div>
-        
         <div class="lista-temporadas"></div>
-        
         <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
-            <i class="fa-solid fa-plus"></i> Añadir Temporada a esta Sección
+            <i class="fa-solid fa-plus"></i> Añadir Bloque a esta Sección
         </button>
     `;
 
     container.appendChild(secBlock);
-
     const listaTemps = secBlock.querySelector('.lista-temporadas');
 
-    // Si estamos editando y hay temporadas, las agregamos
-    if (temporadasArray && temporadasArray.length > 0) {
-        temporadasArray.forEach(tempDatos => {
-            agregarSubTemporadaUI(listaTemps, tempDatos);
-        });
+    if (temporadasArray && Array.isArray(temporadasArray)) {
+        temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos));
     } else {
-        // Si es nuevo, agregamos un bloque de temporada vacío por defecto
         agregarSubTemporadaUI(listaTemps);
     }
 }
 
-// Crea las sub-temporadas dentro de una Sección
 function agregarSubTemporadaUI(containerLista, datos = null) {
+    if (!containerLista) return;
     const bloque = document.createElement('div');
     bloque.className = 'temporada-block';
-    bloque.style.border = "1px solid #27272a";
-    bloque.style.padding = "15px";
-    bloque.style.borderRadius = "8px";
-    bloque.style.marginBottom = "15px";
-    bloque.style.background = "#18181b";
+    bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
     bloque.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos && datos.nombre ? datos.nombre : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
+            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
             <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
-
-        <input type="text" class="temp-img" placeholder="URL de Imagen para esta temporada (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
+        <input type="text" class="temp-img" placeholder="URL Imagen Portada (Opcional)" value="${datos?.imagen || ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
         
         <div class="idiomas-container">
-            <h4 style="color: #a1a1aa; margin-bottom: 10px; font-size: 14px;"><i class="fa-solid fa-language"></i> Idiomas Disponibles</h4>
             <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
-            <button type="button" class="btn-filtro" onclick="agregarIdiomaUI(this.closest('.temporada-block').querySelector('.lista-idiomas'))" style="margin-top: 10px; padding: 8px 15px; font-size: 13px; cursor:pointer; background:#27272a; color:white; border:none; border-radius:6px;">
+            <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
                 <i class="fa-solid fa-plus"></i> Añadir Idioma
             </button>
         </div>
     `;
 
     containerLista.appendChild(bloque);
-
     const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
-    if (datos && datos.enlaces && Object.keys(datos.enlaces).length > 0) {
-        Object.entries(datos.enlaces).forEach(([idioma, capitulos]) => {
-            agregarIdiomaUI(listaIdiomas, idioma, capitulos);
-        });
+    if (datos?.enlaces) {
+        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps));
     } else {
         agregarIdiomaUI(listaIdiomas);
     }
 }
 
 function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
+    if (!containerLista) return;
     const divIdioma = document.createElement('div');
     divIdioma.className = 'idioma-bloque';
-    divIdioma.style.padding = "10px";
-    divIdioma.style.background = "#0c0c0f";
-    divIdioma.style.border = "1px solid #27272a";
-    divIdioma.style.borderRadius = "6px";
+    divIdioma.style.cssText = "padding: 10px; background: #0c0c0f; border: 1px solid #27272a; border-radius: 6px;";
 
     divIdioma.innerHTML = `
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" class="idioma-nombre" placeholder="Ej: Sub Español, Latino" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
+            <input type="text" class="idioma-nombre" placeholder="Idioma" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
             <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
-        <button type="button" onclick="agregarCapituloUI(this.closest('.idioma-bloque').querySelector('.lista-capitulos'))" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
+        <button type="button" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
             + Añadir Capítulo
         </button>
     `;
 
     containerLista.appendChild(divIdioma);
-    
     const listaCaps = divIdioma.querySelector('.lista-capitulos');
 
-    if (capitulos && Object.keys(capitulos).length > 0) {
-        Object.entries(capitulos).forEach(([capNombre, capUrl]) => {
-            agregarCapituloUI(listaCaps, capNombre, capUrl);
-        });
+    if (capitulos) {
+        Object.entries(capitulos).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u));
     } else {
         agregarCapituloUI(listaCaps);
     }
 }
 
 function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
+    if (!containerCaps) return;
     const divCap = document.createElement('div');
     divCap.className = 'capitulo-row';
     divCap.style.display = "flex";
     divCap.style.gap = "8px";
 
     divCap.innerHTML = `
-        <input type="text" class="cap-nombre" placeholder="N° / Nombre" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px; outline: none;">
-        <input type="text" class="cap-url" placeholder="Enlace (https://...)" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px; outline: none;">
-        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer; padding: 0 5px;"><i class="fa-solid fa-trash"></i></button>
+        <input type="text" class="cap-nombre" placeholder="N°" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
+        <input type="text" class="cap-url" placeholder="URL" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
+        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
     `;
-    
     containerCaps.appendChild(divCap);
 }
 
+// ESTA FUNCIÓN ES LA QUE EVITA QUE EL SISTEMA "DEJE DE RESPONDER"
 function recolectarDatosTemporadas() {
     const datos = [];
-    
-    // 1. Recorremos cada SECCIÓN
     document.querySelectorAll('.seccion-block').forEach(secBlock => {
-        const nombreSeccion = secBlock.querySelector('.sec-nombre').value.trim() || 'Principal';
+        const inputSec = secBlock.querySelector('.sec-nombre');
+        const nombreSeccion = inputSec ? inputSec.value.trim() : 'Principal';
 
-        // 2. Recorremos cada TEMPORADA dentro de esa sección
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
-            const nombre = tempBlock.querySelector('.temp-nombre').value.trim();
-            const imagen = tempBlock.querySelector('.temp-img').value.trim(); 
-
-            if (!nombre) return; 
+            const inputTemp = tempBlock.querySelector('.temp-nombre');
+            const inputImg = tempBlock.querySelector('.temp-img');
+            
+            const nombre = inputTemp ? inputTemp.value.trim() : 'Temporada';
+            const imagen = inputImg ? inputImg.value.trim() : '';
 
             const enlaces = {};
             tempBlock.querySelectorAll('.idioma-bloque').forEach(idiomaBlock => {
-                const idiomaNombre = idiomaBlock.querySelector('.idioma-nombre').value.trim();
+                const inputIdio = idiomaBlock.querySelector('.idioma-nombre');
+                const idiomaNombre = inputIdio ? inputIdio.value.trim() : '';
+                
                 if (!idiomaNombre) return;
 
                 enlaces[idiomaNombre] = {};
                 idiomaBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
-                    const capNombre = capRow.querySelector('.cap-nombre').value.trim();
-                    const capUrl = capRow.querySelector('.cap-url').value.trim();
+                    const inputCapN = capRow.querySelector('.cap-nombre');
+                    const inputCapU = capRow.querySelector('.cap-url');
+                    const cNombre = inputCapN ? inputCapN.value.trim() : '';
+                    const cUrl = inputCapU ? inputCapU.value.trim() : '';
                     
-                    if (capNombre && capUrl) {
-                        enlaces[idiomaNombre][capNombre] = capUrl;
+                    if (cNombre && cUrl) {
+                        enlaces[idiomaNombre][cNombre] = cUrl;
                     }
                 });
             });
 
-            // Guardamos el objeto final adjuntándole el nombre de la sección padre
-            datos.push({ 
-                seccion: nombreSeccion, 
-                nombre: nombre, 
-                imagen: imagen, 
-                enlaces: enlaces 
-            }); 
+            datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces });
         });
     });
-    
     return datos;
 }
 
 function cargarDatosTemporadas(temporadasFlat) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
-    
     container.innerHTML = ''; 
-    if (!temporadasFlat || temporadasFlat.length === 0) {
-        agregarSeccionUI(); 
+
+    if (!Array.isArray(temporadasFlat) || temporadasFlat.length === 0) {
+        agregarSeccionUI();
         return;
     }
 
-    // Agrupamos el array por "sección" para reconstruir las carpetas en la interfaz
     const agrupado = {};
     temporadasFlat.forEach(temp => {
         const sec = temp.seccion || 'Principal';
@@ -692,7 +667,6 @@ function cargarDatosTemporadas(temporadasFlat) {
         agrupado[sec].push(temp);
     });
 
-    // Renderizamos una Sección por cada grupo encontrado
     for (const [nombreSec, tempsArray] of Object.entries(agrupado)) {
         agregarSeccionUI(nombreSec, tempsArray);
     }
