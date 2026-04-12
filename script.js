@@ -498,10 +498,52 @@ function mostrarMensajeAuth(msg, color) {
 // =========================================
 // 11. CONSTRUCTOR VISUAL DE TEMPORADAS
 // =========================================
-function agregarTemporadaUI(datos = null) {
+
+// Crea el bloque contenedor principal (La Carpeta)
+function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
     
+    const secBlock = document.createElement('div');
+    secBlock.className = 'seccion-block';
+    secBlock.style.border = "1px solid #3ba4fa";
+    secBlock.style.padding = "15px";
+    secBlock.style.borderRadius = "8px";
+    secBlock.style.marginBottom = "20px";
+    secBlock.style.background = "#0f0f11";
+
+    secBlock.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
+            <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Creado por Universo Anime)" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
+            <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
+                <i class="fa-solid fa-trash"></i> Eliminar Sección
+            </button>
+        </div>
+        
+        <div class="lista-temporadas"></div>
+        
+        <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+            <i class="fa-solid fa-plus"></i> Añadir Temporada a esta Sección
+        </button>
+    `;
+
+    container.appendChild(secBlock);
+
+    const listaTemps = secBlock.querySelector('.lista-temporadas');
+
+    // Si estamos editando y hay temporadas, las agregamos
+    if (temporadasArray && temporadasArray.length > 0) {
+        temporadasArray.forEach(tempDatos => {
+            agregarSubTemporadaUI(listaTemps, tempDatos);
+        });
+    } else {
+        // Si es nuevo, agregamos un bloque de temporada vacío por defecto
+        agregarSubTemporadaUI(listaTemps);
+    }
+}
+
+// Crea las sub-temporadas dentro de una Sección
+function agregarSubTemporadaUI(containerLista, datos = null) {
     const bloque = document.createElement('div');
     bloque.className = 'temporada-block';
     bloque.style.border = "1px solid #27272a";
@@ -511,16 +553,14 @@ function agregarTemporadaUI(datos = null) {
     bloque.style.background = "#18181b";
 
     bloque.innerHTML = `
-    
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
-            <input type="text" class="temp-seccion" placeholder="Sección (Ej: Creado por...)" value="${datos && datos.seccion ? datos.seccion : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
             <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos && datos.nombre ? datos.nombre : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
-            <button type="button" class="btn-delete-block" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
+            <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
 
-        <input type="text" class="temp-img" placeholder="URL de Imagen para esta sección (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
+        <input type="text" class="temp-img" placeholder="URL de Imagen para esta temporada (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
         
         <div class="idiomas-container">
             <h4 style="color: #a1a1aa; margin-bottom: 10px; font-size: 14px;"><i class="fa-solid fa-language"></i> Idiomas Disponibles</h4>
@@ -529,11 +569,9 @@ function agregarTemporadaUI(datos = null) {
                 <i class="fa-solid fa-plus"></i> Añadir Idioma
             </button>
         </div>
-
-        
     `;
 
-    container.appendChild(bloque);
+    containerLista.appendChild(bloque);
 
     const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
@@ -595,45 +633,69 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
 
 function recolectarDatosTemporadas() {
     const datos = [];
-    document.querySelectorAll('.temporada-block').forEach(tempBlock => {
-        const seccion = tempBlock.querySelector('.temp-seccion').value.trim(); // <-- LÍNEA NUEVA
-        const nombre = tempBlock.querySelector('.temp-nombre').value.trim();
-        const imagen = tempBlock.querySelector('.temp-img').value.trim(); 
+    
+    // 1. Recorremos cada SECCIÓN
+    document.querySelectorAll('.seccion-block').forEach(secBlock => {
+        const nombreSeccion = secBlock.querySelector('.sec-nombre').value.trim() || 'Principal';
 
-        if (!nombre) return; 
+        // 2. Recorremos cada TEMPORADA dentro de esa sección
+        secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
+            const nombre = tempBlock.querySelector('.temp-nombre').value.trim();
+            const imagen = tempBlock.querySelector('.temp-img').value.trim(); 
 
-        const enlaces = {};
-        tempBlock.querySelectorAll('.idioma-bloque').forEach(idiomaBlock => {
-            const idiomaNombre = idiomaBlock.querySelector('.idioma-nombre').value.trim();
-            if (!idiomaNombre) return;
+            if (!nombre) return; 
 
-            enlaces[idiomaNombre] = {};
-            idiomaBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
-                const capNombre = capRow.querySelector('.cap-nombre').value.trim();
-                const capUrl = capRow.querySelector('.cap-url').value.trim();
-                
-                if (capNombre && capUrl) {
-                    enlaces[idiomaNombre][capNombre] = capUrl;
-                }
+            const enlaces = {};
+            tempBlock.querySelectorAll('.idioma-bloque').forEach(idiomaBlock => {
+                const idiomaNombre = idiomaBlock.querySelector('.idioma-nombre').value.trim();
+                if (!idiomaNombre) return;
+
+                enlaces[idiomaNombre] = {};
+                idiomaBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
+                    const capNombre = capRow.querySelector('.cap-nombre').value.trim();
+                    const capUrl = capRow.querySelector('.cap-url').value.trim();
+                    
+                    if (capNombre && capUrl) {
+                        enlaces[idiomaNombre][capNombre] = capUrl;
+                    }
+                });
             });
-        });
 
-        // <-- LÍNEA ACTUALIZADA (agregamos 'seccion')
-        datos.push({ seccion, nombre, imagen, enlaces }); 
+            // Guardamos el objeto final adjuntándole el nombre de la sección padre
+            datos.push({ 
+                seccion: nombreSeccion, 
+                nombre: nombre, 
+                imagen: imagen, 
+                enlaces: enlaces 
+            }); 
+        });
     });
+    
     return datos;
 }
 
-function cargarDatosTemporadas(temporadas) {
+function cargarDatosTemporadas(temporadasFlat) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
     
     container.innerHTML = ''; 
-    if (!temporadas || temporadas.length === 0) {
-        agregarTemporadaUI(); 
+    if (!temporadasFlat || temporadasFlat.length === 0) {
+        agregarSeccionUI(); 
         return;
     }
-    temporadas.forEach(temp => agregarTemporadaUI(temp));
+
+    // Agrupamos el array por "sección" para reconstruir las carpetas en la interfaz
+    const agrupado = {};
+    temporadasFlat.forEach(temp => {
+        const sec = temp.seccion || 'Principal';
+        if (!agrupado[sec]) agrupado[sec] = [];
+        agrupado[sec].push(temp);
+    });
+
+    // Renderizamos una Sección por cada grupo encontrado
+    for (const [nombreSec, tempsArray] of Object.entries(agrupado)) {
+        agregarSeccionUI(nombreSec, tempsArray);
+    }
 }
 
 
