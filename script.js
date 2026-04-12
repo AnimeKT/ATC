@@ -33,12 +33,15 @@ function cambiarVista(vista) {
 
     if (vista === 'catalogo') {
         vCatalogo.style.display = 'block';
-        tg.BackButton.hide(); // Oculta la flecha en la pantalla principal
+        tg.BackButton.hide(); // Aquí se oculta
     } else {
         if (vista === 'detalle') vDetalle.style.display = 'block';
         if (vista === 'registro') vRegistro.style.display = 'block';
         
-        tg.BackButton.show(); // MUESTRA la flecha de Telegram
+        // FORZAR la aparición:
+        tg.BackButton.isVisible = true; 
+        tg.BackButton.show(); 
+        
         window.scrollTo(0, 0);
     }
 }
