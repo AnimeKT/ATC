@@ -9,6 +9,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Inicializar Telegram Web App
 const tg = window.Telegram.WebApp;
+tg.ready();
 tg.expand();
 
 tg.BackButton.onClick(() => {
@@ -19,11 +20,16 @@ tg.BackButton.onClick(() => {
 // 2. Controlar cuándo se muestra y cuándo se oculta
 function actualizarBotónRetroceder(vista) {
     if (vista === 'catalogo') {
-        tg.BackButton.hide(); // Se oculta en el menú principal
+        tg.BackButton.hide(); // Se oculta en el inicio
     } else {
-        tg.BackButton.show(); // Aparece en cualquier otra pantalla (Editor, Detalles, etc.)
+        tg.BackButton.show(); // Se muestra en Editor, Detalles, etc.
     }
 }
+
+// Configura qué pasa al tocar la flecha de Telegram
+tg.BackButton.onClick(() => {
+    cambiarVista('catalogo');
+});
 
 
 // =========================================
@@ -92,7 +98,7 @@ function cambiarVista(vista) {
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     }
 
-    actualizarBotónRetroceder(pantalla);
+    actualizarBotónRetroceder(vista);
 }
 
 function volverAlCatalogo() {
