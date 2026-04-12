@@ -14,9 +14,20 @@ tg.ready();
 tg.expand();
 
 // Configurar la acción global del botón de retroceso
+let historialVistas = [];
+
+// Configurar la acción global del botón de retroceso nativo de Telegram
 tg.BackButton.onClick(() => {
-    // Si el usuario pulsa la flecha nativa de Telegram, lo mandamos al catálogo
-    cambiarVista('catalogo');
+    if (historialVistas.length > 0) {
+        // Sacamos la última vista del historial
+        const vistaAnterior = historialVistas.pop();
+        
+        // Cambiamos a esa vista, pero pasando 'false' para no volver a guardarla en el historial
+        cambiarVista(vistaAnterior, false);
+    } else {
+        // Si por alguna razón no hay historial, por seguridad vamos al catálogo
+        cambiarVista('catalogo', false);
+    }
 });
 
 // 3. Función de navegación corregida
