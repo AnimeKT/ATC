@@ -1,22 +1,23 @@
-// 1. Configuración de Supabase
+// =========================================
+// 1. CONFIGURACIÓN DE SUPABASE
+// =========================================
 const SUPABASE_URL = "https://urmnngtfoavnmvbwqepq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVybW5uZ3Rmb2F2bm12YndxZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MTE4NzcsImV4cCI6MjA5MTI4Nzg3N30.HnfoffLftMYWt2ZEkv1YEbG0vqRPWjB5IeQunj2I5cs";
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-
-
-
-// Inicializar Telegram Web App
+// =========================================
+// 2. INICIALIZAR TELEGRAM WEB APP
+// =========================================
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+// Configura qué pasa al tocar la flecha de retroceso de Telegram
 tg.BackButton.onClick(() => {
     volverAlCatalogo();
 });
 
-// 2. Controlar cuándo se muestra y cuándo se oculta
 function actualizarBotónRetroceder(vista) {
     if (vista === 'catalogo') {
         tg.BackButton.hide(); // Se oculta en el inicio
@@ -25,14 +26,9 @@ function actualizarBotónRetroceder(vista) {
     }
 }
 
-// Configura qué pasa al tocar la flecha de Telegram
-tg.BackButton.onClick(() => {
-    cambiarVista('catalogo');
-});
-
 
 // =========================================
-// ESTADO GLOBAL DE LA APP
+// 3. ESTADO GLOBAL DE LA APP
 // =========================================
 let idAnimeEnEdicion = null;
 let todasLasObras = []; 
@@ -48,9 +44,8 @@ let filtrosActuales = {
 };
 
 
-
 // =========================================
-// INICIALIZACIÓN (A PRUEBA DE MÓVILES)
+// 4. INICIALIZACIÓN
 // =========================================
 async function inicializarApp() {
     // 1. Cargamos las obras INMEDIATAMENTE para que el móvil no se quede en blanco
@@ -67,8 +62,9 @@ async function inicializarApp() {
     }
 }
 
+
 // =========================================
-// GESTIÓN DE VISTAS (Pestañas y Scroll)
+// 5. GESTIÓN DE VISTAS (Pestañas y Scroll)
 // =========================================
 function cambiarVista(vista) {
     const vistaCatalogo = document.getElementById('vista-catalogo');
@@ -76,6 +72,7 @@ function cambiarVista(vista) {
     const vistaDetalle = document.getElementById('vista-detalle');
     const barraBusqueda = document.getElementById('barra-busqueda');
 
+    // Guardar scroll solo si estamos en el catálogo
     if (vistaCatalogo.style.display !== 'none') {
         posicionScrollGuardada = window.scrollY;
     }
@@ -97,8 +94,7 @@ function cambiarVista(vista) {
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     }
 
-    
-    actualizarBotónRetroceder(nuevaVista);
+    actualizarBotónRetroceder(vista);
 }
 
 function volverAlCatalogo() {
@@ -106,8 +102,9 @@ function volverAlCatalogo() {
     cambiarVista('catalogo');
 }
 
+
 // =========================================
-// RENDERIZAR VISTA DE DETALLES
+// 6. RENDERIZAR VISTA DE DETALLES
 // =========================================
 function abrirDetalle(tituloObra) {
     tg.HapticFeedback.impactOccurred('medium');
@@ -148,8 +145,9 @@ function abrirDetalle(tituloObra) {
     cambiarVista('detalle');
 }
 
+
 // =========================================
-// JERARQUÍA DINÁMICA (Temporadas -> Idiomas -> Caps)
+// 7. JERARQUÍA DINÁMICA (Temporadas -> Idiomas -> Caps)
 // =========================================
 function iniciarNavegacionContenido(temporadasData) {
     const contenedor = document.getElementById('det-temporadas');
@@ -231,8 +229,9 @@ function abrirEnlaceTelegram(url) {
     }
 }
 
+
 // =========================================
-// FILTROS, BUSCADOR Y RENDERIZADO CATÁLOGO
+// 8. FILTROS, BUSCADOR Y RENDERIZADO CATÁLOGO
 // =========================================
 async function cargarObras() {
     const { data: obras, error } = await _supabase
@@ -260,13 +259,17 @@ function aplicarTodosLosFiltros() {
     renderizarObras(resultado);
 }
 
-document.getElementById('buscador').addEventListener('input', (e) => {
-    clearTimeout(timeoutBusqueda);
-    timeoutBusqueda = setTimeout(() => {
-        filtrosActuales.texto = e.target.value.toLowerCase();
-        aplicarTodosLosFiltros();
-    }, 300);
-});
+// Comprueba que tengas un input con el ID 'buscador' en tu HTML
+const inputBuscador = document.getElementById('buscador');
+if(inputBuscador) {
+    inputBuscador.addEventListener('input', (e) => {
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(() => {
+            filtrosActuales.texto = e.target.value.toLowerCase();
+            aplicarTodosLosFiltros();
+        }, 300);
+    });
+}
 
 function filtrar(estado, evento) {
     tg.HapticFeedback.impactOccurred('light');
@@ -279,6 +282,7 @@ function filtrar(estado, evento) {
 
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
+    if(!grid) return;
     
     if (obras.length === 0) {
         grid.innerHTML = "<p style='color: #a1a1aa; grid-column: 1 / -1; text-align: center; padding: 40px;'>No se encontraron obras...</p>";
@@ -296,7 +300,7 @@ function renderizarObras(obras) {
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="estado-badge ${claseEstado}">${estadoTexto}</div>
             
-            <img src="${obra.portada_url}" alt="${obra.titulo}">
+            <img src="${obra.portada_url}" alt="${tituloSeguro}">
             <div class="info-tarjeta">
                 <div class="titulo-tarjeta">${obra.titulo}</div>
             </div>
@@ -305,18 +309,47 @@ function renderizarObras(obras) {
     }).join('');
 }
 
-// =========================================
-// REGISTRO DE NUEVAS OBRAS
-// =========================================
 
+// =========================================
+// 9. REGISTRO Y EDICIÓN DE OBRAS
+// =========================================
 function prepararNuevoRegistro() {
     idAnimeEnEdicion = null; // Resetear ID de edición
-    document.getElementById('btn-publicar').textContent = "Publicar";
+    const btn = document.getElementById('btn-publicar');
+    if(btn) btn.textContent = "Publicar";
     
     // Limpiar inputs
     document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => i.value = '');
     
     cargarDatosTemporadas([]); 
+    cambiarVista('registro');
+}
+
+function prepararEdicionDesdeDetalle() {
+    if (!obraActual) return;
+
+    idAnimeEnEdicion = obraActual.id; // Activamos el MODO EDICIÓN
+    
+    const btnPublicar = document.getElementById('btn-publicar');
+    if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
+
+    // Llenamos los campos con los datos de la obra seleccionada
+    document.getElementById('in-titulo').value = obraActual.titulo || '';
+    document.getElementById('in-portada').value = obraActual.portada_url || '';
+    document.getElementById('in-banner').value = obraActual.banner_url || '';
+    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
+    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
+
+    if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
+    if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
+    
+    if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
+    if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
+
+    // Cargamos las temporadas en el constructor visual
+    cargarDatosTemporadas(obraActual.temporadas || []);
+
+    // Cambiamos a la vista de edición/registro
     cambiarVista('registro');
 }
 
@@ -338,7 +371,7 @@ async function ejecutarRegistro() {
         titulo: titulo,
         portada_url: portada,
         banner_url: document.getElementById('in-banner').value.trim(),
-        sinopsis: document.getElementById('in-sinopsis').value.trim(), // <--- Agregado
+        sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
         estado: document.getElementById('in-estado').value,
         tipo: document.getElementById('in-tipo').value,
         temporadas: recolectarDatosTemporadas()
@@ -365,7 +398,7 @@ async function ejecutarRegistro() {
         tg.HapticFeedback.notificationOccurred('success');
         alert(idAnimeEnEdicion ? "✅ Cambios guardados" : "✅ Publicado con éxito");
         
-        // Limpiar estado y volver
+        // Limpiar estado y volver al catálogo
         idAnimeEnEdicion = null;
         await cargarObras(); 
         cambiarVista('catalogo');
@@ -374,12 +407,13 @@ async function ejecutarRegistro() {
         alert("❌ Error: " + err.message);
     } finally {
         btn.disabled = false;
-        btn.textContent = "Publicar";
+        btn.textContent = idAnimeEnEdicion ? "Guardar Cambios" : "Publicar";
     }
 }
 
+
 // =========================================
-// SISTEMA DE AUTENTICACIÓN
+// 10. SISTEMA DE AUTENTICACIÓN
 // =========================================
 const btnAdminView = document.getElementById('btn-admin-view');
 const btnAuth = document.getElementById('btn-auth');
@@ -387,29 +421,35 @@ const authMensaje = document.getElementById('auth-mensaje');
 
 _supabase.auth.onAuthStateChange((event, session) => {
     if (session) {
-        btnAdminView.style.display = 'flex';
-        btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
-        btnAuth.onclick = cerrarSesion;
+        if(btnAdminView) btnAdminView.style.display = 'flex';
+        if(btnAuth) {
+            btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
+            btnAuth.onclick = cerrarSesion;
+        }
         cerrarModalAuth();
     } else {
-        btnAdminView.style.display = 'none';
-        btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
-        btnAuth.onclick = abrirModalAuth;
-        cambiarVista('catalogo');
+        if(btnAdminView) btnAdminView.style.display = 'none';
+        if(btnAuth) {
+            btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
+            btnAuth.onclick = abrirModalAuth;
+        }
+        // Solo cambia a catálogo si ya estaba renderizado para no pisar el inicio
+        if(todasLasObras.length > 0) cambiarVista('catalogo');
     }
 });
 
 _supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) btnAdminView.style.display = 'flex';
+    if (session && btnAdminView) btnAdminView.style.display = 'flex';
 });
 
 function abrirModalAuth() {
     document.getElementById('modal-auth').classList.add('modal-visible');
-    authMensaje.textContent = '';
+    if(authMensaje) authMensaje.textContent = '';
 }
 
 function cerrarModalAuth() {
-    document.getElementById('modal-auth').classList.remove('modal-visible');
+    const modal = document.getElementById('modal-auth');
+    if(modal) modal.classList.remove('modal-visible');
 }
 
 function obtenerEmailVirtual() {
@@ -446,20 +486,25 @@ async function cerrarSesion() {
 }
 
 function mostrarErrorAuth(msg) {
-    authMensaje.style.color = '#ef4444';
-    authMensaje.textContent = msg;
+    if(authMensaje) {
+        authMensaje.style.color = '#ef4444';
+        authMensaje.textContent = msg;
+    }
 }
 function mostrarMensajeAuth(msg, color) {
-    authMensaje.style.color = color;
-    authMensaje.textContent = msg;
+    if(authMensaje) {
+        authMensaje.style.color = color;
+        authMensaje.textContent = msg;
+    }
 }
 
-// =========================================
-// CONSTRUCTOR VISUAL DE TEMPORADAS
-// =========================================
 
+// =========================================
+// 11. CONSTRUCTOR VISUAL DE TEMPORADAS
+// =========================================
 function agregarTemporadaUI(datos = null) {
     const container = document.getElementById('builder-temporadas');
+    if(!container) return;
     
     const bloque = document.createElement('div');
     bloque.className = 'temporada-block';
@@ -472,16 +517,16 @@ function agregarTemporadaUI(datos = null) {
     bloque.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
             <input type="text" class="temp-nombre" placeholder="Nombre de Sección (Ej: Principal, Extras)" value="${datos ? datos.nombre || datos.seccion || '' : ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
-            <button type="button" class="btn-delete-block" onclick="this.closest('.temporada-block').remove()">
+            <button type="button" class="btn-delete-block" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
-        <input type="text" class="temp-img" placeholder="URL de Imagen para esta sección (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px;">
+        <input type="text" class="temp-img" placeholder="URL de Imagen para esta sección (Opcional)" value="${datos && datos.imagen ? datos.imagen : ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
         
         <div class="idiomas-container">
             <h4 style="color: #a1a1aa; margin-bottom: 10px; font-size: 14px;"><i class="fa-solid fa-language"></i> Idiomas Disponibles</h4>
             <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
-            <button type="button" class="btn-filtro" onclick="agregarIdiomaUI(this.closest('.temporada-block').querySelector('.lista-idiomas'))" style="margin-top: 10px; padding: 8px 15px; font-size: 13px;">
+            <button type="button" class="btn-filtro" onclick="agregarIdiomaUI(this.closest('.temporada-block').querySelector('.lista-idiomas'))" style="margin-top: 10px; padding: 8px 15px; font-size: 13px; cursor:pointer; background:#27272a; color:white; border:none; border-radius:6px;">
                 <i class="fa-solid fa-plus"></i> Añadir Idioma
             </button>
         </div>
@@ -510,7 +555,7 @@ function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
 
     divIdioma.innerHTML = `
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" class="idioma-nombre" placeholder="Ej: Sub Español, Latino, Castellano" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
+            <input type="text" class="idioma-nombre" placeholder="Ej: Sub Español, Latino" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
             <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
@@ -577,7 +622,10 @@ function recolectarDatosTemporadas() {
 }
 
 function cargarDatosTemporadas(temporadas) {
-    document.getElementById('builder-temporadas').innerHTML = ''; 
+    const container = document.getElementById('builder-temporadas');
+    if(!container) return;
+    
+    container.innerHTML = ''; 
     if (!temporadas || temporadas.length === 0) {
         agregarTemporadaUI(); 
         return;
@@ -585,109 +633,8 @@ function cargarDatosTemporadas(temporadas) {
     temporadas.forEach(temp => agregarTemporadaUI(temp));
 }
 
-function abrirEditorParaEditar(id) {
-    // 1. Guardamos el ID para saber que estamos editando
-    idAnimeEnEdicion = id;
 
-    // 2. Buscamos los datos del anime (asumiendo que tienes un array 'listaAnimes')
-    const anime = listaAnimes.find(a => a.id === id); 
-
-    if (!anime) return;
-
-    // 3. Llenamos los campos del formulario con los datos existentes
-    // NOTA: Asegúrate de que los selectores (ej. '#titulo') coincidan con los IDs de tus inputs
-    document.getElementById('titulo').value = anime.titulo;
-    document.getElementById('estado').value = anime.estado;
-    document.getElementById('tipo').value = anime.tipo;
-    document.getElementById('url-portada').value = anime.urlPortada;
-    document.getElementById('url-banner').value = anime.urlBanner;
-
-    // (Aquí también deberías cargar las temporadas, limpiando primero el contenedor y luego usando tu función agregarTemporadaUI con los datos)
-
-    // 4. Cambiamos el texto del botón azul para que sea intuitivo
-    const btnPublicar = document.querySelector('.btn-publicar-hub'); // Cambia por tu clase/id real
-    btnPublicar.innerText = "Guardar Cambios";
-
-    // 5. Abrimos el modal/sección del editor
-    abrirEditor(); // Llama a la función que ya usas para abrir esa pantalla
-}
-
-function prepararEdicionDesdeDetalle() {
-    if (!obraActual) return;
-
-    // 1. Guardamos el ID para saber que estamos editando y no creando uno nuevo
-    idAnimeEnEdicion = obraActual.id;
-
-    // 2. Cambiamos el texto del botón de acción
-    const btnPublicar = document.getElementById('btn-publicar');
-    btnPublicar.textContent = "Guardar Cambios";
-
-    // 3. Llenamos los campos básicos
-    document.getElementById('in-titulo').value = obraActual.titulo || '';
-    document.getElementById('in-portada').value = obraActual.portada_url || '';
-    document.getElementById('in-banner').value = obraActual.banner_url || '';
-    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
-    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
-
-    // 4. Llenamos los campos adicionales (Asegúrate de que estos IDs existan en tu HTML)
-    if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
-    if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
-    
-    // 5. Nombres alternativos
-    if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
-    if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
-
-    // 6. Cargamos las temporadas en el constructor visual
-    cargarDatosTemporadas(obraActual.temporadas || []);
-
-    // 7. Cambiamos a la vista de registro (que ahora actúa como editor)
-    cambiarVista('registro');
-}
-
-function abrirEditorDesdeDetalle() {
-    // 'obraActual' es la variable que ya usas en tu script para guardar el anime abierto
-    if (obraActual && obraActual.id) {
-        abrirEditorParaEditar(obraActual.id);
-    }
-}
-
-async function guardarAnime() {
-    // Recolectas los datos del formulario
-    const datosAnime = {
-        titulo: document.getElementById('titulo').value,
-        estado: document.getElementById('estado').value,
-        tipo: document.getElementById('tipo').value,
-        urlPortada: document.getElementById('url-portada').value,
-        urlBanner: document.getElementById('url-banner').value,
-        // ... recolección de temporadas ...
-    };
-
-    if (idAnimeEnEdicion) {
-        // MODO EDICIÓN: Actualizamos en Supabase
-        const { data, error } = await supabase
-            .from('animes') // Cambia 'animes' por el nombre real de tu tabla
-            .update(datosAnime)
-            .eq('id', idAnimeEnEdicion);
-
-        if (!error) {
-            console.log("Anime actualizado con éxito");
-        }
-    } else {
-        // MODO CREACIÓN: Insertamos nuevo en Supabase
-        const { data, error } = await supabase
-            .from('animes')
-            .insert([datosAnime]);
-            
-        if (!error) {
-            console.log("Nuevo anime publicado");
-        }
-    }
-
-    // Al terminar de guardar o editar, reiniciamos todo:
-    idAnimeEnEdicion = null;
-    document.querySelector('.btn-publicar-hub').innerText = "Publicar en el Hub";
-    // Limpiar formulario y recargar la lista de animes...
-}
-
-// Arrancar al cargar la página
+// =========================================
+// 12. ARRANQUE DEL SISTEMA
+// =========================================
 document.addEventListener('DOMContentLoaded', inicializarApp);

@@ -17,14 +17,14 @@
         
         <div class="search-bar" id="barra-busqueda">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="buscador" placeholder="Buscar">
+            <input type="text" id="buscador" placeholder="Buscar anime...">
         </div>
         
         <div class="user-actions">
             <button id="btn-admin-view" class="btn-login" style="display: none;" onclick="prepararNuevoRegistro()">
-                <i class="fa-solid fa-plus"></i> <span class="hide-mobile">Añadir Obra</span>
+                <i class="fa-solid fa-plus"></i> <span class="hide-mobile">Añadir</span>
             </button>
-            <button id="btn-auth" class="btn-login" onclick="abrirModalAuth()">
+            <button id="btn-auth" class="btn-login">
                 <i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>
             </button>
         </div>
@@ -33,10 +33,9 @@
     <div id="vista-catalogo">
         <nav class="filtros-container">
             <button class="btn-filtro active" onclick="filtrar('Todos', event)"><i class="fa-solid fa-list"></i> Todos</button>
-            <button class="btn-filtro" onclick="filtrar('En emisión', event)"><i class="fa-solid fa-play"></i> En Emisión</button>
-            <button class="btn-filtro" onclick="filtrar('Finalizado', event)"><i class="fa-solid fa-check-circle"></i> Finalizado</button>
-            <button class="btn-filtro"><i class="fa-solid fa-tags"></i> Categorías</button>
-            <button class="btn-filtro"><i class="fa-solid fa-heart"></i> Favoritos</button>
+            <button class="btn-filtro" onclick="filtrar('En emisión', event)"><i class="fa-solid fa-play"></i> Emisión</button>
+            <button class="btn-filtro" onclick="filtrar('Finalizado', event)"><i class="fa-solid fa-check-circle"></i> Finalizados</button>
+            <button class="btn-filtro"><i class="fa-solid fa-tags"></i> Géneros</button>
         </nav>
 
         <main class="contenedor">
@@ -47,14 +46,14 @@
     </div>
 
     <div id="vista-detalle" style="display: none;">
-        <button onclick="cambiarVista('catalogo')" class="btn-volver btn-flotante"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+        <button onclick="volverAlCatalogo()" class="btn-volver btn-flotante">
+            <i class="fa-solid fa-arrow-left"></i> Volver
+        </button>
 
-        <button onclick="prepararEdicionDesdeDetalle()" class="btn-editar">
+        <button id="btn-editar-obra" onclick="prepararEdicionDesdeDetalle()" class="btn-editar">
             <i class="fa-solid fa-pen"></i>
         </button>
 
-        
-        
         <div class="detalle-banner">
             <img id="det-banner" src="" alt="Banner">
             <div class="detalle-banner-overlay"></div>
@@ -75,7 +74,7 @@
                     <h3>Sinopsis</h3>
                     <p id="det-sinopsis"></p> 
 
-                    <h3 class="titulo-temporadas" style="margin-top: 20px;">Temporadas y Episodios</h3>
+                    <h3 class="titulo-temporadas" style="margin-top: 25px;">Contenido Disponible</h3>
                     <div id="det-temporadas" class="temporadas-list"></div>
                 </div>
                 
@@ -84,7 +83,7 @@
                     <div class="info-item"><span>Tipo:</span> <strong id="det-tipo"></strong></div>
                     <div class="info-item"><span>Estudio:</span> <strong id="det-estudio"></strong></div>
                     <div class="info-item"><span>Origen:</span> <strong id="det-origen"></strong></div>
-                    <div class="info-item"><span>Día emisión:</span> <strong id="det-dia"></strong></div>
+                    <div class="info-item"><span>Emisión:</span> <strong id="det-dia"></strong></div>
                     <div class="info-item"><span>Estreno:</span> <strong id="det-estreno"></strong></div>
                     <div class="info-item"><span>Autor:</span> <strong id="det-autor"></strong></div>
                 </div>
@@ -93,96 +92,108 @@
     </div>
 
     <section id="vista-registro" style="display: none;">
-    <div class="header-fijo">
-        <button class="btn-atras" onclick="volverAlCatalogo()">
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <h2 id="titulo-registro-header">Editor de Contenido</h2>
-        <button id="btn-publicar" class="btn-guardar-principal" onclick="ejecutarRegistro()">
-            Publicar
-        </button>
-    </div>
-
-    <div class="contenedor-formulario">
-        <div class="form-seccion">
-            <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
-            <div class="input-group">
-                <label>Título del Anime</label>
-                <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
-            </div>
-
-            <div class="grid-2-col">
-                <div class="input-group">
-                    <label>Nombre Japonés</label>
-                    <input type="text" id="in-japones" placeholder="Ej: 黄泉のツガイ">
-                </div>
-                <div class="input-group">
-                    <label>Nombre Inglés</label>
-                    <input type="text" id="in-ingles" placeholder="Ej: Daemons of the Shadow Realm">
-                </div>
-
-            <div class="input-group full-width">
-                <label>Sinopsis</label>
-                <textarea id="in-sinopsis" placeholder="Escribe el resumen del anime..." rows="4"></textarea>
-            </div> 
-            
-            <div class="grid-2-col">
-                <div class="input-group">
-                    <label>Estado</label>
-                    <select id="in-estado">
-                        <option value="En emisión">En emisión</option>
-                        <option value="Finalizado">Finalizado</option>
-                        <option value="Próximamente">Próximamente</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>Tipo</label>
-                    <select id="in-tipo">
-                        <option value="TV">TV</option>
-                        <option value="Película">Película</option>
-                        <option value="OVA">OVA</option>
-                    </select>
-                </div>
-            </div>
+        <div class="header-fijo">
+            <button class="btn-atras" onclick="volverAlCatalogo()">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <h2 id="titulo-registro-header">Editor de Contenido</h2>
+            <button id="btn-publicar" class="btn-guardar-principal" onclick="ejecutarRegistro()">
+                Publicar
+            </button>
         </div>
 
-        <div class="form-seccion">
-            <h3><i class="fa-solid fa-image"></i> Multimedia</h3>
-            <div class="input-group">
-                <label>URL Portada</label>
-                <input type="text" id="in-portada">
-            </div>
-            <div class="input-group">
-                <label>URL Banner</label>
-                <input type="text" id="in-banner">
-            </div>
-        </div>
-
-        <div class="form-seccion">
-            <div class="header-flex">
-                <h3><i class="fa-solid fa-list-ol"></i> Temporadas y Enlaces</h3>
-                <button type="button" class="btn-add-seccion" onclick="agregarTemporadaUI()">
-                    <i class="fa-solid fa-plus"></i> Añadir
-                </button>
-            </div>
-            <div id="builder-temporadas">
+        <div class="contenedor-formulario">
+            <div class="form-seccion">
+                <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
+                <div class="input-group">
+                    <label>Título Principal</label>
+                    <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
                 </div>
+
+                <div class="grid-2-col">
+                    <div class="input-group">
+                        <label>Nombre Japonés</label>
+                        <input type="text" id="in-japones" placeholder="Japonés">
+                    </div>
+                    <div class="input-group">
+                        <label>Nombre Inglés</label>
+                        <input type="text" id="in-ingles" placeholder="Inglés">
+                    </div>
+                </div> <div class="input-group full-width">
+                    <label>Sinopsis</label>
+                    <textarea id="in-sinopsis" placeholder="Resumen de la trama..." rows="4"></textarea>
+                </div> 
+
+                <div class="grid-2-col">
+                    <div class="input-group">
+                        <label>Estado</label>
+                        <select id="in-estado">
+                            <option value="En emisión">En emisión</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="Próximamente">Próximamente</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo</label>
+                        <select id="in-tipo">
+                            <option value="TV">TV</option>
+                            <option value="Película">Película</option>
+                            <option value="OVA">OVA</option>
+                            <option value="ONA">ONA</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2-col">
+                    <div class="input-group">
+                        <label>Estudio</label>
+                        <input type="text" id="in-estudio" placeholder="Ej: MAPPA">
+                    </div>
+                    <div class="input-group">
+                        <label>Autor</label>
+                        <input type="text" id="in-autor" placeholder="Nombre del autor">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-seccion">
+                <h3><i class="fa-solid fa-image"></i> Multimedia</h3>
+                <div class="input-group">
+                    <label>URL Portada (Vertical)</label>
+                    <input type="text" id="in-portada" placeholder="https://...">
+                </div>
+                <div class="input-group">
+                    <label>URL Banner (Horizontal)</label>
+                    <input type="text" id="in-banner" placeholder="https://...">
+                </div>
+            </div>
+
+            <div class="form-seccion">
+                <div class="header-flex">
+                    <h3><i class="fa-solid fa-list-ol"></i> Temporadas y Enlaces</h3>
+                    <button type="button" class="btn-add-seccion" onclick="agregarTemporadaUI()">
+                        <i class="fa-solid fa-plus"></i> Añadir Sección
+                    </button>
+                </div>
+                <div id="builder-temporadas">
+                    </div>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <div id="modal-auth" class="modal-oculto">
         <div class="modal-contenido modal-auth-box">
             <button class="btn-cerrar" onclick="cerrarModalAuth()"><i class="fa-solid fa-xmark"></i></button>
-            <h2 style="margin-bottom: 5px; text-align: center; color: #fff;">Acceso</h2>
-            <p style="text-align: center; color: #a1a1aa; font-size: 13px; margin-bottom: 20px;">Tu cuenta de Telegram se detectará automáticamente.</p>
-            <div class="form-group" style="grid-template-columns: 1fr;">
-                <input type="password" id="auth-password" placeholder="Ingresa tu contraseña" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #27272a; background-color: #0f0f11; color: #fff; outline: none; transition: 0.3s;">
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button onclick="iniciarSesion()" class="btn-enviar" style="flex: 1; margin-top: 0;">Entrar</button>
-                    <button onclick="registrarUsuario()" class="btn-filtro active" style="flex: 1; justify-content: center; height: 100%;">Vincular Clave</button>
+            <h2>Acceso Admin</h2>
+            <p style="text-align: center; color: #a1a1aa; font-size: 13px; margin-bottom: 20px;">Vincula tu cuenta para gestionar contenido.</p>
+            
+            <div class="form-group">
+                <input type="password" id="auth-password" placeholder="Ingresa tu contraseña">
+                <div class="auth-buttons-row">
+                    <button onclick="iniciarSesion()" class="btn-enviar">Entrar</button>
+                    <button onclick="registrarUsuario()" class="btn-vincular">Vincular Clave</button>
                 </div>
-                <p id="auth-mensaje" style="color: #ef4444; text-align: center; font-size: 14px; margin-top: 10px;"></p>
+                <p id="auth-mensaje"></p>
             </div>
         </div>
     </div>
