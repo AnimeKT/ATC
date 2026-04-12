@@ -16,16 +16,16 @@ tg.expand();
 // Configurar la acción global del botón de retroceso
 let historialVistas = [];
 
-// Configurar la acción global del botón de retroceso nativo de Telegram
+// 2. Configuración del botón de retroceso nativo de Telegram
 tg.BackButton.onClick(() => {
     if (historialVistas.length > 0) {
-        // Sacamos la última vista del historial
+        // Sacamos la última vista guardada
         const vistaAnterior = historialVistas.pop();
         
-        // Cambiamos a esa vista, pero pasando 'false' para no volver a guardarla en el historial
+        // Cambiamos a esa vista pasando 'false' para que no se guarde en el historial otra vez
         cambiarVista(vistaAnterior, false);
     } else {
-        // Si por alguna razón no hay historial, por seguridad vamos al catálogo
+        // Si no hay historial, por seguridad vamos al inicio
         cambiarVista('catalogo', false);
     }
 });
@@ -35,7 +35,7 @@ function cambiarVista(vista, guardarEnHistorial = true) {
     const vistas = ['catalogo', 'detalle', 'registro'];
     let vistaActual = null;
 
-    // 1. Identificar qué vista está visible actualmente antes de cambiar
+    // Detectar qué vista está abierta actualmente antes de cambiar
     vistas.forEach(v => {
         const el = document.getElementById(`vista-${v}`);
         if (el && !el.classList.contains('oculto')) {
@@ -43,33 +43,34 @@ function cambiarVista(vista, guardarEnHistorial = true) {
         }
     });
 
-    // 2. Si debemos guardar historial y la vista actual es distinta a la nueva
+    // Solo guardamos en el historial si: 
+    // - El parámetro guardarEnHistorial es true
+    // - Estamos cambiando a una vista diferente
     if (guardarEnHistorial && vistaActual && vistaActual !== vista) {
         historialVistas.push(vistaActual);
     }
 
-    // 3. Ocultar todas las vistas
+    // Ocultar todas las vistas y mostrar la nueva
     vistas.forEach(v => {
         const el = document.getElementById(`vista-${v}`);
-        if (el) el.classList.add('oculto');
+        if (el) {
+            if (v === vista) {
+                el.classList.remove('oculto');
+            } else {
+                el.classList.add('oculto');
+            }
+        }
     });
 
-    // 4. Mostrar la vista seleccionada
-    const vistaDestino = document.getElementById(`vista-${vista}`);
-    if (vistaDestino) {
-        vistaDestino.classList.remove('oculto');
-    }
-
-    // 5. Lógica inteligente del botón de retroceso
-    // Si estamos en el catálogo, vaciamos historial y escondemos el botón
+    // Lógica del botón de retroceso
     if (vista === 'catalogo') {
-        historialVistas = []; 
+        historialVistas = []; // Limpiamos historial al volver al inicio
         tg.BackButton.hide();
     } else {
-        tg.BackButton.show();
+        tg.BackButton.show(); // Mostramos el botón en Detalle o Registro
     }
 
-    // Scroll al inicio al cambiar de pantalla
+    // Subir al inicio de la página automáticamente
     window.scrollTo(0, 0);
 }
 
