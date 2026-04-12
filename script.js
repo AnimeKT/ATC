@@ -42,6 +42,42 @@ async function inicializarApp() {
     }
 }
 
+///////////Esto es para borrar boton
+
+let toqueInicioX = 0;
+let toqueFinX = 0;
+
+// Distancia mínima en píxeles para que se considere un "deslizamiento" intencional
+const umbralDeslizamiento = 90; 
+
+function procesarGesto() {
+    const distanciaX = toqueFinX - toqueInicioX;
+
+    // Si deslizó hacia la derecha más allá del umbral
+    if (distanciaX > umbralDeslizamiento) {
+        
+        // Verificamos si NO estamos en la vista principal (catálogo)
+        // Ajusta los IDs si tus vistas se llaman distinto
+        const vistaCatalogo = document.getElementById('vista-catalogo');
+        
+        if (vistaCatalogo && vistaCatalogo.style.display === 'none') {
+            // Si estamos en otra vista (detalle, registro, etc.), volvemos al catálogo
+            cambiarVista('catalogo');
+        }
+    }
+}
+
+// Escuchar cuando el usuario toca la pantalla
+document.addEventListener('touchstart', function(event) {
+    toqueInicioX = event.changedTouches[0].screenX;
+}, false);
+
+// Escuchar cuando el usuario suelta la pantalla
+document.addEventListener('touchend', function(event) {
+    toqueFinX = event.changedTouches[0].screenX;
+    procesarGesto();
+}, false);
+
 // =========================================
 // GESTIÓN DE VISTAS (Pestañas y Scroll)
 // =========================================

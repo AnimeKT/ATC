@@ -93,6 +93,10 @@ body {
     border: 1px solid #27272a; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
+.btn-volver {
+    display: none !important;
+}
+
 .form-grid-complex {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
