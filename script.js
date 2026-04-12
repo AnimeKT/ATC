@@ -13,8 +13,7 @@ tg.ready();
 tg.expand();
 
 tg.BackButton.onClick(() => {
-    // Aquí pones la función que usas para volver, por ejemplo:
-    cambiarVista('catalogo'); 
+    volverAlCatalogo();
 });
 
 // 2. Controlar cuándo se muestra y cuándo se oculta
@@ -98,7 +97,8 @@ function cambiarVista(vista) {
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     }
 
-    actualizarBotónRetroceder(vista);
+    
+    actualizarBotónRetroceder(nuevaVista);
 }
 
 function volverAlCatalogo() {
