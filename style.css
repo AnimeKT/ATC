@@ -684,7 +684,7 @@ body {
 #vista-registro {
     background-color: #0f0f11; 
     min-height: 100vh; 
-    padding-top: 80px; 
+    padding-top: 20px; 
     position: relative;
 }
 
@@ -716,6 +716,7 @@ body {
 }
 
 .form-seccion h3 {
+    margin-top: 0;
     font-size: 14px; 
     color: #3ba4fa; 
     margin-bottom: 15px; 
@@ -886,3 +887,4 @@ body {
     
     .detalle-banner { height: 300px; }
 }
+
