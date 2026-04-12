@@ -4,9 +4,27 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+
+
+
 // Inicializar Telegram Web App
 const tg = window.Telegram.WebApp;
 tg.expand();
+
+tg.BackButton.onClick(() => {
+    // Aquí pones la función que usas para volver, por ejemplo:
+    cambiarVista('catalogo'); 
+});
+
+// 2. Controlar cuándo se muestra y cuándo se oculta
+function actualizarBotónRetroceder(vista) {
+    if (vista === 'catalogo') {
+        tg.BackButton.hide(); // Se oculta en el menú principal
+    } else {
+        tg.BackButton.show(); // Aparece en cualquier otra pantalla (Editor, Detalles, etc.)
+    }
+}
+
 
 // =========================================
 // ESTADO GLOBAL DE LA APP
@@ -23,6 +41,8 @@ let filtrosActuales = {
     estado: 'Todos',
     soloFavoritos: false
 };
+
+
 
 // =========================================
 // INICIALIZACIÓN (A PRUEBA DE MÓVILES)
@@ -41,42 +61,6 @@ async function inicializarApp() {
         });
     }
 }
-
-///////////Esto es para borrar boton
-
-let toqueInicioX = 0;
-let toqueFinX = 0;
-
-// Distancia mínima en píxeles para que se considere un "deslizamiento" intencional
-const umbralDeslizamiento = 90; 
-
-function procesarGesto() {
-    const distanciaX = toqueFinX - toqueInicioX;
-
-    // Si deslizó hacia la derecha más allá del umbral
-    if (distanciaX > umbralDeslizamiento) {
-        
-        // Verificamos si NO estamos en la vista principal (catálogo)
-        // Ajusta los IDs si tus vistas se llaman distinto
-        const vistaCatalogo = document.getElementById('vista-catalogo');
-        
-        if (vistaCatalogo && vistaCatalogo.style.display === 'none') {
-            // Si estamos en otra vista (detalle, registro, etc.), volvemos al catálogo
-            cambiarVista('catalogo');
-        }
-    }
-}
-
-// Escuchar cuando el usuario toca la pantalla
-document.addEventListener('touchstart', function(event) {
-    toqueInicioX = event.changedTouches[0].screenX;
-}, false);
-
-// Escuchar cuando el usuario suelta la pantalla
-document.addEventListener('touchend', function(event) {
-    toqueFinX = event.changedTouches[0].screenX;
-    procesarGesto();
-}, false);
 
 // =========================================
 // GESTIÓN DE VISTAS (Pestañas y Scroll)
@@ -107,6 +91,8 @@ function cambiarVista(vista) {
         barraBusqueda.style.display = 'block';
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     }
+
+    actualizarBotónRetroceder(pantalla);
 }
 
 function volverAlCatalogo() {
@@ -699,19 +685,3 @@ async function guardarAnime() {
 
 // Arrancar al cargar la página
 document.addEventListener('DOMContentLoaded', inicializarApp);
-
-let touchStartX = 0;
-
-document.addEventListener('touchstart', e => {
-    touchStartX = e.changedTouches[0].screenX;
-});
-
-document.addEventListener('touchend', e => {
-    let touchEndX = e.changedTouches[0].screenX;
-    // Si deslizas más de 100px de izquierda a derecha
-    if (touchEndX - touchStartX > 100) {
-        if (document.getElementById('vista-catalogo').style.display === 'none') {
-            cambiarVista('catalogo');
-        }
-    }
-});

@@ -25,7 +25,7 @@ body {
     position: sticky; top: 0; z-index: 900;
 }
 
-.logo h1 { font-size: 22px; color: #e7e7e7; white-space: nowrap; cursor: pointer;}
+.logo h1 { font-size: 22px; color: #fff; white-space: nowrap; cursor: pointer;}
 .logo span { color: #3ba4fa; }
 
 .search-bar { 
@@ -91,10 +91,6 @@ body {
 .admin-panel {
     background-color: #18181b; padding: 25px; border-radius: 12px;
     border: 1px solid #27272a; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-.btn-volver {
-    display: none !important;
 }
 
 .form-grid-complex {
@@ -506,51 +502,4 @@ body {
         padding: 20px; border-radius: 12px; border: 1px solid #27272a;
     }
     .detalle-banner { height: 300px; }
-}
-
-/* Contenedor principal del encabezado */
-.header-telegram {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    gap: 15px;
-    background-color: #000000; /* Fondo negro para que resalte el botón */
-}
-
-/* El botón estilo BotFather */
-.botfather-back {
-    width: 32px; /* Tamaño cuadrado */
-    height: 32px;
-    background-color: #ffffff; /* Fondo blanco puro */
-    color: #000000; /* Icono negro */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px; /* Bordes suavemente redondeados */
-    cursor: pointer;
-    flex-shrink: 0; /* Para que no se deforme */
-}
-
-.botfather-back i {
-    font-size: 16px;
-    font-weight: bold;
-}
-
-/* Título al lado del botón */
-.header-title {
-    color: white;
-    font-size: 18px;
-    font-weight: 600;
-    flex-grow: 1;
-}
-
-/* Estilo para el botón de Guardar que está a la derecha */
-.btn-guardar-top {
-    background-color: #248bf2;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
 }

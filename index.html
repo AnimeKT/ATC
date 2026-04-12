@@ -93,12 +93,14 @@
     </div>
 
     <section id="vista-registro" style="display: none;">
-    <div class="header-telegram">
-    <div class="botfather-back" onclick="cambiarVista('catalogo')">
-        <i class="fa-solid fa-chevron-left"></i>
-    </div>
-        <span class="header-title">Editor de Contenido</span>
-        <button class="btn-guardar-top" onclick="ejecutarRegistro()">Guardar Cambios</button>
+    <div class="header-fijo">
+        <button class="btn-atras" onclick="volverAlCatalogo()">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <h2 id="titulo-registro-header">Editor de Contenido</h2>
+        <button id="btn-publicar" class="btn-guardar-principal" onclick="ejecutarRegistro()">
+            Publicar
+        </button>
     </div>
 
     <div class="contenedor-formulario">
@@ -107,17 +109,6 @@
             <div class="input-group">
                 <label>Título del Anime</label>
                 <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
-            </div>
-
-            <div class="grid-2-col">
-                <div class="input-group">
-                    <label>Nombre Japonés</label>
-                    <input type="text" id="in-japones" placeholder="Ej: 黄泉のツガイ">
-                </div>
-                <div class="input-group">
-                    <label>Nombre Inglés</label>
-                    <input type="text" id="in-ingles" placeholder="Ej: Daemons of the Shadow Realm">
-                </div>
             </div>
 
             <div class="input-group full-width">
