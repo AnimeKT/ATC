@@ -699,3 +699,19 @@ async function guardarAnime() {
 
 // Arrancar al cargar la página
 document.addEventListener('DOMContentLoaded', inicializarApp);
+
+let touchStartX = 0;
+
+document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', e => {
+    let touchEndX = e.changedTouches[0].screenX;
+    // Si deslizas más de 100px de izquierda a derecha
+    if (touchEndX - touchStartX > 100) {
+        if (document.getElementById('vista-catalogo').style.display === 'none') {
+            cambiarVista('catalogo');
+        }
+    }
+});
