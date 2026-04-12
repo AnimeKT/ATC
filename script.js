@@ -10,14 +10,12 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // 2. INICIALIZAR TELEGRAM WEB APP
 // =========================================
 const tg = window.Telegram.WebApp;
-
-// 1. Avisar a Telegram que la app está lista
 tg.ready();
 tg.expand();
 
-// 2. Configurar el botón de retroceso UNA SOLA VEZ al inicio
+// Configurar la acción global del botón de retroceso
 tg.BackButton.onClick(() => {
-    // Esta función detecta si estamos en el registro o detalle y nos manda al catálogo
+    // Si el usuario pulsa la flecha nativa de Telegram, lo mandamos al catálogo
     cambiarVista('catalogo');
 });
 
@@ -28,36 +26,33 @@ function cambiarVista(vista) {
     const vistaDetalle = document.getElementById('vista-detalle');
     const barraBusqueda = document.getElementById('barra-busqueda');
 
-    // Guardar scroll solo si salimos del catálogo
+    // 1. Guardar scroll si salimos del catálogo
     if (vistaCatalogo.style.display !== 'none') {
         posicionScrollGuardada = window.scrollY;
     }
 
-    // Ocultar todo por defecto
+    // 2. Ocultar todas las vistas
     vistaCatalogo.style.display = 'none';
     vistaRegistro.style.display = 'none';
     vistaDetalle.style.display = 'none';
     barraBusqueda.style.display = 'none';
 
+    // 3. Lógica de visibilidad y Botón de Telegram
     if (vista === 'catalogo') {
-        // --- VISTA CATÁLOGO ---
         vistaCatalogo.style.display = 'block';
         barraBusqueda.style.display = 'block';
         
-        // Ocultamos el botón nativo de Telegram
+        // OCULTAR botón en el catálogo
         tg.BackButton.hide();
         
         // Recuperar scroll
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
-
     } else {
-        // --- VISTA DETALLE O REGISTRO ---
+        // MOSTRAR botón en cualquier otra vista (detalle o registro)
         if (vista === 'registro') vistaRegistro.style.display = 'block';
         if (vista === 'detalle') vistaDetalle.style.display = 'block';
 
-        // MOSTRAR el botón nativo de Telegram
         tg.BackButton.show();
-        
         window.scrollTo(0, 0);
     }
 }
@@ -96,41 +91,6 @@ async function inicializarApp() {
             }
         });
     }
-}
-
-
-// =========================================
-// 5. GESTIÓN DE VISTAS (Pestañas y Scroll)
-// =========================================
-function cambiarVista(vista) {
-    const vistaCatalogo = document.getElementById('vista-catalogo');
-    const vistaRegistro = document.getElementById('vista-registro');
-    const vistaDetalle = document.getElementById('vista-detalle');
-    const barraBusqueda = document.getElementById('barra-busqueda');
-
-    // Guardar scroll solo si estamos en el catálogo
-    if (vistaCatalogo.style.display !== 'none') {
-        posicionScrollGuardada = window.scrollY;
-    }
-
-    vistaCatalogo.style.display = 'none';
-    vistaRegistro.style.display = 'none';
-    vistaDetalle.style.display = 'none';
-    barraBusqueda.style.display = 'none';
-
-    if (vista === 'registro') {
-        vistaRegistro.style.display = 'block';
-        window.scrollTo(0, 0);
-    } else if (vista === 'detalle') {
-        vistaDetalle.style.display = 'block';
-        window.scrollTo(0, 0);
-    } else {
-        vistaCatalogo.style.display = 'block';
-        barraBusqueda.style.display = 'block';
-        setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
-    }
-
-    actualizarBotónRetroceder(vista);
 }
 
 function volverAlCatalogo() {
