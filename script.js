@@ -23,24 +23,40 @@ tg.BackButton.onClick(() => {
 
 // 3. Función de navegación corregida
 function cambiarVista(vista) {
-    const vCatalogo = document.getElementById('vista-catalogo');
-    const vDetalle = document.getElementById('vista-detalle');
-    const vRegistro = document.getElementById('vista-registro');
+    const vistaCatalogo = document.getElementById('vista-catalogo');
+    const vistaRegistro = document.getElementById('vista-registro');
+    const vistaDetalle = document.getElementById('vista-detalle');
+    const barraBusqueda = document.getElementById('barra-busqueda');
 
-    vCatalogo.style.display = 'none';
-    vDetalle.style.display = 'none';
-    vRegistro.style.display = 'none';
+    // Guardar scroll solo si salimos del catálogo
+    if (vistaCatalogo.style.display !== 'none') {
+        posicionScrollGuardada = window.scrollY;
+    }
+
+    // Ocultar todo por defecto
+    vistaCatalogo.style.display = 'none';
+    vistaRegistro.style.display = 'none';
+    vistaDetalle.style.display = 'none';
+    barraBusqueda.style.display = 'none';
 
     if (vista === 'catalogo') {
-        vCatalogo.style.display = 'block';
-        tg.BackButton.hide(); // Aquí se oculta
-    } else {
-        if (vista === 'detalle') vDetalle.style.display = 'block';
-        if (vista === 'registro') vRegistro.style.display = 'block';
+        // --- VISTA CATÁLOGO ---
+        vistaCatalogo.style.display = 'block';
+        barraBusqueda.style.display = 'block';
         
-        // FORZAR la aparición:
-        tg.BackButton.isVisible = true; 
-        tg.BackButton.show(); 
+        // Ocultamos el botón nativo de Telegram
+        tg.BackButton.hide();
+        
+        // Recuperar scroll
+        setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
+
+    } else {
+        // --- VISTA DETALLE O REGISTRO ---
+        if (vista === 'registro') vistaRegistro.style.display = 'block';
+        if (vista === 'detalle') vistaDetalle.style.display = 'block';
+
+        // MOSTRAR el botón nativo de Telegram
+        tg.BackButton.show();
         
         window.scrollTo(0, 0);
     }
