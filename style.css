@@ -917,3 +917,135 @@ body {
     .detalle-banner { height: 300px; }
 }
 
+
+/* =========================================
+   DISEÑO MODAL AUTH PRO
+   ========================================= */
+
+/* Contenedor principal (El fondo oscuro) */
+#modal-auth {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Fondo semi-transparente */
+    backdrop-filter: blur(8px); /* Desenfoque de fondo muy moderno */
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+/* Cuando está oculto */
+#modal-auth.modal-oculto {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* La tarjeta blanca/oscura del centro */
+.modal-auth-box {
+    background-color: #18181b; /* Gris muy oscuro, como el navbar */
+    width: 90%;
+    max-width: 360px;
+    padding: 30px;
+    border-radius: 16px;
+    border: 1px solid #27272a;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    position: relative;
+    animation: slideUp 0.3s ease-out; /* Animación de entrada */
+}
+
+/* Botón X de cerrar */
+.btn-cerrar {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #a1a1aa;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.btn-cerrar:hover {
+    color: #fff;
+    transform: scale(1.1);
+}
+
+/* Títulos y textos */
+.modal-auth-box h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+    text-align: center;
+    color: #fff;
+}
+
+/* El input de contraseña */
+#auth-password {
+    width: 100%;
+    padding: 12px 15px;
+    background: #0f0f11;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 20px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#auth-password:focus {
+    border-color: #3ba4fa; /* Color azul de tu logo */
+}
+
+/* Fila de botones */
+.auth-buttons-row {
+    display: grid;
+    grid-template-columns: 1fr; /* Uno encima de otro en móvil para mejor click */
+    gap: 10px;
+}
+
+/* Botones base */
+.auth-buttons-row button {
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.auth-buttons-row button:active {
+    transform: scale(0.98);
+}
+
+/* Botón Entrar (Principal) */
+.btn-enviar {
+    background: #3ba4fa;
+    color: white;
+}
+
+/* Botón Vincular (Secundario) */
+.btn-vincular {
+    background: #27272a;
+    color: #e4e4e7;
+    font-size: 13px;
+}
+
+/* Mensajes de error/éxito */
+#auth-mensaje {
+    margin-top: 15px;
+    font-size: 13px;
+    text-align: center;
+    min-height: 18px;
+}
+
+/* Animación de entrada */
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

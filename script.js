@@ -445,20 +445,28 @@ const btnAuth = document.getElementById('btn-auth');
 const authMensaje = document.getElementById('auth-mensaje');
 
 _supabase.auth.onAuthStateChange((event, session) => {
+    const isAdmin = !!session; // Truco: si hay sesión es true, si no false
+    const btnAdminView = document.getElementById('btn-admin-view');
+    const btnEdit = document.getElementById('btn-edit-serie'); // El botón del lápiz
+    const btnAuth = document.getElementById('btn-auth');
+
+    // Controlamos el botón "Añadir"
+    if(btnAdminView) btnAdminView.style.display = isAdmin ? 'flex' : 'none';
+    
+    // Controlamos el botón "Editar" (Lápiz)
+    if(btnEdit) btnEdit.style.display = isAdmin ? 'flex' : 'none';
+
     if (session) {
-        if(btnAdminView) btnAdminView.style.display = 'flex';
         if(btnAuth) {
             btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
             btnAuth.onclick = cerrarSesion;
         }
         cerrarModalAuth();
     } else {
-        if(btnAdminView) btnAdminView.style.display = 'none';
         if(btnAuth) {
             btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
             btnAuth.onclick = abrirModalAuth;
         }
-        // Solo cambia a catálogo si ya estaba renderizado para no pisar el inicio
         if(todasLasObras.length > 0) cambiarVista('catalogo');
     }
 });
@@ -468,13 +476,22 @@ _supabase.auth.getSession().then(({ data: { session } }) => {
 });
 
 function abrirModalAuth() {
-    document.getElementById('modal-auth').classList.add('modal-visible');
-    if(authMensaje) authMensaje.textContent = '';
+    const modal = document.getElementById('modal-auth');
+    if (modal) {
+        modal.classList.remove('modal-oculto');
+        // Esto limpia el input por si acaso
+        document.getElementById('auth-password').value = "";
+        document.getElementById('auth-mensaje').innerText = "";
+    }
 }
 
 function cerrarModalAuth() {
     const modal = document.getElementById('modal-auth');
-    if(modal) modal.classList.remove('modal-visible');
+    if (modal) {
+        modal.classList.add('modal-oculto');
+        // Opcional: limpiar la clave al cerrar
+        document.getElementById('auth-password').value = "";
+    }
 }
 
 function obtenerEmailVirtual() {

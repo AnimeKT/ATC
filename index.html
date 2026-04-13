@@ -47,8 +47,8 @@
 
     <div id="vista-detalle" style="display: none;">
 
-        <button id="btn-editar-obra" onclick="prepararEdicionDesdeDetalle()" class="btn-editar">
-            <i class="fa-solid fa-pen"></i>
+        <button id="btn-edit-serie" onclick="prepararEdicionDesdeDetalle()" style="display: none;">
+            <i class="fa-solid fa-pencil"></i>
         </button>
 
         <div class="detalle-banner">
@@ -192,14 +192,14 @@
     <div id="modal-auth" class="modal-oculto">
         <div class="modal-contenido modal-auth-box">
             <button class="btn-cerrar" onclick="cerrarModalAuth()"><i class="fa-solid fa-xmark"></i></button>
-            <h2>Acceso Admin</h2>
-            <p style="text-align: center; color: #a1a1aa; font-size: 13px; margin-bottom: 20px;">Vincula tu cuenta para gestionar contenido.</p>
+            <h2>Crea tu Cuenta</h2>
+            <p style="text-align: center; color: #a1a1aa; font-size: 13px; margin-bottom: 20px;">Guarda tu contraseña en un lugar seguro</p>
             
             <div class="form-group">
                 <input type="password" id="auth-password" placeholder="Ingresa tu contraseña">
                 <div class="auth-buttons-row">
                     <button onclick="iniciarSesion()" class="btn-enviar">Entrar</button>
-                    <button onclick="registrarUsuario()" class="btn-vincular">Vincular Clave</button>
+                    <button onclick="registrarUsuario()" class="btn-vincular">Registrar Contraseña</button>
                 </div>
                 <p id="auth-mensaje"></p>
             </div>
