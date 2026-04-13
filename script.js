@@ -307,7 +307,7 @@ function filtrar(estado, evento) {
     filtrosActuales.estado = estado;
     aplicarTodosLosFiltros();
 }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
     if(!grid) return;
@@ -318,25 +318,22 @@ function renderizarObras(obras) {
     }
 
     grid.innerHTML = obras.map(obra => {
-        const claseEstado = obra.estado === 'Finalizado' ? 'estado-finalizado' : 'estado-emision';
-        const estadoTexto = obra.estado || 'En emisión';
-        
-        // Evitamos que comillas raras rompan el HTML en celulares
+        // Evitamos que comillas raras rompan el HTML
         const tituloSeguro = obra.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
 
-       return `
+        // CAMBIO AQUÍ: Añadimos el div "tipo-tag" y quitamos las variables de estado que ya no usas
+        return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
-            <div class="estado-badge ${claseEstado}">${estadoTexto}</div>
-            
+            <div class="tipo-tag">${obra.tipo || 'Anime'}</div> 
             <img src="${obra.portada_url}" alt="${tituloSeguro}">
             <div class="info-tarjeta">
                 <div class="titulo-tarjeta">${obra.titulo}</div>
             </div>
         </div>
-    `;
+        `;
     }).join('');
 }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // =========================================
 // 9. REGISTRO Y EDICIÓN DE OBRAS

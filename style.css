@@ -277,26 +277,41 @@ body {
 }
 
 .tarjeta-anime {
-    background-color: #18181b; 
-    border-radius: 10px; 
+    position: relative;
+    border-radius: 8px; /* Bordes un poco más cerrados como la imagen */
     overflow: hidden;
-    transition: all 0.3s ease; 
-    border: 1px solid #27272a; 
-    position: relative; 
     cursor: pointer;
+    transition: transform 0.2s;
+    background-color: #18181b;
+    aspect-ratio: 2 / 3;
+}
+
+.tipo-tag {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro semi-transparente */
+    color: #fff;
+    font-size: 9px; /* Muy pequeño como en la referencia */
+    padding: 2px 6px;
+    border-radius: 4px;
+    z-index: 10;
+    text-transform: uppercase;
+    font-weight: 600;
+    backdrop-filter: blur(2px); /* Efecto cristal para más nivel */
 }
 
 .tarjeta-anime:hover {
     transform: translateY(-5px); 
     box-shadow: 0 10px 20px rgba(0,0,0,0.8);
-    border-color: #3ba4fa;
+    border-color: #2ba0ff;
 }
 
-.tarjeta-anime img { 
-    width: 100%; 
-    height: auto;
-    aspect-ratio: 2 / 3;
-    object-fit: cover; 
+.tarjeta-anime img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .btn-editar {
@@ -335,15 +350,28 @@ body {
 .estado-emision { background-color: rgba(16, 185, 129, 0.9); } 
 .estado-finalizado { background-color: rgba(239, 68, 68, 0.9); } 
 
-.info-tarjeta { padding: 10px; }
+.info-tarjeta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 5px 6px 5px; /* Más espacio arriba para que el degradado no corte letras */
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9) 70%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 .titulo-tarjeta {
-    font-weight: 600; 
-    color: #fff; 
-    font-size: 13px;
-    white-space: nowrap; 
-    overflow: hidden; 
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 /* =========================================
@@ -853,16 +881,17 @@ body {
         gap: 15px;
     }
     
-    .grid-animes { 
-        grid-template-columns: repeat(3, 1fr); 
+    .grid-animes {
+        grid-template-columns: repeat(3, 1fr);
         gap: 8px;
     }
     
-    .titulo-tarjeta { 
-        font-size: 11px; 
-        padding: 8px 5px; 
-        text-align: center;
+    .titulo-tarjeta {
+        font-size: 10px; /* Un pelín más pequeño en móviles */
+        padding: 0;
     }
+
+
 }
 
 @media (orientation: landscape) and (min-width: 600px), (min-width: 900px) {
