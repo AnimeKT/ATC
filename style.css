@@ -315,23 +315,35 @@ body {
 }
 
 .btn-editar {
-    position: absolute; 
-    top: 12px; 
-    right: 12px; 
-    z-index: 10; 
-    background: #18181b; 
-    color: #a1a1aa;
-    border: 1px solid #27272a;
-    padding: 8px 12px;
-    border-radius: 6px;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100; /* Asegura que esté por encima de todo */
+    background: rgba(24, 24, 27, 0.8); /* Fondo oscuro semi-transparente */
+    backdrop-filter: blur(10px);
+    color: #3ba4fa; /* Color azul de tu marca */
+    border: 1px solid rgba(59, 164, 250, 0.3);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%; /* Lo hace circular */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .btn-editar:hover {
-    color: #3ba4fa;
+    transform: scale(1.1) rotate(10deg); /* Pequeño efecto de giro */
+    background: #3ba4fa;
+    color: #fff;
     border-color: #3ba4fa;
-    background: #1f1f23;
+    box-shadow: 0 0 20px rgba(59, 164, 250, 0.4);
+}
+
+.btn-editar i {
+    font-size: 18px;
 }
 
 .estado-badge {
@@ -525,7 +537,7 @@ body {
     background-color: #050505;
     min-height: 100vh;
     animation: fadeIn 0.4s ease-out;
-    position: relative;
+    position: relative; /* CRÍTICO: Esto mantiene al botón en su sitio */
     padding-bottom: 40px;
 }
 
@@ -809,6 +821,13 @@ body {
    MEDIA QUERIES (RESPONSIVE)
    ========================================= */
 @media (max-width: 768px) {
+
+    .btn-editar {
+        top: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+    }
     .navbar { 
         flex-wrap: wrap; 
         padding: 10px 15px; 
