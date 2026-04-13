@@ -135,41 +135,51 @@ function volverAlCatalogo() {
 // 6. RENDERIZAR VISTA DE DETALLES
 // =========================================
 function abrirDetalle(tituloObra) {
+    // 1. Feedback háptico y búsqueda de la obra
     tg.HapticFeedback.impactOccurred('medium');
-    obraActual = todasLasObras.find(o => o.titulo === tituloObra);
-    if (!obraActual) return;
+    const obra = todasLasObras.find(o => o.titulo === tituloObra);
+    if (!obra) return;
 
-    // Poblar datos con protección por si falta algún dato en la base de datos
-    document.getElementById('det-banner').src = obraActual.banner_url || obraActual.portada_url || '';
+    obraActual = obra; // Guardamos la referencia global
+
+    // 2. Asignar imágenes (Soporta links de Telegram o URLs normales)
+    document.getElementById('det-banner').src = obra.banner_url || obra.portada_url || '';
     const imgPort = document.getElementById('det-portada');
-    imgPort.src = obraActual.portada_url || '';
+    imgPort.src = obra.portada_url || '';
     imgPort.style.opacity = 1;
-    document.getElementById('det-titulo').textContent = obraActual.titulo || 'Sin título';
+
+    // 3. Títulos y nombres alternativos
+    document.getElementById('det-titulo').textContent = obra.titulo || 'Sin título';
     
-    // Nombres alternativos seguros
     let nombresAlt = [];
-    if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
-    if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
+    if(obra.nombres_alternativos?.Japonés) nombresAlt.push(obra.nombres_alternativos.Japonés);
+    if(obra.nombres_alternativos?.Ingles) nombresAlt.push(obra.nombres_alternativos.Ingles);
     document.getElementById('det-nombres-alt').textContent = nombresAlt.join(' • ');
 
+    // 4. Géneros / Tags
     const tagsContainer = document.getElementById('det-tags');
     tagsContainer.innerHTML = '';
-    if(Array.isArray(obraActual.generos)) {
-        obraActual.generos.forEach(g => {
+    if(Array.isArray(obra.generos)) {
+        obra.generos.forEach(g => {
             tagsContainer.innerHTML += `<span class="tag">${g}</span>`;
         });
     }
 
-    document.getElementById('det-estado').textContent = obraActual.estado || '--';
-    document.getElementById('det-tipo').textContent = obraActual.tipo || '--';
-    document.getElementById('det-estudio').textContent = obraActual.estudio || '--';
-    document.getElementById('det-origen').textContent = obraActual.origen || '--';
-    document.getElementById('det-dia').textContent = obraActual.dia_emision || '--';
-    document.getElementById('det-estreno').textContent = obraActual.estreno || '--';
-    document.getElementById('det-autor').textContent = obraActual.autor || '--';
-    document.getElementById('det-sinopsis').textContent = obraActual.sinopsis || 'Sin descripción.';
+    // 5. Información de la Sidebar (IDs según el HTML proporcionado)
+    document.getElementById('det-estado').textContent = obra.estado || '--';
+    document.getElementById('det-tipo').textContent = obra.tipo || '--';
+    document.getElementById('det-estudio').textContent = obra.estudio || '--';
+    document.getElementById('det-origen').textContent = obra.origen || '--';
+    document.getElementById('det-dia').textContent = obra.dia_emision || '--';
+    document.getElementById('det-estreno').textContent = obra.estreno || '--';
+    document.getElementById('det-autor').textContent = obra.autor || '--';
+    
+    // 6. Sinopsis
+    document.getElementById('det-sinopsis').textContent = obra.sinopsis || 'Sin descripción.';
 
-    iniciarNavegacionContenido(obraActual.temporadas);
+    // 7. Navegación y cambio de vista
+    // Nota: Se usa 'detalle' porque tu HTML tiene id="vista-detalle"
+    iniciarNavegacionContenido(obra.temporadas);
     cambiarVista('detalle');
 }
 
@@ -382,57 +392,54 @@ async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
     const titulo = document.getElementById('in-titulo').value.trim();
     const portada = document.getElementById('in-portada').value.trim();
+    const banner = document.getElementById('in-banner').value.trim();
 
     if (!titulo || !portada) {
         tg.HapticFeedback.notificationOccurred('error');
-        return alert("⚠️ Título y Portada son obligatorios.");
+        return alert("⚠️ El título y la portada son obligatorios.");
     }
 
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
 
-    // Recolectar datos del formulario
     const datosObra = {
         titulo: titulo,
-        portada_url: portada,
-        banner_url: document.getElementById('in-banner').value.trim(),
-        sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
+        portada_url: portada, // Aquí se guarda el link de Telegram
+        banner_url: banner,   // Aquí se guarda el link de Telegram
+        sinopsis: document.getElementById('in-sinopsis').value.trim(),
         estado: document.getElementById('in-estado').value,
         tipo: document.getElementById('in-tipo').value,
+        estudio: document.getElementById('in-estudio').value.trim(),
+        autor: document.getElementById('in-autor').value.trim(),
+        origen: document.getElementById('in-origen').value.trim(),
+        estreno: document.getElementById('in-estreno').value.trim(),
+        dia_emision: document.getElementById('in-emision').value.trim(),
+        nombres_alternativos: {
+            japones: document.getElementById('in-japones').value.trim(),
+            ingles: document.getElementById('in-ingles').value.trim()
+        },
         temporadas: recolectarDatosTemporadas()
     };
 
     try {
-        let resultado;
-        
+        let res;
         if (idAnimeEnEdicion) {
-            // MODO EDICIÓN: Actualizar registro existente
-            resultado = await _supabase
-                .from('obras')
-                .update(datosObra)
-                .eq('id', idAnimeEnEdicion);
+            res = await _supabase.from('obras').update(datosObra).eq('id', idAnimeEnEdicion);
         } else {
-            // MODO CREACIÓN: Insertar nuevo
-            resultado = await _supabase
-                .from('obras')
-                .insert([datosObra]);
+            res = await _supabase.from('obras').insert([datosObra]);
         }
 
-        if (resultado.error) throw resultado.error;
+        if (res.error) throw res.error;
 
         tg.HapticFeedback.notificationOccurred('success');
-        alert(idAnimeEnEdicion ? "✅ Cambios guardados" : "✅ Publicado con éxito");
-        
-        // Limpiar estado y volver al catálogo
-        idAnimeEnEdicion = null;
-        await cargarObras(); 
+        await cargarObras();
         cambiarVista('catalogo');
-    } catch (err) {
-        console.error(err);
-        alert("❌ Error: " + err.message);
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        alert("Error al guardar los datos.");
     } finally {
         btn.disabled = false;
-        btn.textContent = idAnimeEnEdicion ? "Guardar Cambios" : "Publicar";
+        btn.textContent = "Publicar";
     }
 }
 
