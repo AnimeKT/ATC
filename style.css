@@ -315,42 +315,23 @@ body {
 }
 
 .btn-editar {
-    position: absolute !important; /* Forzamos la posición */
-    top: 25px !important;
-    right: 25px !important; /* ¡Aquí es donde lo movemos a la derecha! */
-    left: auto !important;  /* Bloqueamos cualquier intento de ir a la izquierda */
-    z-index: 1000;
-    
-    /* Diseño Bonito (Efecto Glassmorphism) */
-    background: rgba(59, 164, 250, 0.15) !important; 
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: #3ba4fa;
-    border: 1px solid rgba(59, 164, 250, 0.4);
-    
-    /* Dimensiones y Forma */
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; 
+    top: 12px; 
+    right: 12px; 
+    z-index: 10; 
+    background: #18181b; 
+    color: #a1a1aa;
+    border: 1px solid #27272a;
+    padding: 8px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    
-    /* Sombra y Animación */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(59, 164, 250, 0.2);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
 }
 
 .btn-editar:hover {
-    transform: scale(1.1) rotate(15deg);
-    background: #3ba4fa !important;
-    color: #fff;
-    box-shadow: 0 0 25px rgba(59, 164, 250, 0.6);
-}
-
-.btn-editar i {
-    font-size: 20px;
+    color: #3ba4fa;
+    border-color: #3ba4fa;
+    background: #1f1f23;
 }
 
 .estado-badge {
@@ -541,9 +522,11 @@ body {
    VISTA DETALLE
    ========================================= */
 #vista-detalle {
-    position: relative; /* ESTO ES VITAL */
     background-color: #050505;
     min-height: 100vh;
+    animation: fadeIn 0.4s ease-out;
+    position: relative;
+    padding-bottom: 40px;
 }
 
 .detalle-banner {
@@ -826,15 +809,6 @@ body {
    MEDIA QUERIES (RESPONSIVE)
    ========================================= */
 @media (max-width: 768px) {
-
-    .btn-editar {
-        top: 20px !important;
-        right: 20px !important;
-        left: auto !important;
-        width: 45px !important;
-        height: 45px !important;
-    }
-
     .navbar { 
         flex-wrap: wrap; 
         padding: 10px 15px; 
