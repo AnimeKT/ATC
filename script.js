@@ -532,6 +532,7 @@ const authMensaje = document.getElementById('auth-mensaje');
 
 _supabase.auth.onAuthStateChange((event, session) => {
     const isAdmin = !!session; // Truco: si hay sesión es true, si no false
+    sesionActiva = isAdmin;
     const btnAdminView = document.getElementById('btn-admin-view');
     const btnEdit = document.getElementById('btn-edit-serie'); // El botón del lápiz
     const btnAuth = document.getElementById('btn-auth');
