@@ -114,76 +114,81 @@ async function inicializarApp() {
     // 1. Cargamos las obras INMEDIATAMENTE para que el móvil no se quede en blanco
     await cargarObras(); 
 
-    // 2. Cargamos los favoritos en segundo plano sin detener la aplicación
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        tg.CloudStorage.getItem('vistos_anime', (err, value) => {
-            if (!err && value) {
-                try { listaFavoritos = JSON.parse(value); } 
-                catch (e) { listaFavoritos = []; }
-            }
-        });
-    }
-
-    cargarFavoritos();
+    // 2. Cargamos los favoritos desde Supabase o fallback local
+    await cargarFavoritos();
 }
 
-function cargarFavoritos() {
-    const almacen = 'favoritos_anime';
-    if (tg.CloudStorage && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        tg.CloudStorage.getItem(almacen, (err, value) => {
-            if (!err && value) {
-                try { listaFavoritos = JSON.parse(value); } catch (e) { listaFavoritos = []; }
+async function cargarFavoritos() {
+    const usuario = tg.initDataUnsafe?.user;
+    if (!usuario) {
+        // Si no hay usuario Telegram, dejamos la carga local como respaldo
+        const almacen = 'favoritos_anime';
+        if (window.localStorage) {
+            const stored = localStorage.getItem(almacen);
+            if (stored) {
+                try { listaFavoritos = JSON.parse(stored); } catch (e) { listaFavoritos = []; }
             }
-        });
-    } else if (window.localStorage) {
-        const stored = localStorage.getItem(almacen);
-        if (stored) {
-            try { listaFavoritos = JSON.parse(stored); } catch (e) { listaFavoritos = []; }
         }
+        return;
     }
+
+    const userId = String(usuario.id);
+
+    const { data, error } = await _supabase
+        .from('favoritos')
+        .select('nombre_item')
+        .eq('user_id_telegram', userId);
+
+    if (error) {
+        console.error('Error cargando favoritos de Supabase:', error);
+        return;
+    }
+
+    listaFavoritos = data?.map(f => f.nombre_item) || [];
+    console.log('Favoritos sincronizados:', listaFavoritos);
+    actualizarBotonFavorito();
 }
 
 function guardarFavoritos() {
     const almacen = 'favoritos_anime';
     const payload = JSON.stringify(listaFavoritos);
-    if (tg.CloudStorage && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        tg.CloudStorage.setItem(almacen, payload, (err) => {
-            if (err) console.warn('Error guardando favoritos:', err);
-        });
-    } else if (window.localStorage) {
+    if (window.localStorage) {
         localStorage.setItem(almacen, payload);
     }
 }
 
-function actualizarBotonFavorito() {
-    const btn = document.getElementById('det-favorito');
-    if (!btn) return;
-
-    const obraId = obraActual?.id ?? obraActual?.titulo;
-    if (!obraId) {
-        btn.style.display = 'none';
-        return;
-    }
-
-    const estaFavorito = listaFavoritos.includes(obraId);
-    btn.style.display = 'inline-flex';
-    btn.classList.toggle('activo', estaFavorito);
-    btn.innerHTML = `<i class="${estaFavorito ? 'fa-solid' : 'fa-regular'} fa-star"></i><span>${estaFavorito ? 'Favorito' : 'Guardar'}</span>`;
-    btn.setAttribute('aria-pressed', estaFavorito);
-}
-
-function toggleFavorito() {
+async function toggleFavorito() {
     if (!obraActual) return;
-    const obraId = obraActual.id ?? obraActual.titulo;
-    if (!obraId) return;
+    const obraId = obraActual.titulo;
+    const usuario = tg.initDataUnsafe?.user;
+    if (!usuario || !obraId) return;
 
+    const userId = String(usuario.id);
     const index = listaFavoritos.indexOf(obraId);
+
     if (index >= 0) {
         listaFavoritos.splice(index, 1);
         tg.HapticFeedback.impactOccurred('light');
+
+        const { error } = await _supabase
+            .from('favoritos')
+            .delete()
+            .eq('user_id_telegram', userId)
+            .eq('nombre_item', obraId);
+
+        if (error) console.error('Error eliminando favorito en Supabase:', error);
     } else {
         listaFavoritos.push(obraId);
         tg.HapticFeedback.impactOccurred('medium');
+
+        const { error } = await _supabase
+            .from('favoritos')
+            .insert([{ 
+                user_id_telegram: userId,
+                nombre_item: obraId 
+            }] );
+
+        if (error) console.error('Error guardando favorito en Supabase:', error);
     }
 
     guardarFavoritos();
@@ -235,6 +240,7 @@ function abrirDetalle(tituloObra) {
     document.getElementById('det-sinopsis').textContent = obraActual.sinopsis || 'Sin descripción.';
 
     iniciarNavegacionContenido(obraActual.temporadas);
+    actualizarBotonFavorito();
     cambiarVista('detalle');
 }
 
@@ -373,30 +379,49 @@ function filtrar(estado, evento) {
     aplicarTodosLosFiltros();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function crearTarjetaAnime(obra) {
+    const tituloSeguro = obra.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const tarjeta = document.createElement('div');
+    tarjeta.className = 'tarjeta-anime';
+    tarjeta.dataset.titulo = obra.titulo;
+    tarjeta.setAttribute('onclick', `abrirDetalle('${tituloSeguro}')`);
+
+    const tipoTag = document.createElement('div');
+    tipoTag.className = 'tipo-tag';
+    tipoTag.textContent = obra.tipo || 'Anime';
+
+    const imagen = document.createElement('img');
+    imagen.src = obra.portada_url || '';
+    imagen.alt = tituloSeguro;
+
+    const infoTarjeta = document.createElement('div');
+    infoTarjeta.className = 'info-tarjeta';
+    infoTarjeta.innerHTML = `<div class="titulo-tarjeta">${obra.titulo}</div>`;
+
+    tarjeta.appendChild(tipoTag);
+    tarjeta.appendChild(imagen);
+    tarjeta.appendChild(infoTarjeta);
+
+    tarjeta.addEventListener('click', () => abrirDetalle(obra.titulo));
+    return tarjeta;
+}
+
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
     if(!grid) return;
     
+    grid.innerHTML = '';
+
     if (obras.length === 0) {
         grid.innerHTML = "<p style='color: #a1a1aa; grid-column: 1 / -1; text-align: center; padding: 40px;'>No se encontraron obras...</p>";
         return;
     }
 
-    grid.innerHTML = obras.map(obra => {
-        // Evitamos que comillas raras rompan el HTML
-        const tituloSeguro = obra.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
-
-        // CAMBIO AQUÍ: Añadimos el div "tipo-tag" y quitamos las variables de estado que ya no usas
-        return `
-        <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
-            <div class="tipo-tag">${obra.tipo || 'Anime'}</div> 
-            <img src="${obra.portada_url}" alt="${tituloSeguro}">
-            <div class="info-tarjeta">
-                <div class="titulo-tarjeta">${obra.titulo}</div>
-            </div>
-        </div>
-        `;
-    }).join('');
+    obras.forEach(obra => {
+        const tarjeta = crearTarjetaAnime(obra);
+        grid.appendChild(tarjeta);
+    });
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
