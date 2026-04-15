@@ -9,7 +9,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // =========================================
 // 2. INICIALIZAR TELEGRAM WEB APP
 // =========================================
-const tg = window.Telegram.WebApp;
+const tg = window.Telegram?.WebApp || {};
 
 if (!tg.HapticFeedback || !tg.HapticFeedback.impactOccurred) {
     tg.HapticFeedback = {
@@ -18,8 +18,8 @@ if (!tg.HapticFeedback || !tg.HapticFeedback.impactOccurred) {
         selectionChanged: () => {}
     };
 }
-tg.ready();
-tg.expand();
+if (typeof tg.ready === 'function') tg.ready();
+if (typeof tg.expand === 'function') tg.expand();
 
 
 // Configurar la acción global del botón de retroceso
@@ -29,21 +29,17 @@ tg.expand();
 let historialNavegacion = ['catalogo'];
 
 // Configurar la acción global del botón de retroceso
-tg.BackButton.onClick(() => {
-    if (historialNavegacion.length > 1) {
-        // 1. Sacamos la vista actual (la que estamos viendo) del historial
-        historialNavegacion.pop();
-        
-        // 2. Obtenemos cuál era la vista anterior
-        const vistaAnterior = historialNavegacion[historialNavegacion.length - 1];
-        
-        // 3. Renderizamos esa vista anterior sin afectar el historial
-        ejecutarCambioVista(vistaAnterior);
-    } else {
-        // Si el historial se queda vacío por alguna razón, forzamos catálogo
-        ejecutarCambioVista('catalogo');
-    }
-});
+if (tg.BackButton && typeof tg.BackButton.onClick === 'function') {
+    tg.BackButton.onClick(() => {
+        if (historialNavegacion.length > 1) {
+            historialNavegacion.pop();
+            const vistaAnterior = historialNavegacion[historialNavegacion.length - 1];
+            ejecutarCambioVista(vistaAnterior);
+        } else {
+            ejecutarCambioVista('catalogo');
+        }
+    });
+}
 
 // 3. Función de navegación principal (Gestiona a dónde vamos)
 function cambiarVista(vista) {
@@ -84,7 +80,9 @@ function ejecutarCambioVista(vista) {
         barraBusqueda.style.display = 'block';
         
         // OCULTAR botón nativo de retroceso en el menú principal
-        tg.BackButton.hide();
+        if (tg.BackButton && typeof tg.BackButton.hide === 'function') {
+            tg.BackButton.hide();
+        }
         
         // Recuperar scroll
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
@@ -93,7 +91,9 @@ function ejecutarCambioVista(vista) {
         if (vista === 'registro') vistaRegistro.style.display = 'block';
         if (vista === 'detalle') vistaDetalle.style.display = 'block';
 
-        tg.BackButton.show();
+        if (tg.BackButton && typeof tg.BackButton.show === 'function') {
+            tg.BackButton.show();
+        }
         window.scrollTo(0, 0);
     }
 }
