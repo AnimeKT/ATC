@@ -9,18 +9,9 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // =========================================
 // 2. INICIALIZAR TELEGRAM WEB APP
 // =========================================
-const tg = window.Telegram?.WebApp || {};
-
-if (!tg.HapticFeedback || !tg.HapticFeedback.impactOccurred) {
-    tg.HapticFeedback = {
-        impactOccurred: () => {},
-        notificationOccurred: () => {},
-        selectionChanged: () => {}
-    };
-}
-if (typeof tg.ready === 'function') tg.ready();
-if (typeof tg.expand === 'function') tg.expand();
-
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
 
 // Configurar la acción global del botón de retroceso
 // =========================================
@@ -29,17 +20,21 @@ if (typeof tg.expand === 'function') tg.expand();
 let historialNavegacion = ['catalogo'];
 
 // Configurar la acción global del botón de retroceso
-if (tg.BackButton && typeof tg.BackButton.onClick === 'function') {
-    tg.BackButton.onClick(() => {
-        if (historialNavegacion.length > 1) {
-            historialNavegacion.pop();
-            const vistaAnterior = historialNavegacion[historialNavegacion.length - 1];
-            ejecutarCambioVista(vistaAnterior);
-        } else {
-            ejecutarCambioVista('catalogo');
-        }
-    });
-}
+tg.BackButton.onClick(() => {
+    if (historialNavegacion.length > 1) {
+        // 1. Sacamos la vista actual (la que estamos viendo) del historial
+        historialNavegacion.pop();
+        
+        // 2. Obtenemos cuál era la vista anterior
+        const vistaAnterior = historialNavegacion[historialNavegacion.length - 1];
+        
+        // 3. Renderizamos esa vista anterior sin afectar el historial
+        ejecutarCambioVista(vistaAnterior);
+    } else {
+        // Si el historial se queda vacío por alguna razón, forzamos catálogo
+        ejecutarCambioVista('catalogo');
+    }
+});
 
 // 3. Función de navegación principal (Gestiona a dónde vamos)
 function cambiarVista(vista) {
@@ -80,9 +75,7 @@ function ejecutarCambioVista(vista) {
         barraBusqueda.style.display = 'block';
         
         // OCULTAR botón nativo de retroceso en el menú principal
-        if (tg.BackButton && typeof tg.BackButton.hide === 'function') {
-            tg.BackButton.hide();
-        }
+        tg.BackButton.hide();
         
         // Recuperar scroll
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
@@ -91,9 +84,7 @@ function ejecutarCambioVista(vista) {
         if (vista === 'registro') vistaRegistro.style.display = 'block';
         if (vista === 'detalle') vistaDetalle.style.display = 'block';
 
-        if (tg.BackButton && typeof tg.BackButton.show === 'function') {
-            tg.BackButton.show();
-        }
+        tg.BackButton.show();
         window.scrollTo(0, 0);
     }
 }
@@ -108,7 +99,6 @@ let obraActual = null;
 let posicionScrollGuardada = 0;
 let timeoutBusqueda = null;
 let listaFavoritos = [];
-let sesionActiva = false;
 
 let filtrosActuales = {
     texto: '',
@@ -121,25 +111,20 @@ let filtrosActuales = {
 // 4. INICIALIZACIÓN
 // =========================================
 async function inicializarApp() {
-    const { data: { session } } = await _supabase.auth.getSession();
-    sesionActiva = !!session;
+    // 1. Cargamos los favoritos del usuario en Supabase primero
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        await cargarFavoritosUsuario();
+    }
 
-    // 1. Cargar las obras primero
+    // 2. Cargamos las obras para pintar el catálogo y los corazones correctamente
     await cargarObras(); 
 
-    // 2. Lógica de Favoritos separada correctamente
-    if (sesionActiva) {
-        // Si tiene sesión, usamos SOLO Supabase
-        await cargarFavoritosUsuario();
-        aplicarTodosLosFiltros(); 
-    } else if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        // Si NO tiene sesión, intentamos rescatar los de Telegram localmente
+    // 3. Cargamos datos extra opcionales en segundo plano sin detener la app
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tg.CloudStorage.getItem('vistos_anime', (err, value) => {
             if (!err && value) {
-                try { 
-                    listaFavoritos = JSON.parse(value); 
-                    aplicarTodosLosFiltros(); // Refrescar vista
-                } catch (e) { listaFavoritos = []; }
+                try { listaFavoritos = JSON.parse(value); } 
+                catch (e) { listaFavoritos = []; }
             }
         });
     }
@@ -300,7 +285,7 @@ function aplicarTodosLosFiltros() {
         const altJap = obra.nombres_alternativos?.Japonés?.toLowerCase() || '';
         const altIng = obra.nombres_alternativos?.Ingles?.toLowerCase() || '';
         const textoMatch = tituloMatch || altJap.includes(filtrosActuales.texto) || altIng.includes(filtrosActuales.texto);
-        const estadoMatch = filtrosActuales.estado === 'Todos' || filtrosActuales.estado === 'Favoritos' || obra.estado === filtrosActuales.estado;
+        const estadoMatch = filtrosActuales.estado === 'Todos' || obra.estado === filtrosActuales.estado;
         const favoritoMatch = !filtrosActuales.soloFavoritos || esFavorito(String(obra.id));
 
         return textoMatch && estadoMatch && favoritoMatch;
@@ -342,9 +327,15 @@ function renderizarObras(obras) {
 
     grid.innerHTML = obras.map(obra => {
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const esFav = esFavorito(String(obra.id));
+        const corazonClass = esFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+        const favoritoActivo = esFav ? 'favorito-activo' : '';
 
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
+            <button type="button" class="btn-fav-card ${favoritoActivo}" onclick="toggleFavorito(event, '${obra.id}')">
+                <i class="${corazonClass}"></i>
+            </button>
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
             <img src="${obra.portada_url}" alt="${tituloSeguro}">
             <div class="info-tarjeta">
@@ -361,14 +352,13 @@ function esFavorito(animeId) {
 }
 
 async function cargarFavoritosUsuario() {
-    // Obtenemos el usuario validado directamente desde Supabase
-    const { data: { user } } = await _supabase.auth.getUser();
-    if (!user) return;
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return;
 
     const { data, error } = await _supabase
         .from('favoritos')
         .select('anime_id')
-        .eq('user_id', user.id); // Usamos el ID de Supabase
+        .eq('user_id', String(userId));
 
     if (error) {
         console.error('Error cargando favoritos:', error);
@@ -380,15 +370,8 @@ async function cargarFavoritosUsuario() {
 
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation();
-    if (!sesionActiva) {
-        abrirModalAuth();
-        return alert('Debes iniciar sesión para guardar tus favoritos.');
-    }
-
-    // Obtenemos el usuario oficial de Supabase
-    const { data: { user } } = await _supabase.auth.getUser();
-    if (!user) return alert('La sesión expiró. Por favor, ingresa nuevamente.');
-    
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return alert('Favoritos solo están disponibles cuando abres la miniapp desde Telegram con tu usuario.');
     if (!animeId) return;
 
     const animeIdStr = String(animeId);
@@ -399,19 +382,17 @@ async function toggleFavorito(event, animeId) {
             await _supabase
                 .from('favoritos')
                 .delete()
-                .eq('user_id', user.id) // Usamos el ID de Supabase
+                .eq('user_id', String(userId))
                 .eq('anime_id', animeIdStr);
         } else {
             await _supabase
                 .from('favoritos')
-                .insert([{ user_id: user.id, anime_id: animeIdStr }]); // Usamos el ID de Supabase
+                .insert([{ user_id: String(userId), anime_id: animeIdStr }]);
         }
 
         await cargarFavoritosUsuario();
         aplicarTodosLosFiltros();
         actualizarEstadoFavoritoDetalle();
-        
-        tg.HapticFeedback.impactOccurred('light');
     } catch (error) {
         console.error('Error toggling favorito:', error);
         alert('No se pudo actualizar el favorito. Revisa la consola.');
@@ -429,13 +410,12 @@ function actualizarEstadoFavoritoDetalle() {
     if (!btn) return;
 
     const esFav = obraActual && esFavorito(String(obraActual.id));
-    const icon = btn.querySelector('i');
     if (esFav) {
         btn.classList.add('favorito-activo');
-        if (icon) icon.className = 'fa-solid fa-heart';
+        btn.innerHTML = '<i class="fa-solid fa-heart"></i> Quitar de favoritos';
     } else {
         btn.classList.remove('favorito-activo');
-        if (icon) icon.className = 'fa-regular fa-heart';
+        btn.innerHTML = '<i class="fa-regular fa-heart"></i> Agregar a favoritos';
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -549,33 +529,32 @@ const btnAdminView = document.getElementById('btn-admin-view');
 const btnAuth = document.getElementById('btn-auth');
 const authMensaje = document.getElementById('auth-mensaje');
 
-// =========================================
-// GESTIÓN DE SESIÓN Y FAVORITOS (FUSIONADO)
-// =========================================
-_supabase.auth.onAuthStateChange(async (event, session) => {
-    const isAdmin = !!session; 
-    sesionActiva = isAdmin;
+_supabase.auth.onAuthStateChange((event, session) => {
+    const isAdmin = !!session; // Truco: si hay sesión es true, si no false
     const btnAdminView = document.getElementById('btn-admin-view');
+    const btnEdit = document.getElementById('btn-edit-serie'); // El botón del lápiz
     const btnAuth = document.getElementById('btn-auth');
 
+    // Controlamos el botón "Añadir"
     if(btnAdminView) btnAdminView.style.display = isAdmin ? 'flex' : 'none';
+    
+    // Controlamos el botón "Editar" (Lápiz)
+    if(btnEdit) btnEdit.style.display = isAdmin ? 'flex' : 'none';
 
     if (session) {
         if(btnAuth) {
             btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
-            btnAuth.onclick = () => _supabase.auth.signOut();
+            btnAuth.onclick = cerrarSesion;
         }
-        await cargarFavoritosUsuario();
+        cerrarModalAuth();
     } else {
         if(btnAuth) {
             btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
-            btnAuth.onclick = () => document.getElementById('modal-auth').classList.add('modal-visible');
+            btnAuth.onclick = abrirModalAuth;
         }
+        if(todasLasObras.length > 0) cambiarVista('catalogo');
     }
-    aplicarTodosLosFiltros();
 });
-
-document.addEventListener('DOMContentLoaded', inicializarApp);
 
 _supabase.auth.getSession().then(({ data: { session } }) => {
     if (session && btnAdminView) btnAdminView.style.display = 'flex';
