@@ -99,6 +99,7 @@ let obraActual = null;
 let posicionScrollGuardada = 0;
 let timeoutBusqueda = null;
 let listaFavoritos = [];
+let sesionActiva = false;
 
 let filtrosActuales = {
     texto: '',
@@ -111,15 +112,15 @@ let filtrosActuales = {
 // 4. INICIALIZACIÓN
 // =========================================
 async function inicializarApp() {
-    // 1. Cargamos los favoritos del usuario en Supabase primero
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const { data: { session } } = await _supabase.auth.getSession();
+    sesionActiva = !!session;
+
+    if (sesionActiva) {
         await cargarFavoritosUsuario();
     }
 
-    // 2. Cargamos las obras para pintar el catálogo y los corazones correctamente
     await cargarObras(); 
 
-    // 3. Cargamos datos extra opcionales en segundo plano sin detener la app
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tg.CloudStorage.getItem('vistos_anime', (err, value) => {
             if (!err && value) {
@@ -285,7 +286,7 @@ function aplicarTodosLosFiltros() {
         const altJap = obra.nombres_alternativos?.Japonés?.toLowerCase() || '';
         const altIng = obra.nombres_alternativos?.Ingles?.toLowerCase() || '';
         const textoMatch = tituloMatch || altJap.includes(filtrosActuales.texto) || altIng.includes(filtrosActuales.texto);
-        const estadoMatch = filtrosActuales.estado === 'Todos' || obra.estado === filtrosActuales.estado;
+        const estadoMatch = filtrosActuales.estado === 'Todos' || filtrosActuales.estado === 'Favoritos' || obra.estado === filtrosActuales.estado;
         const favoritoMatch = !filtrosActuales.soloFavoritos || esFavorito(String(obra.id));
 
         return textoMatch && estadoMatch && favoritoMatch;
@@ -364,6 +365,11 @@ async function cargarFavoritosUsuario() {
 
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation();
+    if (!sesionActiva) {
+        abrirModalAuth();
+        return alert('Debes iniciar sesión para guardar tus favoritos.');
+    }
+
     const userId = tg.initDataUnsafe?.user?.id;
     if (!userId) return alert('No se pudo identificar al usuario de Telegram.');
     if (!animeId) return;
