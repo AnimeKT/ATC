@@ -115,17 +115,22 @@ async function inicializarApp() {
     const { data: { session } } = await _supabase.auth.getSession();
     sesionActiva = !!session;
 
-    if (sesionActiva) {
-        await cargarFavoritosUsuario();
-    }
-
+    // 1. Cargar las obras primero
     await cargarObras(); 
 
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    // 2. Lógica de Favoritos separada correctamente
+    if (sesionActiva) {
+        // Si tiene sesión, usamos SOLO Supabase
+        await cargarFavoritosUsuario();
+        aplicarTodosLosFiltros(); 
+    } else if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        // Si NO tiene sesión, intentamos rescatar los de Telegram localmente
         tg.CloudStorage.getItem('vistos_anime', (err, value) => {
             if (!err && value) {
-                try { listaFavoritos = JSON.parse(value); } 
-                catch (e) { listaFavoritos = []; }
+                try { 
+                    listaFavoritos = JSON.parse(value); 
+                    aplicarTodosLosFiltros(); // Refrescar vista
+                } catch (e) { listaFavoritos = []; }
             }
         });
     }
@@ -347,13 +352,14 @@ function esFavorito(animeId) {
 }
 
 async function cargarFavoritosUsuario() {
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return;
+    // Obtenemos el usuario validado directamente desde Supabase
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return;
 
     const { data, error } = await _supabase
         .from('favoritos')
         .select('anime_id')
-        .eq('user_id', String(userId));
+        .eq('user_id', user.id); // Usamos el ID de Supabase
 
     if (error) {
         console.error('Error cargando favoritos:', error);
@@ -370,8 +376,10 @@ async function toggleFavorito(event, animeId) {
         return alert('Debes iniciar sesión para guardar tus favoritos.');
     }
 
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return alert('No se pudo identificar al usuario de Telegram.');
+    // Obtenemos el usuario oficial de Supabase
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return alert('La sesión expiró. Por favor, ingresa nuevamente.');
+    
     if (!animeId) return;
 
     const animeIdStr = String(animeId);
@@ -382,17 +390,19 @@ async function toggleFavorito(event, animeId) {
             await _supabase
                 .from('favoritos')
                 .delete()
-                .eq('user_id', String(userId))
+                .eq('user_id', user.id) // Usamos el ID de Supabase
                 .eq('anime_id', animeIdStr);
         } else {
             await _supabase
                 .from('favoritos')
-                .insert([{ user_id: String(userId), anime_id: animeIdStr }]);
+                .insert([{ user_id: user.id, anime_id: animeIdStr }]); // Usamos el ID de Supabase
         }
 
         await cargarFavoritosUsuario();
         aplicarTodosLosFiltros();
         actualizarEstadoFavoritoDetalle();
+        
+        tg.HapticFeedback.impactOccurred('light');
     } catch (error) {
         console.error('Error toggling favorito:', error);
         alert('No se pudo actualizar el favorito. Revisa la consola.');
@@ -530,17 +540,14 @@ const btnAdminView = document.getElementById('btn-admin-view');
 const btnAuth = document.getElementById('btn-auth');
 const authMensaje = document.getElementById('auth-mensaje');
 
-_supabase.auth.onAuthStateChange((event, session) => {
-    const isAdmin = !!session; // Truco: si hay sesión es true, si no false
+_supabase.auth.onAuthStateChange(async (event, session) => {
+    const isAdmin = !!session; 
     sesionActiva = isAdmin;
     const btnAdminView = document.getElementById('btn-admin-view');
-    const btnEdit = document.getElementById('btn-edit-serie'); // El botón del lápiz
+    const btnEdit = document.getElementById('btn-edit-serie'); 
     const btnAuth = document.getElementById('btn-auth');
 
-    // Controlamos el botón "Añadir"
     if(btnAdminView) btnAdminView.style.display = isAdmin ? 'flex' : 'none';
-    
-    // Controlamos el botón "Editar" (Lápiz)
     if(btnEdit) btnEdit.style.display = isAdmin ? 'flex' : 'none';
 
     if (session) {
@@ -549,11 +556,21 @@ _supabase.auth.onAuthStateChange((event, session) => {
             btnAuth.onclick = cerrarSesion;
         }
         cerrarModalAuth();
+        
+        // ¡NUEVO! Cargar favoritos al loguearse sin recargar la página
+        await cargarFavoritosUsuario();
+        aplicarTodosLosFiltros();
+        actualizarEstadoFavoritoDetalle();
+
     } else {
         if(btnAuth) {
             btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
             btnAuth.onclick = abrirModalAuth;
         }
+        
+        // ¡NUEVO! Limpiar favoritos si cierra sesión
+        listaFavoritos = [];
+        aplicarTodosLosFiltros();
         if(todasLasObras.length > 0) cambiarVista('catalogo');
     }
 });
