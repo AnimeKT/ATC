@@ -354,15 +354,15 @@ async function cargarFavoritosUsuario() {
 
     const { data, error } = await _supabase
         .from('favoritos')
-        .select('anime_id')
-        .eq('user_id', String(userId));
+        .select('nombre_item')
+        .eq('user_id_telegram', String(userId));
 
     if (error) {
-        console.error('Error cargando favoritos:', error);
+        console.error('Error cargando favoritos (supabase):', error);
         return;
     }
 
-    listaFavoritos = Array.isArray(data) ? data.map(item => String(item.anime_id)) : [];
+    listaFavoritos = Array.isArray(data) ? data.map(item => String(item.nombre_item)) : [];
 }
 
 async function toggleFavorito(event, animeId) {
@@ -372,9 +372,8 @@ async function toggleFavorito(event, animeId) {
     if (!animeId) return;
 
     const userIdStr = String(userId);
-    const animeIdNum = Number(animeId);
-    const animeIdStr = String(animeId);
-    const yaEsFavorito = esFavorito(animeIdStr);
+    const nombreItem = String(animeId);
+    const yaEsFavorito = esFavorito(nombreItem);
 
     try {
         let resultado;
@@ -383,12 +382,12 @@ async function toggleFavorito(event, animeId) {
             resultado = await _supabase
                 .from('favoritos')
                 .delete()
-                .eq('user_id', userIdStr)
-                .eq('anime_id', animeIdNum);
+                .eq('user_id_telegram', userIdStr)
+                .eq('nombre_item', nombreItem);
         } else {
             resultado = await _supabase
                 .from('favoritos')
-                .insert([{ user_id: userIdStr, anime_id: animeIdNum }]);
+                .insert([{ user_id_telegram: userIdStr, nombre_item: nombreItem }]);
         }
 
         if (resultado.error) throw resultado.error;
@@ -397,7 +396,7 @@ async function toggleFavorito(event, animeId) {
         aplicarTodosLosFiltros();
         actualizarEstadoFavoritoDetalle();
     } catch (error) {
-        console.error('Error toggling favorito:', error);
+        console.error('Error toggling favorito (supabase):', error);
         alert('No se pudo actualizar el favorito. Revisa la consola.');
     }
 }
