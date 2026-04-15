@@ -301,6 +301,62 @@ body {
     backdrop-filter: blur(2px); /* Efecto cristal para más nivel */
 }
 
+.btn-fav-card {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 12;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.88);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn-fav-card:hover {
+    transform: scale(1.05);
+    background: rgba(59, 164, 250, 0.9);
+}
+
+.btn-fav-card i {
+    font-size: 14px;
+}
+
+.btn-fav-detalle {
+    margin-top: 5px;
+    background: transparent;
+    border: 1px solid #27272a;
+    color: #e0e0e0;
+    padding: 5px 14px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-fav-detalle:hover {
+    border-color: #3ba4fa;
+    background: rgba(59, 164, 250, 0.12);
+}
+
+.btn-fav-detalle.favorito-activo {
+    color: #f87171;
+    border-color: #f87171;
+    background: rgba(248, 113, 113, 0.12);
+}
+
+.btn-fav-detalle i {
+    font-size: 16px;
+}
+
 .tarjeta-anime:hover {
     transform: translateY(-5px); 
     box-shadow: 0 10px 20px rgba(0,0,0,0.8);
@@ -581,47 +637,6 @@ body {
     color: #ffffff;
     margin-bottom: 4px;
     line-height: 1.2;
-}
-
-.btn-favorito {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-    margin-top: 6px;
-    margin-bottom: 12px;
-}
-
-.detalle-titulo-fila {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.btn-favorito:hover {
-    transform: translateY(-1px);
-    background: rgba(59,164,250,0.14);
-    border-color: rgba(59,164,250,0.35);
-}
-
-.btn-favorito.activo {
-    background: #3ba4fa;
-    border-color: #3ba4fa;
-    color: #fff;
-}
-
-.btn-favorito.activo i {
-    color: #fff;
 }
 
 #det-nombres-alt {

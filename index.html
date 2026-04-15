@@ -35,7 +35,6 @@
             <button class="btn-filtro active" onclick="filtrar('Todos', event)"><i class="fa-solid fa-list"></i> Todos</button>
             <button class="btn-filtro" onclick="filtrar('En emisión', event)"><i class="fa-solid fa-play"></i> Emisión</button>
             <button class="btn-filtro" onclick="filtrar('Finalizado', event)"><i class="fa-solid fa-check-circle"></i> Finalizados</button>
-            <button class="btn-filtro" onclick="filtrar('Favoritos', event)"><i class="fa-solid fa-heart"></i> Favoritos</button>
             <button class="btn-filtro"><i class="fa-solid fa-tags"></i> Géneros</button>
         </nav>
 
@@ -63,9 +62,8 @@
                 <div class="detalle-titulos">
                     <h2 id="det-titulo"></h2>
                     <p id="det-nombres-alt" class="text-muted"></p>
-                    <button id="det-favorito" type="button" class="btn-favorito" onclick="toggleFavorito()">
-                        <i class="fa-regular fa-star"></i>
-                        <span>Guardar</span>
+                    <button id="det-favorito-btn" type="button" class="btn-fav-detalle" onclick="toggleFavoritoDetalle(event)">
+                        <i class="fa-regular fa-heart"></i> Favoritos
                     </button>
                     <div class="detalle-tags" id="det-tags"></div>
                 </div>
