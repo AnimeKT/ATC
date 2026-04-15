@@ -333,7 +333,7 @@ function renderizarObras(obras) {
 
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
-            <button type="button" class="btn-fav-card ${favoritoActivo}" onclick="toggleFavorito(event, '${obra.id}')">
+            <button type="button" class="btn-fav-card ${favoritoActivo}" onclick="toggleFavorito(event || window.event, ${obra.id}); return false;">
                 <i class="${corazonClass}"></i>
             </button>
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
@@ -374,21 +374,27 @@ async function toggleFavorito(event, animeId) {
     if (!userId) return alert('Favoritos solo están disponibles cuando abres la miniapp desde Telegram con tu usuario.');
     if (!animeId) return;
 
+    const userIdStr = String(userId);
+    const animeIdNum = Number(animeId);
     const animeIdStr = String(animeId);
     const yaEsFavorito = esFavorito(animeIdStr);
 
     try {
+        let resultado;
+
         if (yaEsFavorito) {
-            await _supabase
+            resultado = await _supabase
                 .from('favoritos')
                 .delete()
-                .eq('user_id', String(userId))
-                .eq('anime_id', animeIdStr);
+                .eq('user_id', userIdStr)
+                .eq('anime_id', animeIdNum);
         } else {
-            await _supabase
+            resultado = await _supabase
                 .from('favoritos')
-                .insert([{ user_id: String(userId), anime_id: animeIdStr }]);
+                .insert([{ user_id: userIdStr, anime_id: animeIdNum }]);
         }
+
+        if (resultado.error) throw resultado.error;
 
         await cargarFavoritosUsuario();
         aplicarTodosLosFiltros();
