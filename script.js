@@ -343,19 +343,26 @@ function renderizarObras(obras) {
     }).join('');
 }
 
+// Variable global añadida para gestionar el nombre de la obra al guardar
+let animeFavActual = ""; 
+
 function esFavorito(animeId) {
     if (!animeId) return false;
+    // Comparamos siempre usando Strings para evitar fallos de tipos
     return listaFavoritos.map(String).includes(String(animeId));
 }
 
 async function cargarFavoritosUsuario() {
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return;
+    // Si no hay datos seguros de Telegram, salimos
+    if (!tg.initDataUnsafe?.user?.id) return;
+    
+    // CORRECCIÓN VITAL: Pasamos el ID a texto
+    const userId = String(tg.initDataUnsafe.user.id);
 
     const { data, error } = await _supabase
         .from('favoritos')
         .select('nombre_item')
-        .eq('user_id_telegram', String(userId));
+        .eq('user_id_telegram', userId);
 
     if (error) {
         console.error('Error cargando favoritos (supabase):', error);
@@ -367,11 +374,15 @@ async function cargarFavoritosUsuario() {
 
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation();
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return alert('Favoritos solo están disponibles cuando abres la miniapp desde Telegram con tu usuario.');
+    
+    if (!tg.initDataUnsafe?.user?.id) {
+        return alert('Debes usar la aplicación desde Telegram para guardar favoritos.');
+    }
+    
     if (!animeId) return;
 
-    const userIdStr = String(userId);
+    // Convertimos ambos a string para que no choque con la base de datos de Supabase
+    const userIdStr = String(tg.initDataUnsafe.user.id);
     const nombreItem = String(animeId);
     const yaEsFavorito = esFavorito(nombreItem);
 
@@ -392,9 +403,14 @@ async function toggleFavorito(event, animeId) {
 
         if (resultado.error) throw resultado.error;
 
+        // Recargamos el estado
         await cargarFavoritosUsuario();
         aplicarTodosLosFiltros();
         actualizarEstadoFavoritoDetalle();
+        
+        // Efecto háptico opcional para que se sienta cuando le das al corazón
+        if (tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('medium');
+
     } catch (error) {
         console.error('Error toggling favorito (supabase):', error);
         alert('No se pudo actualizar el favorito. Revisa la consola.');
@@ -404,6 +420,7 @@ async function toggleFavorito(event, animeId) {
 function toggleFavoritoDetalle(event) {
     if (event) event.stopPropagation();
     if (!obraActual) return;
+    // Ahora le pasamos correctamente el nombre (o id) de la obra
     toggleFavorito(event, obraActual.id);
 }
 
@@ -414,10 +431,12 @@ function actualizarEstadoFavoritoDetalle() {
     const esFav = obraActual && esFavorito(String(obraActual.id));
     if (esFav) {
         btn.classList.add('favorito-activo');
-        btn.innerHTML = '<i class="fa-solid fa-heart"></i> Quitar de favoritos';
+        btn.dataset.isfav = "true";
+        btn.innerHTML = '<i class="fa-solid fa-heart" style="color: #e2124d;"></i> Quitar de favoritos';
     } else {
         btn.classList.remove('favorito-activo');
-        btn.innerHTML = '<i class="fa-regular fa-heart"></i> Agregar a favoritos';
+        btn.dataset.isfav = "false";
+        btn.innerHTML = '<i class="fa-regular fa-heart" style="color: #ffffff;"></i> Agregar a favoritos';
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
