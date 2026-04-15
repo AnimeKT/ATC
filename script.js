@@ -123,6 +123,71 @@ async function inicializarApp() {
             }
         });
     }
+
+    cargarFavoritos();
+}
+
+function cargarFavoritos() {
+    const almacen = 'favoritos_anime';
+    if (tg.CloudStorage && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        tg.CloudStorage.getItem(almacen, (err, value) => {
+            if (!err && value) {
+                try { listaFavoritos = JSON.parse(value); } catch (e) { listaFavoritos = []; }
+            }
+        });
+    } else if (window.localStorage) {
+        const stored = localStorage.getItem(almacen);
+        if (stored) {
+            try { listaFavoritos = JSON.parse(stored); } catch (e) { listaFavoritos = []; }
+        }
+    }
+}
+
+function guardarFavoritos() {
+    const almacen = 'favoritos_anime';
+    const payload = JSON.stringify(listaFavoritos);
+    if (tg.CloudStorage && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        tg.CloudStorage.setItem(almacen, payload, (err) => {
+            if (err) console.warn('Error guardando favoritos:', err);
+        });
+    } else if (window.localStorage) {
+        localStorage.setItem(almacen, payload);
+    }
+}
+
+function actualizarBotonFavorito() {
+    const btn = document.getElementById('det-favorito');
+    if (!btn) return;
+
+    const obraId = obraActual?.id ?? obraActual?.titulo;
+    if (!obraId) {
+        btn.style.display = 'none';
+        return;
+    }
+
+    const estaFavorito = listaFavoritos.includes(obraId);
+    btn.style.display = 'inline-flex';
+    btn.classList.toggle('activo', estaFavorito);
+    btn.innerHTML = `<i class="${estaFavorito ? 'fa-solid' : 'fa-regular'} fa-star"></i><span>${estaFavorito ? 'Favorito' : 'Guardar'}</span>`;
+    btn.setAttribute('aria-pressed', estaFavorito);
+}
+
+function toggleFavorito() {
+    if (!obraActual) return;
+    const obraId = obraActual.id ?? obraActual.titulo;
+    if (!obraId) return;
+
+    const index = listaFavoritos.indexOf(obraId);
+    if (index >= 0) {
+        listaFavoritos.splice(index, 1);
+        tg.HapticFeedback.impactOccurred('light');
+    } else {
+        listaFavoritos.push(obraId);
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+
+    guardarFavoritos();
+    actualizarBotonFavorito();
 }
 
 function volverAlCatalogo() {

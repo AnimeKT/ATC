@@ -583,6 +583,47 @@ body {
     line-height: 1.2;
 }
 
+.btn-favorito {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    margin-top: 6px;
+    margin-bottom: 12px;
+}
+
+.detalle-titulo-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.btn-favorito:hover {
+    transform: translateY(-1px);
+    background: rgba(59,164,250,0.14);
+    border-color: rgba(59,164,250,0.35);
+}
+
+.btn-favorito.activo {
+    background: #3ba4fa;
+    border-color: #3ba4fa;
+    color: #fff;
+}
+
+.btn-favorito.activo i {
+    color: #fff;
+}
+
 #det-nombres-alt {
     font-size: 13px;
     color: #71717a;
