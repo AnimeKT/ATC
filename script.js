@@ -286,8 +286,9 @@ function aplicarTodosLosFiltros() {
         const altIng = obra.nombres_alternativos?.Ingles?.toLowerCase() || '';
         const textoMatch = tituloMatch || altJap.includes(filtrosActuales.texto) || altIng.includes(filtrosActuales.texto);
         const estadoMatch = filtrosActuales.estado === 'Todos' || obra.estado === filtrosActuales.estado;
+        const favoritoMatch = !filtrosActuales.soloFavoritos || esFavorito(String(obra.id));
 
-        return textoMatch && estadoMatch;
+        return textoMatch && estadoMatch && favoritoMatch;
     });
 
     renderizarObras(resultado);
@@ -306,11 +307,12 @@ if(inputBuscador) {
 }
 
 function filtrar(estado, evento) {
-    tg.HapticFeedback.impactOccurred('light');
+    if (tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
     document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('active'));
     if(evento) evento.currentTarget.classList.add('active');
 
     filtrosActuales.estado = estado;
+    filtrosActuales.soloFavoritos = estado === 'Favoritos';
     aplicarTodosLosFiltros();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -325,15 +327,10 @@ function renderizarObras(obras) {
 
     grid.innerHTML = obras.map(obra => {
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const favorito = esFavorito(String(obra.id));
-        const iconClass = favorito ? 'fa-solid' : 'fa-regular';
 
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
-            <button type="button" class="btn-fav-card" onclick="toggleFavorito(event, '${obra.id}')">
-                <i class="${iconClass} fa-heart"></i>
-            </button>
             <img src="${obra.portada_url}" alt="${tituloSeguro}">
             <div class="info-tarjeta">
                 <div class="titulo-tarjeta">${obra.titulo}</div>
