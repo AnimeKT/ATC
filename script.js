@@ -18,7 +18,6 @@ if (!tg.HapticFeedback || !tg.HapticFeedback.impactOccurred) {
         selectionChanged: () => {}
     };
 }
-
 tg.ready();
 tg.expand();
 
@@ -557,58 +556,26 @@ _supabase.auth.onAuthStateChange(async (event, session) => {
     const isAdmin = !!session; 
     sesionActiva = isAdmin;
     const btnAdminView = document.getElementById('btn-admin-view');
-    const btnEdit = document.getElementById('btn-edit-serie'); 
     const btnAuth = document.getElementById('btn-auth');
 
-    // Control de visibilidad de botones de administración
     if(btnAdminView) btnAdminView.style.display = isAdmin ? 'flex' : 'none';
-    if(btnEdit) btnEdit.style.display = isAdmin ? 'flex' : 'none';
 
     if (session) {
-        // --- LOGUEADO: USAR DATOS DE SUPABASE ---
         if(btnAuth) {
             btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
-            btnAuth.onclick = cerrarSesion;
+            btnAuth.onclick = () => _supabase.auth.signOut();
         }
-        cerrarModalAuth();
-        
-        // Cargamos los favoritos desde la base de datos
         await cargarFavoritosUsuario();
-        aplicarTodosLosFiltros();
-        actualizarEstadoFavoritoDetalle();
-
     } else {
-        // --- DESLOGUEADO: RECUPERAR DATOS LOCALES ---
         if(btnAuth) {
             btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
-            btnAuth.onclick = abrirModalAuth;
+            btnAuth.onclick = () => document.getElementById('modal-auth').classList.add('modal-visible');
         }
-        
-        // 1. Limpiamos la lista que venía de la nube
-        listaFavoritos = [];
-        
-        // 2. Intentamos rescatar los favoritos guardados localmente en Telegram CloudStorage
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            tg.CloudStorage.getItem('vistos_anime', (err, value) => {
-                if (!err && value) {
-                    try { 
-                        listaFavoritos = JSON.parse(value); 
-                    } catch (e) { 
-                        listaFavoritos = []; 
-                    }
-                }
-                // Refrescamos la vista con los favoritos locales (o vacía si no había nada)
-                aplicarTodosLosFiltros();
-            });
-        } else {
-            // Si no estamos en un entorno con CloudStorage, refrescamos con lista vacía
-            aplicarTodosLosFiltros();
-        }
-
-        // Volver al catálogo si se cierra la sesión
-        if(todasLasObras.length > 0) cambiarVista('catalogo');
     }
+    aplicarTodosLosFiltros();
 });
+
+document.addEventListener('DOMContentLoaded', inicializarApp);
 
 _supabase.auth.getSession().then(({ data: { session } }) => {
     if (session && btnAdminView) btnAdminView.style.display = 'flex';
