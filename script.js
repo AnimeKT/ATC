@@ -489,36 +489,6 @@ function prepararEdicionDesdeDetalle() {
     cargarDatosTemporadas(obraActual.temporadas || []);
 
     // Cambiamos a la vista de edición/registro
-    // Verificamos autoridad: si el usuario actual no es el creador, bloqueamos campos
-    const usuarioActual = tg.initDataUnsafe?.user?.id?.toString();
-    const esDueño = (obraActual.creador_id && usuarioActual && String(obraActual.creador_id) === usuarioActual);
-
-    if (!esDueño) {
-        const camposPrincipales = ['in-titulo', 'in-sinopsis', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-estudio', 'in-autor', 'in-japones', 'in-ingles'];
-        camposPrincipales.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.disabled = true;
-        });
-
-        // Ocultar botones de borrar para proteger la obra original
-        const botonesBorrar = document.querySelectorAll('.btn-borrar-seccion');
-        botonesBorrar.forEach(btn => btn.style.display = 'none');
-
-        // Cambiar texto del botón principal para reflejar permisos
-        const btnPublicar = document.getElementById('btn-publicar');
-        if (btnPublicar) btnPublicar.textContent = 'Añadir Sección';
-    } else {
-        // Si es el dueño, habilitamos todo por si estaba bloqueado
-        const camposPrincipales = ['in-titulo', 'in-sinopsis', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-estudio', 'in-autor', 'in-japones', 'in-ingles'];
-        camposPrincipales.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.disabled = false;
-        });
-
-        const btnPublicar = document.getElementById('btn-publicar');
-        if (btnPublicar) btnPublicar.textContent = 'Guardar Cambios';
-    }
-
     cambiarVista('registro');
 }
 
@@ -536,8 +506,6 @@ async function ejecutarRegistro() {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
 
     // Recolectar datos del formulario
-    const usuarioActual = tg.initDataUnsafe?.user?.id?.toString();
-
     const datosObra = {
         titulo: titulo,
         portada_url: portada,
@@ -552,29 +520,13 @@ async function ejecutarRegistro() {
         let resultado;
         
         if (idAnimeEnEdicion) {
-            // MODO EDICIÓN: detectar si el usuario es el creador original
-            const obraOriginal = todasLasObras.find(o => String(o.id) === String(idAnimeEnEdicion));
-            const creadorOriginal = obraOriginal?.creador_id?.toString();
-            const esDueño = (creadorOriginal && usuarioActual && creadorOriginal === usuarioActual);
-
-            let datosAEnviar;
-            if (esDueño) {
-                // El dueño puede actualizar todo
-                datosAEnviar = datosObra;
-            } else {
-                // Colaborador: solo actualiza temporadas
-                datosAEnviar = { temporadas: datosObra.temporadas };
-            }
-
+            // MODO EDICIÓN: Actualizar registro existente
             resultado = await _supabase
                 .from('obras')
-                .update(datosAEnviar)
+                .update(datosObra)
                 .eq('id', idAnimeEnEdicion);
         } else {
-            // MODO CREACIÓN: Insertar nuevo (guardamos creador_id)
-            const usuarioActual = tg.initDataUnsafe?.user?.id?.toString();
-            if (usuarioActual) datosObra.creador_id = usuarioActual;
-
+            // MODO CREACIÓN: Insertar nuevo
             resultado = await _supabase
                 .from('obras')
                 .insert([datosObra]);
@@ -723,7 +675,7 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
             <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Películas / Ovas)" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
-            <button type="button" class="btn-borrar-seccion" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
+            <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
@@ -752,7 +704,7 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     bloque.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
             <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
-            <button type="button" class="btn-borrar-seccion" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
+            <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
@@ -785,7 +737,7 @@ function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
     divIdioma.innerHTML = `
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <input type="text" class="idioma-nombre" placeholder="Idioma" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
-            <button type="button" class="btn-borrar-seccion" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
         <button type="button" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
@@ -813,7 +765,7 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
     divCap.innerHTML = `
         <input type="text" class="cap-nombre" placeholder="N°" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
         <input type="text" class="cap-url" placeholder="URL" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
-        <button type="button" class="btn-borrar-seccion" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
     `;
     containerCaps.appendChild(divCap);
 }
