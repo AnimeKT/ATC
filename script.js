@@ -333,9 +333,6 @@ function renderizarObras(obras) {
 
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
-            <button type="button" class="btn-fav-card ${favoritoActivo}" onclick="toggleFavorito(event || window.event, ${obra.id}); return false;">
-                <i class="${corazonClass}"></i>
-            </button>
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
             <img src="${obra.portada_url}" alt="${tituloSeguro}">
             <div class="info-tarjeta">
