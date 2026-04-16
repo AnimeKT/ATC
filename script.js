@@ -58,42 +58,33 @@ function ejecutarCambioVista(vista) {
     const vistaDetalle = document.getElementById('vista-detalle');
     const barraBusqueda = document.getElementById('barra-busqueda');
 
-    // 1. Guardar la posición del scroll si el usuario estaba en el catálogo
+    // 1. Guardar scroll si salimos del catálogo
     if (vistaCatalogo.style.display !== 'none') {
         posicionScrollGuardada = window.scrollY;
     }
 
-    // 2. Limpiar pantalla: Ocultar todas las secciones antes de mostrar la nueva
+    // 2. Ocultar todas las vistas
     vistaCatalogo.style.display = 'none';
     vistaRegistro.style.display = 'none';
     vistaDetalle.style.display = 'none';
     barraBusqueda.style.display = 'none';
 
-    // 3. Lógica específica según la vista solicitada
+    // 3. Lógica de visibilidad y Botón de Telegram
     if (vista === 'catalogo') {
         vistaCatalogo.style.display = 'block';
         barraBusqueda.style.display = 'block';
         
-        // Ocultar botón de retroceso de Telegram en el menú principal
+        // OCULTAR botón nativo de retroceso en el menú principal
         tg.BackButton.hide();
         
-        // MODIFICACIÓN CLAVE: 
-        // Refrescamos los filtros para que si un favorito fue eliminado en la 
-        // vista de detalle, ya no aparezca en la lista del catálogo.
-        aplicarTodosLosFiltros(); 
-        
-        // Recuperar la posición exacta donde estaba el usuario
+        // Recuperar scroll
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
-
     } else {
-        // Mostrar la vista solicitada (Registro o Detalle)
+        // MOSTRAR botón en cualquier otra vista (detalle o registro)
         if (vista === 'registro') vistaRegistro.style.display = 'block';
         if (vista === 'detalle') vistaDetalle.style.display = 'block';
 
-        // Mostrar botón de retroceso en cualquier vista que no sea el catálogo
         tg.BackButton.show();
-        
-        // Llevar el scroll arriba para que la nueva vista se vea desde el inicio
         window.scrollTo(0, 0);
     }
 }
@@ -376,55 +367,37 @@ async function cargarFavoritosUsuario() {
 
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation();
-    
-    const { data: { session } } = await _supabase.auth.getSession();
-    
-    if (!session) {
-        tg.HapticFeedback.notificationOccurred('error');
-        tg.showAlert("🔑 Debes iniciar sesión para guardar favoritos.");
-        abrirModalAuth();
-        return;
-    }
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return alert('Favoritos solo están disponibles cuando abres la miniapp desde Telegram con tu usuario.');
+    if (!animeId) return;
 
-    const userIdStr = String(tg.initDataUnsafe?.user?.id);
-    const idItemStr = String(animeId);
-    const yaEsFav = esFavorito(idItemStr);
+    const userIdStr = String(userId);
+    const nombreItem = String(animeId);
+    const yaEsFavorito = esFavorito(nombreItem);
 
     try {
-        if (yaEsFav) {
-            // 1. Borramos en la base de datos
-            const { error } = await _supabase
+        let resultado;
+
+        if (yaEsFavorito) {
+            resultado = await _supabase
                 .from('favoritos')
                 .delete()
                 .eq('user_id_telegram', userIdStr)
-                .eq('nombre_item', idItemStr);
-            
-            if (error) throw error;
-
-            // 2. ACTUALIZACIÓN INSTANTÁNEA: Lo quitamos de la lista local manualmente
-            listaFavoritos = listaFavoritos.filter(id => id !== idItemStr);
-            
+                .eq('nombre_item', nombreItem);
         } else {
-            // 1. Insertamos en la base de datos
-            const { error } = await _supabase
+            resultado = await _supabase
                 .from('favoritos')
-                .insert([{ user_id_telegram: userIdStr, nombre_item: idItemStr }]);
-            
-            if (error) throw error;
-
-            // 2. ACTUALIZACIÓN INSTANTÁNEA: Lo añadimos a la lista local
-            listaFavoritos.push(idItemStr);
+                .insert([{ user_id_telegram: userIdStr, nombre_item: nombreItem }]);
         }
 
-        // 3. Refrescamos la interfaz sin recargar la página
-        actualizarEstadoFavoritoDetalle(); // Actualiza el corazón del detalle
-        aplicarTodosLosFiltros();        // Actualiza el catálogo (borra la tarjeta si estás en el filtro "Favoritos")
-        
-        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        if (resultado.error) throw resultado.error;
 
+        await cargarFavoritosUsuario();
+        aplicarTodosLosFiltros();
+        actualizarEstadoFavoritoDetalle();
     } catch (error) {
-        console.error('Error:', error.message);
-        tg.showAlert("No se pudo actualizar: " + error.message);
+        console.error('Error toggling favorito (supabase):', error);
+        alert('No se pudo actualizar el favorito. Revisa la consola.');
     }
 }
 
