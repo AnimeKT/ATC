@@ -166,6 +166,8 @@ function abrirDetalle(tituloObra) {
 function iniciarNavegacionContenido(temporadasData) {
     const contenedor = document.getElementById('det-temporadas');
     if(!contenedor) return;
+    
+    // Limpiamos el contenedor una sola vez al principio
     contenedor.innerHTML = '';
 
     if (!temporadasData || !Array.isArray(temporadasData) || temporadasData.length === 0) {
@@ -181,14 +183,23 @@ function iniciarNavegacionContenido(temporadasData) {
     });
 
     for (const [secName, temps] of Object.entries(seccionesObj)) {
-        contenedor.innerHTML += `<h4 style="margin-top: 15px; margin-bottom: 10px; color: #3ba4fa; font-size: 14px;">${secName}</h4>`;
+        // CORRECCIÓN: Creamos el título como un elemento real de DOM
+        const titulo = document.createElement('h4');
+        titulo.style.cssText = "margin-top: 15px; margin-bottom: 10px; color: #3ba4fa; font-size: 14px;";
+        titulo.textContent = secName;
+        contenedor.appendChild(titulo); // Lo añadimos de forma segura
         
         temps.forEach((temp) => {
             const btn = document.createElement('button');
             btn.className = 'btn-dinamico';
             btn.style.cssText = "display: block; width: 100%; text-align: left; background: #18181b; border: 1px solid #27272a; padding: 12px; border-radius: 8px; color: white; margin-bottom: 8px; cursor: pointer;";
+            
+            // Icono y nombre
             btn.innerHTML = `<i class="fa-solid fa-folder-open" style="color: #3ba4fa; margin-right: 8px;"></i> ${temp.nombre}`;
+            
+            // El evento 'onclick' ahora no se borrará
             btn.onclick = () => mostrarIdiomas(temp);
+            
             contenedor.appendChild(btn);
         });
     }
