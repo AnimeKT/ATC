@@ -124,12 +124,11 @@ function abrirDetalle(tituloObra) {
     if(imgPort) {
         imgPort.src = obraActual.portada_url || '';
         imgPort.style.opacity = 1;
-        imgPort.style.cursor = 'pointer'; // Crucial para que iOS Safari lo reconozca como botón
+        imgPort.style.cursor = 'pointer'; 
         
-        // Asignar el evento pasando 'e' para bloquear comportamientos nativos de móvil
         imgPort.onclick = (e) => {
-            e.preventDefault(); // Evita que Telegram o el navegador intenten arrastrar la imagen
-            e.stopPropagation(); // Evita que el clic afecte a elementos que estén detrás
+            e.preventDefault(); 
+            e.stopPropagation(); 
             verImagenGrande(imgPort.src);
         };
     }
@@ -162,6 +161,24 @@ function abrirDetalle(tituloObra) {
     setContent('det-estreno', obraActual.estreno || '--');
     setContent('det-autor', obraActual.autor || '--');
     setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
+
+    // --- NUEVA LÓGICA PARA PROPIEDADES EXTRA ---
+    const contenedorExtras = document.getElementById('det-extras-dinamicos');
+    if(contenedorExtras) {
+        contenedorExtras.innerHTML = ''; 
+        if (obraActual.propiedades_extra && typeof obraActual.propiedades_extra === 'object') {
+            Object.entries(obraActual.propiedades_extra).forEach(([clave, valor]) => {
+                const item = document.createElement('div');
+                item.className = 'info-item'; // <--- Usamos tu clase original
+                item.innerHTML = `
+                    <span>${clave}:</span>
+                    <strong>${valor}</strong>
+                `; // <--- Usamos span y strong como en tu CSS
+                contenedorExtras.appendChild(item);
+            });
+        }
+    }
+    // -------------------------------------------
 
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
@@ -557,6 +574,8 @@ async function ejecutarRegistro() {
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
 
+    const detallesDinamicos = obtenerPropiedadesExtra();
+
     try {
         let resultado;
         
@@ -582,7 +601,8 @@ async function ejecutarRegistro() {
                         Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                         Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                     },
-                    temporadas: recolectarDatosTemporadas()
+                    temporadas: recolectarDatosTemporadas(),
+                    propiedades_extra: detallesDinamicos
                 };
             } else {
                 // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas del dueño con las suyas propias)
@@ -612,7 +632,8 @@ async function ejecutarRegistro() {
                     Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                 },
                 temporadas: recolectarDatosTemporadas(),
-                creador_id: userIdActual 
+                creador_id: userIdActual,
+                propiedades_extra: detallesDinamicos
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
@@ -777,6 +798,52 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
         agregarSubTemporadaUI(listaTemps);
     }
 }
+
+function agregarPropiedadExtra() {
+    const contenedor = document.getElementById('contenedor-propiedades-extra');
+    
+    // Creamos el div contenedor de la fila
+    const div = document.createElement('div');
+    div.className = 'fila-propiedad-extra';
+    
+    // Insertamos los inputs y el botón de eliminar
+    div.innerHTML = `
+        <input type="text" placeholder="Ej: Fansub" class="prop-clave">
+        <input type="text" placeholder="Ej: HD 1080p" class="prop-valor">
+        <button type="button" class="btn-eliminar-prop" onclick="eliminarPropiedadExtra(this)">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+    `;
+    
+    contenedor.appendChild(div);
+}
+
+// 2. Función para eliminar la fila
+function eliminarPropiedadExtra(boton) {
+    // El botón está dentro del div .fila-propiedad-extra, así que eliminamos a su 'padre'
+    boton.parentElement.remove();
+}
+
+// 3. Función para recopilar los datos ANTES de enviar a Supabase
+function obtenerPropiedadesExtra() {
+    const filas = document.querySelectorAll('.fila-propiedad-extra');
+    let propiedadesExtra = {}; // Creamos un objeto vacío
+    
+    filas.forEach(fila => {
+        // Obtenemos lo que el usuario escribió
+        const clave = fila.querySelector('.prop-clave').value.trim();
+        const valor = fila.querySelector('.prop-valor').value.trim();
+        
+        // Si ambos campos tienen texto, lo añadimos al objeto
+        if (clave !== "" && valor !== "") {
+            propiedadesExtra[clave] = valor;
+        }
+    });
+    
+    return propiedadesExtra; 
+    // Retornará algo como: { "Fansub": "Erai-raws", "Resolución": "1080p" }
+}
+
 
 function agregarSubTemporadaUI(containerLista, datos = null) {
     if (!containerLista) return;
