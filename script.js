@@ -683,24 +683,32 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     secBlock.className = 'seccion-block';
     secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
-    // PERMISOS DE SECCIÓN: Averiguamos de quién es la sección.
+    // PERMISOS DE SECCIÓN
     let creadorSeccion = userIdActual;
     if (temporadasArray && temporadasArray.length > 0) {
-        // Si no tiene creador_id en la base de datos, asumimos que fue hecha por el dueño de la obra.
+        // Determinamos el creador basándonos en la primera temporada de la lista
         creadorSeccion = temporadasArray[0].creador_id ? String(temporadasArray[0].creador_id) : (obraActual ? String(obraActual.creador_id) : userIdActual);
     }
+    
     const esPropietarioObra = idAnimeEnEdicion ? (obraActual && String(obraActual.creador_id) === userIdActual) : true;
-    const puedeEditarSeccion = esPropietarioObra || (creadorSeccion === userIdActual);
+    // Solo el dueño de la obra o el creador de la sección pueden editar el TÍTULO o BORRAR la sección
+    const puedeEditarCabecera = esPropietarioObra || (String(creadorSeccion) === userIdActual);
 
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
-            <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Películas / Ovas)" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold; ${!puedeEditarSeccion ? 'opacity: 0.6;' : ''}" ${!puedeEditarSeccion ? 'disabled' : ''}>
-            <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer; ${!puedeEditarSeccion ? 'display:none;' : ''}">
+            <input type="text" class="sec-nombre" placeholder="Nombre de Sección" value="${nombreSeccion}" 
+                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold; ${!puedeEditarCabecera ? 'opacity: 0.6; cursor: not-allowed;' : ''}" 
+                ${!puedeEditarCabecera ? 'disabled' : ''}>
+            
+            <button type="button" onclick="this.closest('.seccion-block').remove()" 
+                style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer; ${!puedeEditarCabecera ? 'display:none;' : ''}">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
         <div class="lista-temporadas"></div>
-        <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+        
+        <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" 
+            style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
             <i class="fa-solid fa-plus"></i> Añadir Bloque a esta Sección
         </button>
     `;
@@ -721,31 +729,39 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     bloque.className = 'temporada-block';
     bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
-    // PERMISOS DEL BLOQUE: Averiguamos quién creó este bloque individual.
+    // PERMISOS DEL BLOQUE INDIVIDUAL
     let creadorId = userIdActual;
     if (datos) {
+        // Si hay datos, leemos quién lo creó. Si no hay ID (datos viejos), asumimos que es del dueño.
         creadorId = datos.creador_id ? String(datos.creador_id) : (obraActual ? String(obraActual.creador_id) : userIdActual);
     }
+    
     const esPropietarioObra = idAnimeEnEdicion ? (obraActual && String(obraActual.creador_id) === userIdActual) : true;
-    const puedeEditar = esPropietarioObra || (creadorId === userIdActual);
-
-    if (!puedeEditar) {
-        bloque.style.opacity = "0.5";
-    }
+    // Un usuario puede editar si es el DUEÑO de la obra O si ÉL mismo creó este bloque específico
+    const puedeEditarEsteBloque = esPropietarioObra || (String(creadorId) === userIdActual);
 
     bloque.innerHTML = `
         <input type="hidden" class="temp-creador-id" value="${creadorId}">
+        
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;" ${!puedeEditar ? 'disabled' : ''}>
-            <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer; ${!puedeEditar ? 'display:none;' : ''}">
+            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" 
+                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; ${!puedeEditarEsteBloque ? 'opacity: 0.6;' : ''}" 
+                ${!puedeEditarEsteBloque ? 'disabled' : ''}>
+            
+            <button type="button" onclick="this.closest('.temporada-block').remove()" 
+                style="background:transparent; color:#ef4444; border:none; cursor:pointer; ${!puedeEditarEsteBloque ? 'display:none;' : ''}">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
-        <input type="text" class="temp-img" placeholder="URL Imagen Portada (Opcional)" value="${datos?.imagen || ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;" ${!puedeEditar ? 'disabled' : ''}>
+        
+        <input type="text" class="temp-img" placeholder="URL Imagen Portada" value="${datos?.imagen || ''}" 
+            style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box; ${!puedeEditarEsteBloque ? 'opacity: 0.6;' : ''}" 
+            ${!puedeEditarEsteBloque ? 'disabled' : ''}>
         
         <div class="idiomas-container">
             <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
-            <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling, '', null, true)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; ${!puedeEditar ? 'display:none;' : ''}">
+            <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling, '', null, true)" 
+                style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; ${!puedeEditarEsteBloque ? 'display:none;' : ''}">
                 <i class="fa-solid fa-plus"></i> Añadir Idioma
             </button>
         </div>
@@ -755,8 +771,8 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
     if (datos?.enlaces) {
-        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps, puedeEditar));
-    } else if (puedeEditar) {
+        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps, puedeEditarEsteBloque));
+    } else if (puedeEditarEsteBloque) {
         agregarIdiomaUI(listaIdiomas, '', null, true);
     }
 }
