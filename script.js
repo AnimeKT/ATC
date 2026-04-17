@@ -727,9 +727,6 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     if (!containerLista) return;
     const bloque = document.createElement('div');
     bloque.className = 'temporada-block';
-    const creadorIdBloque = datos?.creador_id || userIdActual;
-    bloque.dataset.creadorId = creadorIdBloque;
-    
     bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
     bloque.innerHTML = `
@@ -813,7 +810,6 @@ function recolectarDatosTemporadas() {
             const inputTempI = tempBlock.querySelector('.temp-img');
             const nombre = inputTempN ? inputTempN.value.trim() : '';
             const imagen = inputTempI ? inputTempI.value.trim() : '';
-            const creadorIdBloque = tempBlock.dataset.creadorId;
             const enlaces = {};
 
             tempBlock.querySelectorAll('.idioma-bloque').forEach(idBlock => {
@@ -836,7 +832,7 @@ function recolectarDatosTemporadas() {
             });
 
             if(nombre) {
-                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces, creador_id: creadorIdBloque });
+                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces });
             }
         });
     });
