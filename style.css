@@ -1095,3 +1095,31 @@ body {
     to { transform: translateY(0); opacity: 1; }
 }
 
+.fila-propiedad-extra {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.fila-propiedad-extra input {
+    flex: 1; /* Hace que ambos inputs tomen el mismo espacio disponible */
+    margin-bottom: 0; /* Anula el margin inferior si tus inputs globales lo tienen */
+}
+
+.btn-eliminar-prop {
+    background-color: #ef4444; /* Rojo para eliminar */
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.btn-eliminar-prop:hover {
+    background-color: #dc2626;
+}
