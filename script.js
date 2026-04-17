@@ -719,105 +719,111 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     bloque.className = 'temporada-block';
     bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
-    // LÓGICA DE AUTORÍA CORREGIDA:
-    let idAutorDelBloque;
-    if (datos) {
-        // Si el JSON tiene creador_id, lo usamos. 
-        // Si NO lo tiene (es un dato viejo), el dueño es el creador de la obra.
-        idAutorDelBloque = datos.creador_id ? String(datos.creador_id) : String(obraActual.creador_id);
-    } else {
-        // Si el bloque es nuevo, el autor es el usuario que está frente a la pantalla.
-        idAutorDelBloque = String(userIdActual);
-    }
-
+    // 1. Identificar al autor (si no existe ID en el JSON, es del dueño de la obra)
+    const idAutorDelBloque = datos?.creador_id ? String(datos.creador_id) : (obraActual ? String(obraActual.creador_id) : String(userIdActual));
+    
+    // 2. ¿Es el dueño total o el autor de este bloque?
     const esPropietarioObra = obraActual && String(obraActual.creador_id) === String(userIdActual);
     const esMiAporte = idAutorDelBloque === String(userIdActual);
-    
-    // Puedes editar si eres el DUEÑO TOTAL o si el bloque es TUYO.
     const puedeEditar = esPropietarioObra || esMiAporte;
 
     bloque.innerHTML = `
         <input type="hidden" class="temp-creador-id" value="${idAutorDelBloque}">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre" value="${datos?.nombre || ''}" 
-                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; ${!puedeEditar ? 'opacity: 0.5;' : ''}" 
-                ${!puedeEditar ? 'disabled' : ''}>
+            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" 
+                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
+                ${!puedeEditar ? 'readonly' : ''}>
             
             ${puedeEditar ? `
-                <button type="button" onclick="this.closest('.temporada-block').remove()" style="color:#ef4444; background:none; border:none; cursor:pointer;">
+                <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             ` : ''}
         </div>
         
-        <input type="text" class="temp-img" placeholder="URL Imagen" value="${datos?.imagen || ''}" 
-            style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; margin-bottom: 15px; ${!puedeEditar ? 'opacity: 0.5;' : ''}" 
-            ${!puedeEditar ? 'disabled' : ''}>
+        <input type="text" class="temp-img" placeholder="URL Imagen Portada" value="${datos?.imagen || ''}" 
+            style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; margin-bottom: 15px; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
+            ${!puedeEditar ? 'readonly' : ''}>
         
         <div class="idiomas-container">
             <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
             ${puedeEditar ? `
-                <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer;">
+                <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
                     <i class="fa-solid fa-plus"></i> Añadir Idioma
                 </button>
-            ` : '<p style="font-size:11px; color:#555; text-align:center;">Bloque protegido por el autor</p>'}
+            ` : '<p style="font-size:11px; color:#555; margin-top:10px;"><i class="fa-solid fa-lock"></i> Contenido protegido</p>'}
         </div>
     `;
 
     containerLista.appendChild(bloque);
     const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
+    // IMPORTANTE: Pasamos el valor de "puedeEditar" a la siguiente función
     if (datos?.enlaces) {
         Object.entries(datos.enlaces).forEach(([idioma, caps]) => {
-            // Pasamos el permiso de editar a los idiomas para que también se bloqueen
             agregarIdiomaUI(listaIdiomas, idioma, caps, puedeEditar); 
         });
     } else if (puedeEditar) {
-        agregarIdiomaUI(listaIdiomas);
+        agregarIdiomaUI(listaIdiomas, '', null, true);
     }
 }
 
-function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null, puedeEditar = true) {
-    if (!containerLista) return;
-    const divIdioma = document.createElement('div');
-    divIdioma.className = 'idioma-bloque';
-    divIdioma.style.cssText = "padding: 10px; background: #0c0c0f; border: 1px solid #27272a; border-radius: 6px;";
+function agregarIdiomaUI(container, nombre = '', capitulos = null, puedeEditar = true) {
+    const div = document.createElement('div');
+    div.className = 'idioma-bloque';
+    div.style.cssText = "background: #0f0f11; padding: 10px; border-radius: 6px; border: 1px solid #27272a;";
 
-    divIdioma.innerHTML = `
+    div.innerHTML = `
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" class="idioma-nombre" placeholder="Idioma" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;" ${!puedeEditar ? 'disabled' : ''}>
-            <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer; ${!puedeEditar ? 'display:none;' : ''}"><i class="fa-solid fa-xmark"></i></button>
+            <input type="text" class="idioma-nombre" placeholder="Idioma (Latino, Sub...)" value="${nombre}" 
+                style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #27272a; background: #18181b; color: white; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
+                ${!puedeEditar ? 'readonly' : ''}>
+            ${puedeEditar ? `
+                <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            ` : ''}
         </div>
-        <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
-        <button type="button" onclick="agregarCapituloUI(this.previousElementSibling, '', '', true)" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px; ${!puedeEditar ? 'display:none;' : ''}">
-            + Añadir Capítulo
-        </button>
+        <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; padding-left: 10px; border-left: 2px solid #27272a;"></div>
+        ${puedeEditar ? `
+            <button type="button" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 8px; background:none; border:none; color:#3ba4fa; cursor:pointer; font-size:12px;">
+                <i class="fa-solid fa-plus"></i> Añadir Capítulo
+            </button>
+        ` : ''}
     `;
 
-    containerLista.appendChild(divIdioma);
-    const listaCaps = divIdioma.querySelector('.lista-capitulos');
+    container.appendChild(div);
+    const listaCaps = div.querySelector('.lista-capitulos');
 
     if (capitulos) {
-        Object.entries(capitulos).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u, puedeEditar));
+        Object.entries(capitulos).forEach(([num, url]) => {
+            agregarCapituloUI(listaCaps, num, url, puedeEditar);
+        });
     } else if (puedeEditar) {
-        agregarCapituloUI(listaCaps, '', '', true);
+        agregarCapituloUI(listaCaps);
     }
 }
 
-function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '', puedeEditar = true) {
-    if (!containerCaps) return;
-    const divCap = document.createElement('div');
-    divCap.className = 'capitulo-row';
-    divCap.style.display = "flex";
-    divCap.style.gap = "8px";
+function agregarCapituloUI(container, numero = '', url = '', puedeEditar = true) {
+    const div = document.createElement('div');
+    div.className = 'capitulo-row';
+    div.style.cssText = "display: flex; gap: 5px; align-items: center;";
 
-    divCap.innerHTML = `
-        <input type="text" class="cap-nombre" placeholder="N°" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;" ${!puedeEditar ? 'disabled' : ''}>
-        <input type="text" class="cap-url" placeholder="URL" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;" ${!puedeEditar ? 'disabled' : ''}>
-        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer; ${!puedeEditar ? 'display:none;' : ''}"><i class="fa-solid fa-trash"></i></button>
+    div.innerHTML = `
+        <input type="text" class="cap-nombre" placeholder="Cap 1" value="${numero}" 
+            style="width: 80px; padding: 6px; border-radius: 4px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 12px; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
+            ${!puedeEditar ? 'readonly' : ''}>
+        <input type="text" class="cap-url" placeholder="URL del video" value="${url}" 
+            style="flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 12px; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
+            ${!puedeEditar ? 'readonly' : ''}>
+        ${puedeEditar ? `
+            <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background:transparent; color:#555; border:none; cursor:pointer;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        ` : ''}
     `;
-    containerCaps.appendChild(divCap);
+    container.appendChild(div);
 }
 
 function recolectarDatosTemporadas() {
