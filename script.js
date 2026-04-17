@@ -124,6 +124,7 @@ function abrirDetalle(tituloObra) {
     if(imgPort) {
         imgPort.src = obraActual.portada_url || '';
         imgPort.style.opacity = 1;
+        imgPort.onclick = () => verImagenGrande(imgPort.src);
     }
     
     const detTitulo = document.getElementById('det-titulo');
@@ -917,6 +918,67 @@ function cargarDatosTemporadas(temporadasFlat) {
         }
         agregarSeccionUI(nombreSec, tempsArray, sectionCreator);
     }
+}
+
+function verImagenGrande(url) {
+    if (!url || url === "") return;
+    
+    // Intentamos obtener el visualizador si ya existe
+    let overlay = document.getElementById('viewer-overlay');
+    
+    // Si no existe, lo creamos desde cero
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'viewer-overlay';
+        
+        // Estilos para el fondo oscuro
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        `;
+        
+        // La imagen que se verá grande
+        const img = document.createElement('img');
+        img.id = 'viewer-img';
+        img.style.cssText = `
+            max-width: 90%;
+            max-height: 85%;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        `;
+        
+        // Botón de cerrar (opcional, ya que cerrarás al tocar el fondo)
+        const btnCerrar = document.createElement('div');
+        btnCerrar.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        btnCerrar.style.cssText = "position: absolute; top: 20px; right: 20px; color: white; font-size: 24px;";
+        
+        overlay.appendChild(img);
+        overlay.appendChild(btnCerrar);
+        document.body.appendChild(overlay);
+
+        // Al hacer click en cualquier parte del fondo, se cierra
+        overlay.onclick = () => {
+            overlay.style.display = 'none';
+        };
+    }
+    
+    // Asignamos la URL y mostramos
+    const viewerImg = document.getElementById('viewer-img');
+    viewerImg.src = url;
+    overlay.style.display = 'flex';
 }
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
