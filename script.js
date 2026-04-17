@@ -352,16 +352,11 @@ function renderizarObras(obras) {
 
         // Se añade el botón de favoritos integrado en la tarjeta
         return `
-        <div class="tarjeta-anime" style="position:relative;">
-            <button class="btn-fav-card ${favoritoActivo}" onclick="toggleFavorito(event, '${obra.id}')" style="position:absolute; top:8px; right:8px; z-index:10; background:rgba(0,0,0,0.6); border:none; width:30px; height:30px; border-radius:50%; color: ${esFav ? '#ff4757' : 'white'}; cursor:pointer;">
-                <i class="${corazonClass}"></i>
-            </button>
-            <div onclick="abrirDetalle('${tituloSeguro}')" style="cursor:pointer;">
-                <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
-                <img src="${obra.portada_url}" alt="${tituloSeguro}">
-                <div class="info-tarjeta">
-                    <div class="titulo-tarjeta">${obra.titulo}</div>
-                </div>
+        <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
+            <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
+            <img src="${obra.portada_url}" alt="${tituloSeguro}">
+            <div class="info-tarjeta">
+                <div class="titulo-tarjeta">${obra.titulo}</div>
             </div>
         </div>
         `;
