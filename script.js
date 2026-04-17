@@ -16,7 +16,9 @@ tg.ready();
 tg.expand();
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
-let userIdActual = "invitado";
+let userIdActual = (tg.initDataUnsafe && tg.initDataUnsafe.user) 
+    ? String(tg.initDataUnsafe.user.id) 
+    : "visitante_" + Math.random();
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
@@ -685,13 +687,13 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     secBlock.className = 'seccion-block';
     secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
-    // COMPROBACIÓN MAESTRA: ¿Es el dueño de toda la ficha?
+    // ¿Es el dueño de toda la obra?
     const esPropietarioObra = obraActual && String(obraActual.creador_id) === String(userIdActual);
 
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
             <input type="text" class="sec-nombre" placeholder="Nombre de Sección" value="${nombreSeccion}" 
-                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold; ${!esPropietarioObra ? 'opacity: 0.6;' : ''}" 
+                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold; ${!esPropietarioObra ? 'opacity: 0.6; pointer-events: none;' : ''}" 
                 ${!esPropietarioObra ? 'readonly' : ''}>
             
             ${esPropietarioObra ? `
@@ -703,8 +705,8 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
         <div class="lista-temporadas"></div>
         
         <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" 
-            style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
-            <i class="fa-solid fa-plus"></i> Añadir mi aporte a esta sección
+            style="width: 100%; padding: 12px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: 600;">
+            <i class="fa-solid fa-plus"></i> Añadir Contenido a esta sección
         </button>
     `;
 
@@ -721,30 +723,25 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     bloque.className = 'temporada-block';
     bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
-    // 1. Identificar al autor (si no existe ID en el JSON, es del dueño de la obra)
-    const idAutorDelBloque = datos?.creador_id ? String(datos.creador_id) : (obraActual ? String(obraActual.creador_id) : String(userIdActual));
-    
-    // 2. ¿Es el dueño total o el autor de este bloque?
+    // DETERMINAR PERMISOS
     const esPropietarioObra = obraActual && String(obraActual.creador_id) === String(userIdActual);
-    const esMiAporte = idAutorDelBloque === String(userIdActual);
-    const puedeEditar = esPropietarioObra || esMiAporte;
+    
+    // Si el bloque existe, verificamos su creador. Si no tiene creador_id, es del dueño de la obra.
+    let idCreadorBloque = datos?.creador_id ? String(datos.creador_id) : (datos ? String(obraActual.creador_id) : String(userIdActual));
+    
+    const puedeEditar = esPropietarioObra || (idCreadorBloque === String(userIdActual));
 
     bloque.innerHTML = `
-        <input type="hidden" class="temp-creador-id" value="${idAutorDelBloque}">
+        <input type="hidden" class="temp-creador-id" value="${idCreadorBloque}">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" 
+            <input type="text" class="temp-nombre" placeholder="Nombre" value="${datos?.nombre || ''}" 
                 style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
                 ${!puedeEditar ? 'readonly' : ''}>
-            
-            ${puedeEditar ? `
-                <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            ` : ''}
+            ${puedeEditar ? `<button type="button" onclick="this.closest('.temporada-block').remove()" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
         </div>
         
-        <input type="text" class="temp-img" placeholder="URL Imagen Portada" value="${datos?.imagen || ''}" 
+        <input type="text" class="temp-img" placeholder="URL Imagen" value="${datos?.imagen || ''}" 
             style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; margin-bottom: 15px; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
             ${!puedeEditar ? 'readonly' : ''}>
         
@@ -754,20 +751,17 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
                 <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
                     <i class="fa-solid fa-plus"></i> Añadir Idioma
                 </button>
-            ` : '<p style="font-size:11px; color:#555; margin-top:10px;"><i class="fa-solid fa-lock"></i> Contenido protegido</p>'}
+            ` : '<div style="color:#555; font-size:11px; text-align:center; padding:10px; border: 1px dashed #27272a; border-radius:6px;">Contenido Protegido</div>'}
         </div>
     `;
 
     containerLista.appendChild(bloque);
     const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
-    // IMPORTANTE: Pasamos el valor de "puedeEditar" a la siguiente función
     if (datos?.enlaces) {
-        Object.entries(datos.enlaces).forEach(([idioma, caps]) => {
-            agregarIdiomaUI(listaIdiomas, idioma, caps, puedeEditar); 
-        });
+        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps, puedeEditar));
     } else if (puedeEditar) {
-        agregarIdiomaUI(listaIdiomas, '', null, true);
+        agregarIdiomaUI(listaIdiomas);
     }
 }
 
