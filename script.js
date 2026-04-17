@@ -4,8 +4,6 @@
 const SUPABASE_URL = "https://urmnngtfoavnmvbwqepq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVybW5uZ3Rmb2F2bm12YndxZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MTE4NzcsImV4cCI6MjA5MTI4Nzg3N30.HnfoffLftMYWt2ZEkv1YEbG0vqRPWjB5IeQunj2I5cs";
 
-
-
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // =========================================
@@ -16,9 +14,7 @@ tg.ready();
 tg.expand();
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
-let userIdActual = (tg.initDataUnsafe && tg.initDataUnsafe.user) 
-    ? String(tg.initDataUnsafe.user.id) 
-    : "visitante_" + Math.random();
+let userIdActual = "anonimo";
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
@@ -93,6 +89,7 @@ let filtrosActuales = {
 // =========================================
 async function inicializarApp() {
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        // Guardamos el ID del usuario actual para validar permisos después
         userIdActual = String(tg.initDataUnsafe.user.id);
         await cargarFavoritosUsuario();
         
@@ -412,11 +409,10 @@ function prepararNuevoRegistro() {
     if(btn) btn.textContent = "Publicar";
     
     // Limpiamos los inputs y nos aseguramos de que todos estén HABILITADOS
-    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea, #vista-registro button').forEach(i => {
+    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => {
         i.value = '';
         i.disabled = false;
         i.style.opacity = '1';
-        if(i.tagName === 'BUTTON') i.style.display = ''; // Restaurar botones ocultos
     });
     
     cargarDatosTemporadas([]); 
@@ -431,66 +427,46 @@ function prepararEdicionDesdeDetalle() {
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
-    // USAMOS LA VARIABLE GLOBAL userIdActual
-    // Aseguramos que ambos sean strings para la comparación
-    const idEnDB = String(obraActual.creador_id || "sin_dueño");
-    const idMia = String(userIdActual);
-    
-    const esPropietario = idEnDB === idMia;
+    // Llenamos los datos principales
+    if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
+    if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
+    if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
+    if(document.getElementById('in-estado')) document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
+    if(document.getElementById('in-tipo')) document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
+    if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
+    if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
+    if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
+    if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
-    // EL ALERT ES TU MEJOR AMIGO:
-    // Si estos dos números son iguales, el bloqueo NO se activará (es correcto).
-    // Si son distintos y puedes editar, entonces hay un error de caché o de ID.
-    alert("Dueño en DB: " + idEnDB + "\nTu ID actual: " + idMia);
+    // LÓGICA DE ROLES: Verificar si es el dueño
+    const esPropietario = String(obraActual.creador_id) === userIdActual;
 
-    // 1. Llenamos los datos principales
-    const campos = {
-        'in-titulo': obraActual.titulo,
-        'in-portada': obraActual.portada_url,
-        'in-banner': obraActual.banner_url,
-        'in-estado': obraActual.estado || 'En emisión',
-        'in-tipo': obraActual.tipo || 'TV',
-        'in-sinopsis': obraActual.sinopsis,
-        'in-autor': obraActual.autor,
-        'in-estudio': obraActual.estudio,
-        'in-origen': obraActual.origen,
-        'in-estreno': obraActual.estreno,
-        'in-dia': obraActual.dia_emision,
-        'in-japones': obraActual.nombres_alternativos?.Japonés,
-        'in-ingles': obraActual.nombres_alternativos?.Ingles
-    };
-
-    for (const [id, valor] of Object.entries(campos)) {
-        const el = document.getElementById(id);
-        if (el) {
-            el.value = valor || '';
-            // BLOQUEO: Si no es propietario, deshabilitamos
-            el.disabled = !esPropietario;
-            el.style.opacity = esPropietario ? "1" : "0.5";
-            el.style.backgroundColor = esPropietario ? "#0f0f11" : "#27272a";
+    // Si NO es el propietario, bloqueamos los campos generales (Colaborador solo añade temporadas)
+    const camposPrivados = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-japones', 'in-ingles'];
+    camposPrivados.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.disabled = !esPropietario;
+            input.style.opacity = esPropietario ? "1" : "0.5";
         }
-    }
+    });
 
-    // 2. Cargamos las temporadas (su lógica interna ya usa userIdActual)
     cargarDatosTemporadas(obraActual.temporadas || []);
-
     cambiarVista('registro');
 }
-
-
-
-
 
 async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
     const inTitulo = document.getElementById('in-titulo');
     const inPortada = document.getElementById('in-portada');
     
-    
     if(!inTitulo || !inPortada) return;
 
+    // Validamos permisos antes de recoger datos
+    // Si la obra es nueva, el creador es el usuario actual. Si existe, revisamos la base de datos local.
     const esPropietario = idAnimeEnEdicion ? (String(obraActual.creador_id) === userIdActual) : true;
 
+    // Solo exigimos titulo y portada si el que está guardando tiene permisos de modificar eso
     if (esPropietario && (!inTitulo.value.trim() || !inPortada.value.trim())) {
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
         return alert("⚠️ Título y Portada son obligatorios.");
@@ -503,9 +479,11 @@ async function ejecutarRegistro() {
         let resultado;
         
         if (idAnimeEnEdicion) {
+            // MODO EDICIÓN
             let datosObra = {};
 
             if (esPropietario) {
+                // Dueño actualiza todo
                 datosObra = {
                     titulo: inTitulo.value.trim(),
                     portada_url: inPortada.value.trim(),
@@ -513,11 +491,7 @@ async function ejecutarRegistro() {
                     sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
                     estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
                     tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
-                    estudio: document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '',
                     autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
-                    origen: document.getElementById('in-origen') ? document.getElementById('in-origen').value : '',
-                    estreno: document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '',
-                    dia_emision: document.getElementById('in-dia') ? document.getElementById('in-dia').value : '',
                     nombres_alternativos: {
                         Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                         Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
@@ -525,14 +499,19 @@ async function ejecutarRegistro() {
                     temporadas: recolectarDatosTemporadas()
                 };
             } else {
+                // Colaborador SOLO actualiza las temporadas
                 datosObra = {
                     temporadas: recolectarDatosTemporadas()
                 };
             }
 
-            resultado = await _supabase.from('obras').update(datosObra).eq('id', idAnimeEnEdicion);
+            resultado = await _supabase
+                .from('obras')
+                .update(datosObra)
+                .eq('id', idAnimeEnEdicion);
 
         } else {
+            // MODO CREACIÓN: Insertar nuevo (asignando creador)
             const datosObra = {
                 titulo: inTitulo.value.trim(),
                 portada_url: inPortada.value.trim(),
@@ -540,20 +519,18 @@ async function ejecutarRegistro() {
                 sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
                 estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
                 tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
-                estudio: document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '',
                 autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
-                origen: document.getElementById('in-origen') ? document.getElementById('in-origen').value : '',
-                estreno: document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '',
-                dia_emision: document.getElementById('in-dia') ? document.getElementById('in-dia').value : '',
                 nombres_alternativos: {
                     Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                     Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                 },
                 temporadas: recolectarDatosTemporadas(),
-                creador_id: userIdActual
+                creador_id: userIdActual // <--- CLAVE PARA EL SISTEMA DE ROLES
             };
 
-            resultado = await _supabase.from('obras').insert([datosObra]);
+            resultado = await _supabase
+                .from('obras')
+                .insert([datosObra]);
         }
 
         if (resultado.error) throw resultado.error;
@@ -687,33 +664,26 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     secBlock.className = 'seccion-block';
     secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
-    // ¿Es el dueño de toda la obra?
-    const esPropietarioObra = obraActual && String(obraActual.creador_id) === String(userIdActual);
-
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
-            <input type="text" class="sec-nombre" placeholder="Nombre de Sección" value="${nombreSeccion}" 
-                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold; ${!esPropietarioObra ? 'opacity: 0.6; pointer-events: none;' : ''}" 
-                ${!esPropietarioObra ? 'readonly' : ''}>
-            
-            ${esPropietarioObra ? `
-                <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            ` : ''}
+            <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Películas / Ovas)" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
+            <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
         </div>
         <div class="lista-temporadas"></div>
-        
-        <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" 
-            style="width: 100%; padding: 12px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: 600;">
-            <i class="fa-solid fa-plus"></i> Añadir Contenido a esta sección
+        <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+            <i class="fa-solid fa-plus"></i> Añadir Bloque a esta Sección
         </button>
     `;
 
     container.appendChild(secBlock);
     const listaTemps = secBlock.querySelector('.lista-temporadas');
-    if (temporadasArray) {
+
+    if (temporadasArray && Array.isArray(temporadasArray)) {
         temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos));
+    } else {
+        agregarSubTemporadaUI(listaTemps);
     }
 }
 
@@ -723,35 +693,20 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     bloque.className = 'temporada-block';
     bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
-    // DETERMINAR PERMISOS
-    const esPropietarioObra = obraActual && String(obraActual.creador_id) === String(userIdActual);
-    
-    // Si el bloque existe, verificamos su creador. Si no tiene creador_id, es del dueño de la obra.
-    let idCreadorBloque = datos?.creador_id ? String(datos.creador_id) : (datos ? String(obraActual.creador_id) : String(userIdActual));
-    
-    const puedeEditar = esPropietarioObra || (idCreadorBloque === String(userIdActual));
-
     bloque.innerHTML = `
-        <input type="hidden" class="temp-creador-id" value="${idCreadorBloque}">
-        
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre" value="${datos?.nombre || ''}" 
-                style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
-                ${!puedeEditar ? 'readonly' : ''}>
-            ${puedeEditar ? `<button type="button" onclick="this.closest('.temporada-block').remove()" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
+            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
+            <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
         </div>
-        
-        <input type="text" class="temp-img" placeholder="URL Imagen" value="${datos?.imagen || ''}" 
-            style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; margin-bottom: 15px; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
-            ${!puedeEditar ? 'readonly' : ''}>
+        <input type="text" class="temp-img" placeholder="URL Imagen Portada (Opcional)" value="${datos?.imagen || ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
         
         <div class="idiomas-container">
             <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
-            ${puedeEditar ? `
-                <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
-                    <i class="fa-solid fa-plus"></i> Añadir Idioma
-                </button>
-            ` : '<div style="color:#555; font-size:11px; text-align:center; padding:10px; border: 1px dashed #27272a; border-radius:6px;">Contenido Protegido</div>'}
+            <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
+                <i class="fa-solid fa-plus"></i> Añadir Idioma
+            </button>
         </div>
     `;
 
@@ -759,67 +714,52 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
     if (datos?.enlaces) {
-        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps, puedeEditar));
-    } else if (puedeEditar) {
+        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps));
+    } else {
         agregarIdiomaUI(listaIdiomas);
     }
 }
 
-function agregarIdiomaUI(container, nombre = '', capitulos = null, puedeEditar = true) {
-    const div = document.createElement('div');
-    div.className = 'idioma-bloque';
-    div.style.cssText = "background: #0f0f11; padding: 10px; border-radius: 6px; border: 1px solid #27272a;";
+function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
+    if (!containerLista) return;
+    const divIdioma = document.createElement('div');
+    divIdioma.className = 'idioma-bloque';
+    divIdioma.style.cssText = "padding: 10px; background: #0c0c0f; border: 1px solid #27272a; border-radius: 6px;";
 
-    div.innerHTML = `
+    divIdioma.innerHTML = `
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" class="idioma-nombre" placeholder="Idioma (Latino, Sub...)" value="${nombre}" 
-                style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #27272a; background: #18181b; color: white; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
-                ${!puedeEditar ? 'readonly' : ''}>
-            ${puedeEditar ? `
-                <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            ` : ''}
+            <input type="text" class="idioma-nombre" placeholder="Idioma" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
+            <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; padding-left: 10px; border-left: 2px solid #27272a;"></div>
-        ${puedeEditar ? `
-            <button type="button" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 8px; background:none; border:none; color:#3ba4fa; cursor:pointer; font-size:12px;">
-                <i class="fa-solid fa-plus"></i> Añadir Capítulo
-            </button>
-        ` : ''}
+        <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
+        <button type="button" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
+            + Añadir Capítulo
+        </button>
     `;
 
-    container.appendChild(div);
-    const listaCaps = div.querySelector('.lista-capitulos');
+    containerLista.appendChild(divIdioma);
+    const listaCaps = divIdioma.querySelector('.lista-capitulos');
 
     if (capitulos) {
-        Object.entries(capitulos).forEach(([num, url]) => {
-            agregarCapituloUI(listaCaps, num, url, puedeEditar);
-        });
-    } else if (puedeEditar) {
+        Object.entries(capitulos).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u));
+    } else {
         agregarCapituloUI(listaCaps);
     }
 }
 
-function agregarCapituloUI(container, numero = '', url = '', puedeEditar = true) {
-    const div = document.createElement('div');
-    div.className = 'capitulo-row';
-    div.style.cssText = "display: flex; gap: 5px; align-items: center;";
+function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
+    if (!containerCaps) return;
+    const divCap = document.createElement('div');
+    divCap.className = 'capitulo-row';
+    divCap.style.display = "flex";
+    divCap.style.gap = "8px";
 
-    div.innerHTML = `
-        <input type="text" class="cap-nombre" placeholder="Cap 1" value="${numero}" 
-            style="width: 80px; padding: 6px; border-radius: 4px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 12px; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
-            ${!puedeEditar ? 'readonly' : ''}>
-        <input type="text" class="cap-url" placeholder="URL del video" value="${url}" 
-            style="flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 12px; ${!puedeEditar ? 'opacity: 0.5; pointer-events: none;' : ''}" 
-            ${!puedeEditar ? 'readonly' : ''}>
-        ${puedeEditar ? `
-            <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background:transparent; color:#555; border:none; cursor:pointer;">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        ` : ''}
+    divCap.innerHTML = `
+        <input type="text" class="cap-nombre" placeholder="N°" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
+        <input type="text" class="cap-url" placeholder="URL" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
+        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
     `;
-    container.appendChild(div);
+    containerCaps.appendChild(divCap);
 }
 
 function recolectarDatosTemporadas() {
@@ -832,13 +772,8 @@ function recolectarDatosTemporadas() {
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
             const inputTempN = tempBlock.querySelector('.temp-nombre');
             const inputTempI = tempBlock.querySelector('.temp-img');
-            const inputCreador = tempBlock.querySelector('.temp-creador-id'); // Identificador clave
-            
             const nombre = inputTempN ? inputTempN.value.trim() : '';
             const imagen = inputTempI ? inputTempI.value.trim() : '';
-            // Si el bloque tiene un creador oculto, lo usamos. Si no, lo marcamos con el usuario actual.
-            const creadorId = inputCreador && inputCreador.value ? inputCreador.value : userIdActual;
-
             const enlaces = {};
 
             tempBlock.querySelectorAll('.idioma-bloque').forEach(idBlock => {
@@ -861,13 +796,7 @@ function recolectarDatosTemporadas() {
             });
 
             if(nombre) {
-                datos.push({ 
-                    seccion: nombreSeccion, 
-                    nombre, 
-                    imagen, 
-                    enlaces,
-                    creador_id: creadorId // Aquí es donde se "firma" el bloque para siempre
-                });
+                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces });
             }
         });
     });
