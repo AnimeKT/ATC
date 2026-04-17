@@ -400,7 +400,7 @@ function actualizarEstadoFavoritoDetalle() {
 }
 
 // =========================================
-// 9. REGISTRO Y EDICIÓN DE OBRAS
+// 9. REGISTRO Y EDICIÓN DE OBRAS (SISTEMA DE ROLES APLICADO)
 // =========================================
 function prepararNuevoRegistro() {
     idAnimeEnEdicion = null; 
@@ -412,7 +412,7 @@ function prepararNuevoRegistro() {
         i.value = '';
         i.disabled = false;
         i.style.opacity = '1';
-        if(i.tagName === 'BUTTON') i.style.display = ''; 
+        if(i.tagName === 'BUTTON') i.style.display = ''; // Restaurar botones ocultos
     });
     
     cargarDatosTemporadas([]); 
@@ -427,6 +427,7 @@ function prepararEdicionDesdeDetalle() {
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
+    // 1. Llenamos los datos principales
     if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
     if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
     if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
@@ -441,9 +442,10 @@ function prepararEdicionDesdeDetalle() {
     if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
-    // LÓGICA DE ROLES: Verificar si es el dueño para campos generales
+    // 2. Verificar si es el dueño
     const esPropietario = String(obraActual.creador_id) === userIdActual;
 
+    // 3. Bloqueamos TODOS los campos de Información General si no eres el dueño
     const camposPrivados = [
         'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
         'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
@@ -458,8 +460,7 @@ function prepararEdicionDesdeDetalle() {
         }
     });
 
-    // Delegamos la inteligencia de los permisos granulares a la función cargarDatosTemporadas
-    // Ya no hacemos un forEach destructivo para bloquear todo ciegamente.
+    // 4. Cargamos las temporadas y delegamos el bloqueo granular a las funciones del Constructor
     cargarDatosTemporadas(obraActual.temporadas || []);
 
     cambiarVista('registro');
@@ -660,7 +661,7 @@ function mostrarMensajeAuth(msg, color) {
 
 
 // =========================================
-// 11. CONSTRUCTOR VISUAL INTELIGENTE (PERMISOS GRANULARES)
+// 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES
 // =========================================
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     const container = document.getElementById('builder-temporadas');
@@ -670,12 +671,14 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     secBlock.className = 'seccion-block';
     secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
-    // Permisos de Sección: Evalúa si el usuario es dueño de la obra o si fue quien creó el primer bloque de esta sección
-    const esPropietarioObra = obraActual ? (String(obraActual.creador_id) === userIdActual) : true;
-    const creadorPrimeraTemp = (temporadasArray && temporadasArray.length > 0 && temporadasArray[0].creador_id) 
-                                ? String(temporadasArray[0].creador_id) 
-                                : userIdActual;
-    const puedeEditarSeccion = esPropietarioObra || (creadorPrimeraTemp === userIdActual);
+    // PERMISOS DE SECCIÓN: Averiguamos de quién es la sección.
+    let creadorSeccion = userIdActual;
+    if (temporadasArray && temporadasArray.length > 0) {
+        // Si no tiene creador_id en la base de datos, asumimos que fue hecha por el dueño de la obra.
+        creadorSeccion = temporadasArray[0].creador_id ? String(temporadasArray[0].creador_id) : (obraActual ? String(obraActual.creador_id) : userIdActual);
+    }
+    const esPropietarioObra = idAnimeEnEdicion ? (obraActual && String(obraActual.creador_id) === userIdActual) : true;
+    const puedeEditarSeccion = esPropietarioObra || (creadorSeccion === userIdActual);
 
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
@@ -706,9 +709,12 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     bloque.className = 'temporada-block';
     bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
-    // Permisos del Bloque Individual: Revisa el creador_id guardado en la base de datos
-    const creadorId = datos && datos.creador_id ? String(datos.creador_id) : userIdActual;
-    const esPropietarioObra = obraActual ? (String(obraActual.creador_id) === userIdActual) : true;
+    // PERMISOS DEL BLOQUE: Averiguamos quién creó este bloque individual.
+    let creadorId = userIdActual;
+    if (datos) {
+        creadorId = datos.creador_id ? String(datos.creador_id) : (obraActual ? String(obraActual.creador_id) : userIdActual);
+    }
+    const esPropietarioObra = idAnimeEnEdicion ? (obraActual && String(obraActual.creador_id) === userIdActual) : true;
     const puedeEditar = esPropietarioObra || (creadorId === userIdActual);
 
     if (!puedeEditar) {
@@ -795,12 +801,13 @@ function recolectarDatosTemporadas() {
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
             const inputTempN = tempBlock.querySelector('.temp-nombre');
             const inputTempI = tempBlock.querySelector('.temp-img');
-            const inputCreador = tempBlock.querySelector('.temp-creador-id');
+            const inputCreador = tempBlock.querySelector('.temp-creador-id'); // Identificador clave
             
             const nombre = inputTempN ? inputTempN.value.trim() : '';
             const imagen = inputTempI ? inputTempI.value.trim() : '';
+            // Si el bloque tiene un creador oculto, lo usamos. Si no, lo marcamos con el usuario actual.
             const creadorId = inputCreador && inputCreador.value ? inputCreador.value : userIdActual;
-            
+
             const enlaces = {};
 
             tempBlock.querySelectorAll('.idioma-bloque').forEach(idBlock => {
@@ -828,7 +835,7 @@ function recolectarDatosTemporadas() {
                     nombre, 
                     imagen, 
                     enlaces,
-                    creador_id: creadorId // Se guarda la firma del creador
+                    creador_id: creadorId // Aquí es donde se "firma" el bloque para siempre
                 });
             }
         });
