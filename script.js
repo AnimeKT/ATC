@@ -167,8 +167,16 @@ function iniciarNavegacionContenido(temporadasData) {
     const contenedor = document.getElementById('det-temporadas');
     if(!contenedor) return;
     
-    // Limpiamos el contenedor una sola vez al principio
+    // 1. Limpiamos la lista actual
     contenedor.innerHTML = '';
+
+    // 2. REINICIO DE IMAGEN: Volver a la portada original de la obra
+    const imgPortada = document.getElementById('det-portada');
+    if (imgPortada && obraActual) {
+        // Restauramos la URL original que se guardó al abrir el detalle
+        imgPortada.src = obraActual.portada_url || ''; 
+        imgPortada.style.opacity = 1; // Nos aseguramos de que sea visible
+    }
 
     if (!temporadasData || !Array.isArray(temporadasData) || temporadasData.length === 0) {
         contenedor.innerHTML = '<p class="text-muted" style="color: #a1a1aa;">Aún no hay enlaces disponibles.</p>';
@@ -183,23 +191,18 @@ function iniciarNavegacionContenido(temporadasData) {
     });
 
     for (const [secName, temps] of Object.entries(seccionesObj)) {
-        // CORRECCIÓN: Creamos el título como un elemento real de DOM
+        // Crear el título de sección con createElement para evitar problemas de eventos
         const titulo = document.createElement('h4');
         titulo.style.cssText = "margin-top: 15px; margin-bottom: 10px; color: #3ba4fa; font-size: 14px;";
         titulo.textContent = secName;
-        contenedor.appendChild(titulo); // Lo añadimos de forma segura
+        contenedor.appendChild(titulo);
         
         temps.forEach((temp) => {
             const btn = document.createElement('button');
             btn.className = 'btn-dinamico';
             btn.style.cssText = "display: block; width: 100%; text-align: left; background: #18181b; border: 1px solid #27272a; padding: 12px; border-radius: 8px; color: white; margin-bottom: 8px; cursor: pointer;";
-            
-            // Icono y nombre
             btn.innerHTML = `<i class="fa-solid fa-folder-open" style="color: #3ba4fa; margin-right: 8px;"></i> ${temp.nombre}`;
-            
-            // El evento 'onclick' ahora no se borrará
             btn.onclick = () => mostrarIdiomas(temp);
-            
             contenedor.appendChild(btn);
         });
     }
