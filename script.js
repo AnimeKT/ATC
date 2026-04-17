@@ -13,7 +13,6 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// Configurar la acción global del botón de retroceso
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
 // =========================================
@@ -38,7 +37,7 @@ tg.BackButton.onClick(() => {
 
 // 3. Función de navegación principal (Gestiona a dónde vamos)
 function cambiarVista(vista) {
-    // Si volvemos al catálogo directamente (ej: clic en tu logo o al publicar), limpiamos historial
+    // Si volvemos al catálogo directamente, limpiamos historial
     if (vista === 'catalogo') {
         historialNavegacion = ['catalogo'];
     } 
@@ -59,20 +58,20 @@ function ejecutarCambioVista(vista) {
     const barraBusqueda = document.getElementById('barra-busqueda');
 
     // 1. Guardar scroll si salimos del catálogo
-    if (vistaCatalogo.style.display !== 'none') {
+    if (vistaCatalogo && vistaCatalogo.style.display !== 'none') {
         posicionScrollGuardada = window.scrollY;
     }
 
     // 2. Ocultar todas las vistas
-    vistaCatalogo.style.display = 'none';
-    vistaRegistro.style.display = 'none';
-    vistaDetalle.style.display = 'none';
-    barraBusqueda.style.display = 'none';
+    if(vistaCatalogo) vistaCatalogo.style.display = 'none';
+    if(vistaRegistro) vistaRegistro.style.display = 'none';
+    if(vistaDetalle) vistaDetalle.style.display = 'none';
+    if(barraBusqueda) barraBusqueda.style.display = 'none';
 
     // 3. Lógica de visibilidad y Botón de Telegram
     if (vista === 'catalogo') {
-        vistaCatalogo.style.display = 'block';
-        barraBusqueda.style.display = 'block';
+        if(vistaCatalogo) vistaCatalogo.style.display = 'block';
+        if(barraBusqueda) barraBusqueda.style.display = 'block';
         
         // OCULTAR botón nativo de retroceso en el menú principal
         tg.BackButton.hide();
@@ -81,8 +80,8 @@ function ejecutarCambioVista(vista) {
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     } else {
         // MOSTRAR botón en cualquier otra vista (detalle o registro)
-        if (vista === 'registro') vistaRegistro.style.display = 'block';
-        if (vista === 'detalle') vistaDetalle.style.display = 'block';
+        if (vista === 'registro' && vistaRegistro) vistaRegistro.style.display = 'block';
+        if (vista === 'detalle' && vistaDetalle) vistaDetalle.style.display = 'block';
 
         tg.BackButton.show();
         window.scrollTo(0, 0);
@@ -131,7 +130,7 @@ async function inicializarApp() {
 }
 
 function volverAlCatalogo() {
-    tg.HapticFeedback.impactOccurred('light');
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
     cambiarVista('catalogo');
 }
 
@@ -140,39 +139,49 @@ function volverAlCatalogo() {
 // 6. RENDERIZAR VISTA DE DETALLES
 // =========================================
 function abrirDetalle(tituloObra) {
-    tg.HapticFeedback.impactOccurred('medium');
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('medium');
     obraActual = todasLasObras.find(o => o.titulo === tituloObra);
     if (!obraActual) return;
 
     // Poblar datos con protección por si falta algún dato en la base de datos
-    document.getElementById('det-banner').src = obraActual.banner_url || obraActual.portada_url || '';
+    const imgBanner = document.getElementById('det-banner');
+    if(imgBanner) imgBanner.src = obraActual.banner_url || obraActual.portada_url || '';
+    
     const imgPort = document.getElementById('det-portada');
-    imgPort.src = obraActual.portada_url || '';
-    imgPort.style.opacity = 1;
-    document.getElementById('det-titulo').textContent = obraActual.titulo || 'Sin título';
+    if(imgPort) {
+        imgPort.src = obraActual.portada_url || '';
+        imgPort.style.opacity = 1;
+    }
+    
+    const detTitulo = document.getElementById('det-titulo');
+    if(detTitulo) detTitulo.textContent = obraActual.titulo || 'Sin título';
     
     // Nombres alternativos seguros
     let nombresAlt = [];
     if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
     if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
-    document.getElementById('det-nombres-alt').textContent = nombresAlt.join(' • ');
+    const detNombresAlt = document.getElementById('det-nombres-alt');
+    if(detNombresAlt) detNombresAlt.textContent = nombresAlt.join(' • ');
 
     const tagsContainer = document.getElementById('det-tags');
-    tagsContainer.innerHTML = '';
-    if(Array.isArray(obraActual.generos)) {
-        obraActual.generos.forEach(g => {
-            tagsContainer.innerHTML += `<span class="tag">${g}</span>`;
-        });
+    if(tagsContainer) {
+        tagsContainer.innerHTML = '';
+        if(Array.isArray(obraActual.generos)) {
+            obraActual.generos.forEach(g => {
+                tagsContainer.innerHTML += `<span class="tag">${g}</span>`;
+            });
+        }
     }
 
-    document.getElementById('det-estado').textContent = obraActual.estado || '--';
-    document.getElementById('det-tipo').textContent = obraActual.tipo || '--';
-    document.getElementById('det-estudio').textContent = obraActual.estudio || '--';
-    document.getElementById('det-origen').textContent = obraActual.origen || '--';
-    document.getElementById('det-dia').textContent = obraActual.dia_emision || '--';
-    document.getElementById('det-estreno').textContent = obraActual.estreno || '--';
-    document.getElementById('det-autor').textContent = obraActual.autor || '--';
-    document.getElementById('det-sinopsis').textContent = obraActual.sinopsis || 'Sin descripción.';
+    const setContent = (id, value) => { if(document.getElementById(id)) document.getElementById(id).textContent = value; };
+    setContent('det-estado', obraActual.estado || '--');
+    setContent('det-tipo', obraActual.tipo || '--');
+    setContent('det-estudio', obraActual.estudio || '--');
+    setContent('det-origen', obraActual.origen || '--');
+    setContent('det-dia', obraActual.dia_emision || '--');
+    setContent('det-estreno', obraActual.estreno || '--');
+    setContent('det-autor', obraActual.autor || '--');
+    setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
 
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
@@ -185,6 +194,7 @@ function abrirDetalle(tituloObra) {
 // =========================================
 function iniciarNavegacionContenido(temporadasData) {
     const contenedor = document.getElementById('det-temporadas');
+    if(!contenedor) return;
     contenedor.innerHTML = '';
 
     if (!temporadasData || !Array.isArray(temporadasData) || temporadasData.length === 0) {
@@ -214,18 +224,20 @@ function iniciarNavegacionContenido(temporadasData) {
 }
 
 function mostrarIdiomas(temporadaObj) {
-    tg.HapticFeedback.impactOccurred('light');
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
     const contenedor = document.getElementById('det-temporadas');
     
     contenedor.innerHTML = `<button onclick="iniciarNavegacionContenido(obraActual.temporadas)" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Temporadas</button>`;
 
     if(temporadaObj.imagen && temporadaObj.imagen !== "") {
         const imgPortada = document.getElementById('det-portada');
-        imgPortada.style.opacity = 0.3;
-        setTimeout(() => {
-            imgPortada.src = temporadaObj.imagen;
-            imgPortada.style.opacity = 1;
-        }, 150);
+        if(imgPortada) {
+            imgPortada.style.opacity = 0.3;
+            setTimeout(() => {
+                imgPortada.src = temporadaObj.imagen;
+                imgPortada.style.opacity = 1;
+            }, 150);
+        }
     }
 
     if (temporadaObj.enlaces) {
@@ -240,7 +252,7 @@ function mostrarIdiomas(temporadaObj) {
 }
 
 function mostrarCapitulos(capitulosObj, temporadaPadre) {
-    tg.HapticFeedback.impactOccurred('light');
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
     const contenedor = document.getElementById('det-temporadas');
     
     contenedor.innerHTML = `<button onclick="mostrarIdiomas(obraActual.temporadas.find(t => t.nombre === '${temporadaPadre.nombre}'))" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Idiomas</button>`;
@@ -255,7 +267,7 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 }
 
 function abrirEnlaceTelegram(url) {
-    tg.HapticFeedback.impactOccurred('heavy');
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
     if (url.includes('t.me')) {
         tg.openTelegramLink(url);
     } else {
@@ -285,7 +297,10 @@ function aplicarTodosLosFiltros() {
         const altJap = obra.nombres_alternativos?.Japonés?.toLowerCase() || '';
         const altIng = obra.nombres_alternativos?.Ingles?.toLowerCase() || '';
         const textoMatch = tituloMatch || altJap.includes(filtrosActuales.texto) || altIng.includes(filtrosActuales.texto);
-        const estadoMatch = filtrosActuales.estado === 'Todos' || obra.estado === filtrosActuales.estado;
+        
+        // CORRECCIÓN CLAVE AQUÍ: Ignoramos el chequeo de "estado" si el filtro seleccionado es "Favoritos" o "Todos"
+        const estadoMatch = filtrosActuales.estado === 'Todos' || filtrosActuales.estado === 'Favoritos' || obra.estado === filtrosActuales.estado;
+        
         const favoritoMatch = !filtrosActuales.soloFavoritos || esFavorito(String(obra.id));
 
         return textoMatch && estadoMatch && favoritoMatch;
@@ -308,14 +323,18 @@ if(inputBuscador) {
 
 function filtrar(estado, evento) {
     if (tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
-    document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.btn-filtro, .categoria-item').forEach(btn => btn.classList.remove('active'));
     if(evento) evento.currentTarget.classList.add('active');
 
     filtrosActuales.estado = estado;
     filtrosActuales.soloFavoritos = estado === 'Favoritos';
+    
     aplicarTodosLosFiltros();
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// =========================================
+// RENDERIZADO DE OBRAS EN CATÁLOGO
+// =========================================
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
     if(!grid) return;
@@ -331,12 +350,18 @@ function renderizarObras(obras) {
         const corazonClass = esFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
         const favoritoActivo = esFav ? 'favorito-activo' : '';
 
+        // Se añade el botón de favoritos integrado en la tarjeta
         return `
-        <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
-            <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
-            <img src="${obra.portada_url}" alt="${tituloSeguro}">
-            <div class="info-tarjeta">
-                <div class="titulo-tarjeta">${obra.titulo}</div>
+        <div class="tarjeta-anime" style="position:relative;">
+            <button class="btn-fav-card ${favoritoActivo}" onclick="toggleFavorito(event, '${obra.id}')" style="position:absolute; top:8px; right:8px; z-index:10; background:rgba(0,0,0,0.6); border:none; width:30px; height:30px; border-radius:50%; color: ${esFav ? '#ff4757' : 'white'}; cursor:pointer;">
+                <i class="${corazonClass}"></i>
+            </button>
+            <div onclick="abrirDetalle('${tituloSeguro}')" style="cursor:pointer;">
+                <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
+                <img src="${obra.portada_url}" alt="${tituloSeguro}">
+                <div class="info-tarjeta">
+                    <div class="titulo-tarjeta">${obra.titulo}</div>
+                </div>
             </div>
         </div>
         `;
@@ -366,7 +391,8 @@ async function cargarFavoritosUsuario() {
 }
 
 async function toggleFavorito(event, animeId) {
-    if (event) event.stopPropagation();
+    if (event) event.stopPropagation(); // Evita que se abra el detalle al tocar el corazón
+    
     const userId = tg.initDataUnsafe?.user?.id;
     if (!userId) return alert('Favoritos solo están disponibles cuando abres la miniapp desde Telegram con tu usuario.');
     if (!animeId) return;
@@ -392,9 +418,9 @@ async function toggleFavorito(event, animeId) {
 
         if (resultado.error) throw resultado.error;
 
-        await cargarFavoritosUsuario();
-        aplicarTodosLosFiltros();
-        actualizarEstadoFavoritoDetalle();
+        await cargarFavoritosUsuario(); // Refresca lista local
+        aplicarTodosLosFiltros(); // Refresca la vista (si estás en Favoritos, el anime desaparece automáticamente de la vista)
+        actualizarEstadoFavoritoDetalle(); // Si estás dentro del anime, actualiza el botón
     } catch (error) {
         console.error('Error toggling favorito (supabase):', error);
         alert('No se pudo actualizar el favorito. Revisa la consola.');
@@ -414,13 +440,14 @@ function actualizarEstadoFavoritoDetalle() {
     const esFav = obraActual && esFavorito(String(obraActual.id));
     if (esFav) {
         btn.classList.add('favorito-activo');
-        btn.innerHTML = '<i class="fa-solid fa-heart"></i> Quitar de favoritos';
+        btn.innerHTML = '<i class="fa-solid fa-heart" style="color:#ff4757;"></i> Quitar de favoritos';
     } else {
         btn.classList.remove('favorito-activo');
         btn.innerHTML = '<i class="fa-regular fa-heart"></i> Agregar a favoritos';
     }
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// =========================================
+
 
 // =========================================
 // 9. REGISTRO Y EDICIÓN DE OBRAS
@@ -446,11 +473,11 @@ function prepararEdicionDesdeDetalle() {
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
     // Llenamos los campos con los datos de la obra seleccionada
-    document.getElementById('in-titulo').value = obraActual.titulo || '';
-    document.getElementById('in-portada').value = obraActual.portada_url || '';
-    document.getElementById('in-banner').value = obraActual.banner_url || '';
-    document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
-    document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
+    if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
+    if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
+    if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
+    if(document.getElementById('in-estado')) document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
+    if(document.getElementById('in-tipo')) document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
 
     if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
     if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
@@ -467,11 +494,16 @@ function prepararEdicionDesdeDetalle() {
 
 async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
-    const titulo = document.getElementById('in-titulo').value.trim();
-    const portada = document.getElementById('in-portada').value.trim();
+    const inTitulo = document.getElementById('in-titulo');
+    const inPortada = document.getElementById('in-portada');
+    
+    if(!inTitulo || !inPortada) return;
+    
+    const titulo = inTitulo.value.trim();
+    const portada = inPortada.value.trim();
 
     if (!titulo || !portada) {
-        tg.HapticFeedback.notificationOccurred('error');
+        if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
         return alert("⚠️ Título y Portada son obligatorios.");
     }
 
@@ -482,10 +514,10 @@ async function ejecutarRegistro() {
     const datosObra = {
         titulo: titulo,
         portada_url: portada,
-        banner_url: document.getElementById('in-banner').value.trim(),
+        banner_url: document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '',
         sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
-        estado: document.getElementById('in-estado').value,
-        tipo: document.getElementById('in-tipo').value,
+        estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
+        tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
         temporadas: recolectarDatosTemporadas()
     };
 
@@ -507,7 +539,7 @@ async function ejecutarRegistro() {
 
         if (resultado.error) throw resultado.error;
 
-        tg.HapticFeedback.notificationOccurred('success');
+        if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('success');
         alert(idAnimeEnEdicion ? "✅ Cambios guardados" : "✅ Publicado con éxito");
         
         // Limpiar estado y volver al catálogo
@@ -566,9 +598,8 @@ function abrirModalAuth() {
     const modal = document.getElementById('modal-auth');
     if (modal) {
         modal.classList.remove('modal-oculto');
-        // Esto limpia el input por si acaso
-        document.getElementById('auth-password').value = "";
-        document.getElementById('auth-mensaje').innerText = "";
+        if(document.getElementById('auth-password')) document.getElementById('auth-password').value = "";
+        if(document.getElementById('auth-mensaje')) document.getElementById('auth-mensaje').innerText = "";
     }
 }
 
@@ -576,8 +607,7 @@ function cerrarModalAuth() {
     const modal = document.getElementById('modal-auth');
     if (modal) {
         modal.classList.add('modal-oculto');
-        // Opcional: limpiar la clave al cerrar
-        document.getElementById('auth-password').value = "";
+        if(document.getElementById('auth-password')) document.getElementById('auth-password').value = "";
     }
 }
 
@@ -589,7 +619,8 @@ function obtenerEmailVirtual() {
 
 async function registrarUsuario() {
     const virtualEmail = obtenerEmailVirtual();
-    const password = document.getElementById('auth-password').value;
+    const passInput = document.getElementById('auth-password');
+    const password = passInput ? passInput.value : '';
 
     if (password.length < 6) return mostrarErrorAuth('La clave debe tener al menos 6 caracteres.');
 
@@ -602,7 +633,8 @@ async function registrarUsuario() {
 
 async function iniciarSesion() {
     const virtualEmail = obtenerEmailVirtual();
-    const password = document.getElementById('auth-password').value;
+    const passInput = document.getElementById('auth-password');
+    const password = passInput ? passInput.value : '';
 
     mostrarMensajeAuth('Iniciando...', '#e0e0e0');
     const { error } = await _supabase.auth.signInWithPassword({ email: virtualEmail, password: password });
@@ -615,12 +647,14 @@ async function cerrarSesion() {
 }
 
 function mostrarErrorAuth(msg) {
+    const authMensaje = document.getElementById('auth-mensaje');
     if(authMensaje) {
         authMensaje.style.color = '#ef4444';
         authMensaje.textContent = msg;
     }
 }
 function mostrarMensajeAuth(msg, color) {
+    const authMensaje = document.getElementById('auth-mensaje');
     if(authMensaje) {
         authMensaje.style.color = color;
         authMensaje.textContent = msg;
@@ -629,12 +663,7 @@ function mostrarMensajeAuth(msg, color) {
 
 
 // =========================================
-// 11. CONSTRUCTOR VISUAL DE TEMPORADAS
-// =========================================
-
-// Crea el bloque contenedor principal (La Carpeta)
-// =========================================
-// 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES (VERSION BLINDADA)
+// 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES
 // =========================================
 
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
@@ -743,43 +772,48 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
     containerCaps.appendChild(divCap);
 }
 
-// ESTA FUNCIÓN ES LA QUE EVITA QUE EL SISTEMA "DEJE DE RESPONDER"
+// =========================================
+// FUNCIÓN REPARADA Y COMPLETADA
+// =========================================
 function recolectarDatosTemporadas() {
     const datos = [];
+    
     document.querySelectorAll('.seccion-block').forEach(secBlock => {
         const inputSec = secBlock.querySelector('.sec-nombre');
         const nombreSeccion = inputSec ? inputSec.value.trim() : 'Principal';
-
+        
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
-            const inputTemp = tempBlock.querySelector('.temp-nombre');
-            const inputImg = tempBlock.querySelector('.temp-img');
-            
-            const nombre = inputTemp ? inputTemp.value.trim() : 'Temporada';
-            const imagen = inputImg ? inputImg.value.trim() : '';
-
+            const inputTempN = tempBlock.querySelector('.temp-nombre');
+            const inputTempI = tempBlock.querySelector('.temp-img');
+            const nombre = inputTempN ? inputTempN.value.trim() : '';
+            const imagen = inputTempI ? inputTempI.value.trim() : '';
             const enlaces = {};
-            tempBlock.querySelectorAll('.idioma-bloque').forEach(idiomaBlock => {
-                const inputIdio = idiomaBlock.querySelector('.idioma-nombre');
-                const idiomaNombre = inputIdio ? inputIdio.value.trim() : '';
-                
-                if (!idiomaNombre) return;
 
-                enlaces[idiomaNombre] = {};
-                idiomaBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
-                    const inputCapN = capRow.querySelector('.cap-nombre');
-                    const inputCapU = capRow.querySelector('.cap-url');
-                    const cNombre = inputCapN ? inputCapN.value.trim() : '';
-                    const cUrl = inputCapU ? inputCapU.value.trim() : '';
-                    
-                    if (cNombre && cUrl) {
-                        enlaces[idiomaNombre][cNombre] = cUrl;
-                    }
-                });
+            tempBlock.querySelectorAll('.idioma-bloque').forEach(idBlock => {
+                const inputIdioma = idBlock.querySelector('.idioma-nombre');
+                const idiomaNombre = inputIdioma ? inputIdioma.value.trim() : '';
+                
+                if (idiomaNombre) {
+                    enlaces[idiomaNombre] = {};
+                    idBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
+                        const inputCapN = capRow.querySelector('.cap-nombre');
+                        const inputCapU = capRow.querySelector('.cap-url');
+                        const cNombre = inputCapN ? inputCapN.value.trim() : '';
+                        const cUrl = inputCapU ? inputCapU.value.trim() : '';
+                        
+                        if (cNombre && cUrl) {
+                            enlaces[idiomaNombre][cNombre] = cUrl;
+                        }
+                    });
+                }
             });
 
-            datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces });
+            if(nombre) {
+                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces });
+            }
         });
     });
+    
     return datos;
 }
 
@@ -805,8 +839,5 @@ function cargarDatosTemporadas(temporadasFlat) {
     }
 }
 
-
-// =========================================
-// 12. ARRANQUE DEL SISTEMA
-// =========================================
-document.addEventListener('DOMContentLoaded', inicializarApp);
+// INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
+window.onload = inicializarApp;
