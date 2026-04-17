@@ -13,81 +13,60 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+// Identificador del usuario actual para permisos (Dueño vs Colaborador)
+let userIdActual = "anonimo";
+
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
 // =========================================
 let historialNavegacion = ['catalogo'];
 
-// Configurar la acción global del botón de retroceso
 tg.BackButton.onClick(() => {
     if (historialNavegacion.length > 1) {
-        // 1. Sacamos la vista actual (la que estamos viendo) del historial
         historialNavegacion.pop();
-        
-        // 2. Obtenemos cuál era la vista anterior
         const vistaAnterior = historialNavegacion[historialNavegacion.length - 1];
-        
-        // 3. Renderizamos esa vista anterior sin afectar el historial
         ejecutarCambioVista(vistaAnterior);
     } else {
-        // Si el historial se queda vacío por alguna razón, forzamos catálogo
         ejecutarCambioVista('catalogo');
     }
 });
 
-// 3. Función de navegación principal (Gestiona a dónde vamos)
 function cambiarVista(vista) {
-    // Si volvemos al catálogo directamente, limpiamos historial
     if (vista === 'catalogo') {
         historialNavegacion = ['catalogo'];
-    } 
-    // Si la nueva vista es diferente a la que estamos actualmente, la añadimos al historial
-    else if (historialNavegacion[historialNavegacion.length - 1] !== vista) {
+    } else if (historialNavegacion[historialNavegacion.length - 1] !== vista) {
         historialNavegacion.push(vista);
     }
-    
-    // Cambiamos el DOM
     ejecutarCambioVista(vista);
 }
 
-// 3.1. Función que solo maneja el DOM (Visibilidad de HTML y Scroll)
 function ejecutarCambioVista(vista) {
     const vistaCatalogo = document.getElementById('vista-catalogo');
     const vistaRegistro = document.getElementById('vista-registro');
     const vistaDetalle = document.getElementById('vista-detalle');
     const barraBusqueda = document.getElementById('barra-busqueda');
 
-    // 1. Guardar scroll si salimos del catálogo
     if (vistaCatalogo && vistaCatalogo.style.display !== 'none') {
         posicionScrollGuardada = window.scrollY;
     }
 
-    // 2. Ocultar todas las vistas
     if(vistaCatalogo) vistaCatalogo.style.display = 'none';
     if(vistaRegistro) vistaRegistro.style.display = 'none';
     if(vistaDetalle) vistaDetalle.style.display = 'none';
     if(barraBusqueda) barraBusqueda.style.display = 'none';
 
-    // 3. Lógica de visibilidad y Botón de Telegram
     if (vista === 'catalogo') {
         if(vistaCatalogo) vistaCatalogo.style.display = 'block';
         if(barraBusqueda) barraBusqueda.style.display = 'block';
-        
-        // OCULTAR botón nativo de retroceso en el menú principal
         tg.BackButton.hide();
-        
-        // Recuperar scroll
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     } else {
-        // MOSTRAR botón en cualquier otra vista (detalle o registro)
         if (vista === 'registro' && vistaRegistro) vistaRegistro.style.display = 'block';
         if (vista === 'detalle' && vistaDetalle) vistaDetalle.style.display = 'block';
-
         tg.BackButton.show();
         window.scrollTo(0, 0);
     }
 }
-
 
 // =========================================
 // 3. ESTADO GLOBAL DE LA APP
@@ -105,21 +84,15 @@ let filtrosActuales = {
     soloFavoritos: false
 };
 
-
 // =========================================
 // 4. INICIALIZACIÓN
 // =========================================
 async function inicializarApp() {
-    // 1. Cargamos los favoritos del usuario en Supabase primero
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        // Guardamos el ID del usuario actual para validar permisos después
+        userIdActual = String(tg.initDataUnsafe.user.id);
         await cargarFavoritosUsuario();
-    }
-
-    // 2. Cargamos las obras para pintar el catálogo y los corazones correctamente
-    await cargarObras(); 
-
-    // 3. Cargamos datos extra opcionales en segundo plano sin detener la app
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        
         tg.CloudStorage.getItem('vistos_anime', (err, value) => {
             if (!err && value) {
                 try { listaFavoritos = JSON.parse(value); } 
@@ -127,13 +100,14 @@ async function inicializarApp() {
             }
         });
     }
+
+    await cargarObras(); 
 }
 
 function volverAlCatalogo() {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
     cambiarVista('catalogo');
 }
-
 
 // =========================================
 // 6. RENDERIZAR VISTA DE DETALLES
@@ -143,7 +117,6 @@ function abrirDetalle(tituloObra) {
     obraActual = todasLasObras.find(o => o.titulo === tituloObra);
     if (!obraActual) return;
 
-    // Poblar datos con protección por si falta algún dato en la base de datos
     const imgBanner = document.getElementById('det-banner');
     if(imgBanner) imgBanner.src = obraActual.banner_url || obraActual.portada_url || '';
     
@@ -156,7 +129,6 @@ function abrirDetalle(tituloObra) {
     const detTitulo = document.getElementById('det-titulo');
     if(detTitulo) detTitulo.textContent = obraActual.titulo || 'Sin título';
     
-    // Nombres alternativos seguros
     let nombresAlt = [];
     if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
     if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
@@ -187,7 +159,6 @@ function abrirDetalle(tituloObra) {
     actualizarEstadoFavoritoDetalle();
     cambiarVista('detalle');
 }
-
 
 // =========================================
 // 7. JERARQUÍA DINÁMICA (Temporadas -> Idiomas -> Caps)
@@ -275,7 +246,6 @@ function abrirEnlaceTelegram(url) {
     }
 }
 
-
 // =========================================
 // 8. FILTROS, BUSCADOR Y RENDERIZADO CATÁLOGO
 // =========================================
@@ -298,9 +268,7 @@ function aplicarTodosLosFiltros() {
         const altIng = obra.nombres_alternativos?.Ingles?.toLowerCase() || '';
         const textoMatch = tituloMatch || altJap.includes(filtrosActuales.texto) || altIng.includes(filtrosActuales.texto);
         
-        // CORRECCIÓN CLAVE AQUÍ: Ignoramos el chequeo de "estado" si el filtro seleccionado es "Favoritos" o "Todos"
         const estadoMatch = filtrosActuales.estado === 'Todos' || filtrosActuales.estado === 'Favoritos' || obra.estado === filtrosActuales.estado;
-        
         const favoritoMatch = !filtrosActuales.soloFavoritos || esFavorito(String(obra.id));
 
         return textoMatch && estadoMatch && favoritoMatch;
@@ -309,7 +277,6 @@ function aplicarTodosLosFiltros() {
     renderizarObras(resultado);
 }
 
-// Comprueba que tengas un input con el ID 'buscador' en tu HTML
 const inputBuscador = document.getElementById('buscador');
 if(inputBuscador) {
     inputBuscador.addEventListener('input', (e) => {
@@ -332,9 +299,6 @@ function filtrar(estado, evento) {
     aplicarTodosLosFiltros();
 }
 
-// =========================================
-// RENDERIZADO DE OBRAS EN CATÁLOGO
-// =========================================
 function renderizarObras(obras) {
     const grid = document.getElementById('grid-obras');
     if(!grid) return;
@@ -346,11 +310,6 @@ function renderizarObras(obras) {
 
     grid.innerHTML = obras.map(obra => {
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const esFav = esFavorito(String(obra.id));
-        const corazonClass = esFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-        const favoritoActivo = esFav ? 'favorito-activo' : '';
-
-        // Se añade el botón de favoritos integrado en la tarjeta
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
@@ -378,7 +337,7 @@ async function cargarFavoritosUsuario() {
         .eq('user_id_telegram', String(userId));
 
     if (error) {
-        console.error('Error cargando favoritos (supabase):', error);
+        console.error('Error cargando favoritos:', error);
         return;
     }
 
@@ -386,10 +345,10 @@ async function cargarFavoritosUsuario() {
 }
 
 async function toggleFavorito(event, animeId) {
-    if (event) event.stopPropagation(); // Evita que se abra el detalle al tocar el corazón
+    if (event) event.stopPropagation(); 
     
     const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return alert('Favoritos solo están disponibles cuando abres la miniapp desde Telegram con tu usuario.');
+    if (!userId) return alert('Favoritos solo están disponibles en Telegram.');
     if (!animeId) return;
 
     const userIdStr = String(userId);
@@ -398,7 +357,6 @@ async function toggleFavorito(event, animeId) {
 
     try {
         let resultado;
-
         if (yaEsFavorito) {
             resultado = await _supabase
                 .from('favoritos')
@@ -413,12 +371,12 @@ async function toggleFavorito(event, animeId) {
 
         if (resultado.error) throw resultado.error;
 
-        await cargarFavoritosUsuario(); // Refresca lista local
-        aplicarTodosLosFiltros(); // Refresca la vista (si estás en Favoritos, el anime desaparece automáticamente de la vista)
-        actualizarEstadoFavoritoDetalle(); // Si estás dentro del anime, actualiza el botón
+        await cargarFavoritosUsuario();
+        aplicarTodosLosFiltros(); 
+        actualizarEstadoFavoritoDetalle(); 
     } catch (error) {
-        console.error('Error toggling favorito (supabase):', error);
-        alert('No se pudo actualizar el favorito. Revisa la consola.');
+        console.error('Error:', error);
+        alert('No se pudo actualizar el favorito.');
     }
 }
 
@@ -441,19 +399,21 @@ function actualizarEstadoFavoritoDetalle() {
         btn.innerHTML = '<i class="fa-regular fa-heart"></i> Agregar a favoritos';
     }
 }
-// =========================================
-
 
 // =========================================
-// 9. REGISTRO Y EDICIÓN DE OBRAS
+// 9. REGISTRO Y EDICIÓN DE OBRAS (SISTEMA DE ROLES APLICADO)
 // =========================================
 function prepararNuevoRegistro() {
-    idAnimeEnEdicion = null; // Resetear ID de edición
+    idAnimeEnEdicion = null; 
     const btn = document.getElementById('btn-publicar');
     if(btn) btn.textContent = "Publicar";
     
-    // Limpiar inputs
-    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => i.value = '');
+    // Limpiamos los inputs y nos aseguramos de que todos estén HABILITADOS
+    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => {
+        i.value = '';
+        i.disabled = false;
+        i.style.opacity = '1';
+    });
     
     cargarDatosTemporadas([]); 
     cambiarVista('registro');
@@ -462,28 +422,36 @@ function prepararNuevoRegistro() {
 function prepararEdicionDesdeDetalle() {
     if (!obraActual) return;
 
-    idAnimeEnEdicion = obraActual.id; // Activamos el MODO EDICIÓN
+    idAnimeEnEdicion = obraActual.id; 
     
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
-    // Llenamos los campos con los datos de la obra seleccionada
+    // Llenamos los datos principales
     if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
     if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
     if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
     if(document.getElementById('in-estado')) document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
     if(document.getElementById('in-tipo')) document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
-
     if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
     if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
-    
     if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
-    // Cargamos las temporadas en el constructor visual
-    cargarDatosTemporadas(obraActual.temporadas || []);
+    // LÓGICA DE ROLES: Verificar si es el dueño
+    const esPropietario = String(obraActual.creador_id) === userIdActual;
 
-    // Cambiamos a la vista de edición/registro
+    // Si NO es el propietario, bloqueamos los campos generales (Colaborador solo añade temporadas)
+    const camposPrivados = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-japones', 'in-ingles'];
+    camposPrivados.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.disabled = !esPropietario;
+            input.style.opacity = esPropietario ? "1" : "0.5";
+        }
+    });
+
+    cargarDatosTemporadas(obraActual.temporadas || []);
     cambiarVista('registro');
 }
 
@@ -493,11 +461,13 @@ async function ejecutarRegistro() {
     const inPortada = document.getElementById('in-portada');
     
     if(!inTitulo || !inPortada) return;
-    
-    const titulo = inTitulo.value.trim();
-    const portada = inPortada.value.trim();
 
-    if (!titulo || !portada) {
+    // Validamos permisos antes de recoger datos
+    // Si la obra es nueva, el creador es el usuario actual. Si existe, revisamos la base de datos local.
+    const esPropietario = idAnimeEnEdicion ? (String(obraActual.creador_id) === userIdActual) : true;
+
+    // Solo exigimos titulo y portada si el que está guardando tiene permisos de modificar eso
+    if (esPropietario && (!inTitulo.value.trim() || !inPortada.value.trim())) {
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
         return alert("⚠️ Título y Portada son obligatorios.");
     }
@@ -505,28 +475,59 @@ async function ejecutarRegistro() {
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
 
-    // Recolectar datos del formulario
-    const datosObra = {
-        titulo: titulo,
-        portada_url: portada,
-        banner_url: document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '',
-        sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
-        estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
-        tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
-        temporadas: recolectarDatosTemporadas()
-    };
-
     try {
         let resultado;
         
         if (idAnimeEnEdicion) {
-            // MODO EDICIÓN: Actualizar registro existente
+            // MODO EDICIÓN
+            let datosObra = {};
+
+            if (esPropietario) {
+                // Dueño actualiza todo
+                datosObra = {
+                    titulo: inTitulo.value.trim(),
+                    portada_url: inPortada.value.trim(),
+                    banner_url: document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '',
+                    sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
+                    estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
+                    tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
+                    autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
+                    nombres_alternativos: {
+                        Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
+                        Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
+                    },
+                    temporadas: recolectarDatosTemporadas()
+                };
+            } else {
+                // Colaborador SOLO actualiza las temporadas
+                datosObra = {
+                    temporadas: recolectarDatosTemporadas()
+                };
+            }
+
             resultado = await _supabase
                 .from('obras')
                 .update(datosObra)
                 .eq('id', idAnimeEnEdicion);
+
         } else {
-            // MODO CREACIÓN: Insertar nuevo
+            // MODO CREACIÓN: Insertar nuevo (asignando creador)
+            const datosObra = {
+                titulo: inTitulo.value.trim(),
+                portada_url: inPortada.value.trim(),
+                banner_url: document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '',
+                sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
+                estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
+                tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
+                autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
+                nombres_alternativos: {
+                    Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
+                    Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
+                },
+                temporadas: recolectarDatosTemporadas(),
+                creador_id: userIdActual // <--- CLAVE PARA EL SISTEMA DE ROLES
+            };
+
             resultado = await _supabase
                 .from('obras')
                 .insert([datosObra]);
@@ -537,7 +538,6 @@ async function ejecutarRegistro() {
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('success');
         alert(idAnimeEnEdicion ? "✅ Cambios guardados" : "✅ Publicado con éxito");
         
-        // Limpiar estado y volver al catálogo
         idAnimeEnEdicion = null;
         await cargarObras(); 
         cambiarVista('catalogo');
@@ -550,7 +550,6 @@ async function ejecutarRegistro() {
     }
 }
 
-
 // =========================================
 // 10. SISTEMA DE AUTENTICACIÓN
 // =========================================
@@ -559,15 +558,12 @@ const btnAuth = document.getElementById('btn-auth');
 const authMensaje = document.getElementById('auth-mensaje');
 
 _supabase.auth.onAuthStateChange((event, session) => {
-    const isAdmin = !!session; // Truco: si hay sesión es true, si no false
+    const isAdmin = !!session; 
     const btnAdminView = document.getElementById('btn-admin-view');
-    const btnEdit = document.getElementById('btn-edit-serie'); // El botón del lápiz
+    const btnEdit = document.getElementById('btn-edit-serie'); 
     const btnAuth = document.getElementById('btn-auth');
 
-    // Controlamos el botón "Añadir"
     if(btnAdminView) btnAdminView.style.display = isAdmin ? 'flex' : 'none';
-    
-    // Controlamos el botón "Editar" (Lápiz)
     if(btnEdit) btnEdit.style.display = isAdmin ? 'flex' : 'none';
 
     if (session) {
@@ -660,7 +656,6 @@ function mostrarMensajeAuth(msg, color) {
 // =========================================
 // 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES
 // =========================================
-
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
@@ -767,9 +762,6 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
     containerCaps.appendChild(divCap);
 }
 
-// =========================================
-// FUNCIÓN REPARADA Y COMPLETADA
-// =========================================
 function recolectarDatosTemporadas() {
     const datos = [];
     
