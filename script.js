@@ -408,11 +408,13 @@ function prepararNuevoRegistro() {
     const btn = document.getElementById('btn-publicar');
     if(btn) btn.textContent = "Publicar";
     
-    // Limpiamos los inputs y nos aseguramos de que todos estén HABILITADOS
+    // Limpiamos los inputs y nos aseguramos de que todos estén HABILITADOS y sin filtros
     document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea, #vista-registro button').forEach(i => {
         i.value = '';
         i.disabled = false;
         i.style.opacity = '1';
+        i.style.filter = 'none';
+        i.style.cursor = 'auto';
         if(i.tagName === 'BUTTON') i.style.display = ''; // Restaurar botones ocultos
     });
     
@@ -457,7 +459,17 @@ function prepararEdicionDesdeDetalle() {
         const input = document.getElementById(id);
         if (input) {
             input.disabled = !esPropietario;
-            input.style.opacity = esPropietario ? "1" : "0.4"; // Se verá más gris si está bloqueado
+            
+            // Si NO es el dueño, se pone gris, se reduce la opacidad y se bloquea el cursor
+            if (!esPropietario) {
+                input.style.opacity = "0.5";
+                input.style.filter = "grayscale(100%)";
+                input.style.cursor = "not-allowed";
+            } else {
+                input.style.opacity = "1";
+                input.style.filter = "none";
+                input.style.cursor = "text";
+            }
         }
     });
 
@@ -471,23 +483,30 @@ function prepararEdicionDesdeDetalle() {
             const secCreator = sec.dataset.creador || (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : '');
 
             if (secCreator === String(userIdActual)) {
-                // Sección creada por el colaborador actual: permitir edición completa
+                // Sección creada por el colaborador actual: permitir edición completa y restaurar estilos
+                sec.style.opacity = '1';
+                sec.style.pointerEvents = 'auto';
+                sec.style.filter = 'none';
+                
                 sec.querySelectorAll('input, button').forEach(el => {
                     el.disabled = false;
-                    el.style.opacity = '1';
-                    if (el.tagName === 'BUTTON') el.style.display = '';
+                    if (el.tagName === 'BUTTON') el.style.display = ''; // Mostrar botones de la sección propia
                 });
             } else {
-                // Sección del dueño u otro colaborador: bloquear y ocultar controles de borrado/añadido
+                // Sección del dueño (o de otro colaborador): Poner completamente gris y bloquear interacciones
+                sec.style.opacity = '0.5';
+                sec.style.filter = 'grayscale(100%)';
+                sec.style.pointerEvents = 'none'; // ¡CLAVE! Bloquea todo tipo de clic en la tarjeta
+
                 sec.querySelectorAll('input, button').forEach(el => {
                     el.disabled = true;
-                    el.style.opacity = '0.5';
+                    // Ocultar por completo los botones de añadir o eliminar para no causar confusión
                     if (el.tagName === 'BUTTON') el.style.display = 'none';
                 });
             }
         });
 
-        // Asegurar que el botón global para añadir secciones siga activo para colaboradores
+        // Asegurar que el botón global para añadir NUEVAS secciones siga activo para los colaboradores
         const btnAddPrincipal = document.querySelector('.btn-add-seccion');
         if (btnAddPrincipal) {
             btnAddPrincipal.disabled = false;
@@ -524,7 +543,7 @@ async function ejecutarRegistro() {
             let datosObra = {};
 
             if (esPropietario) {
-                // Dueño actualiza todo (Ahora incluye los nuevos campos)
+                // Dueño actualiza todo
                 datosObra = {
                     titulo: inTitulo.value.trim(),
                     portada_url: inPortada.value.trim(),
@@ -544,7 +563,7 @@ async function ejecutarRegistro() {
                     temporadas: recolectarDatosTemporadas()
                 };
             } else {
-                // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas con las que acaba de crear)
+                // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas del dueño con las suyas propias)
                 datosObra = {
                     temporadas: recolectarDatosTemporadas()
                 };
@@ -553,7 +572,7 @@ async function ejecutarRegistro() {
             resultado = await _supabase.from('obras').update(datosObra).eq('id', idAnimeEnEdicion);
 
         } else {
-            // MODO CREACIÓN (Incluye los nuevos campos)
+            // MODO CREACIÓN
             const datosObra = {
                 titulo: inTitulo.value.trim(),
                 portada_url: inPortada.value.trim(),
@@ -722,9 +741,6 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     `;
 
     // Determinar y guardar el creador de esta sección en el DOM
-    // - Si se pasa `creadorId`, usarlo
-    // - Si estamos editando una obra existente (idAnimeEnEdicion), nuevas secciones las marca el usuario actual
-    // - Si no, por defecto intentar usar el creador de la obra (obraActual.creador_id)
     const resolvedCreador = (creadorId !== null)
         ? String(creadorId)
         : (idAnimeEnEdicion ? String(userIdActual) : (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : ''));
@@ -878,7 +894,7 @@ function cargarDatosTemporadas(temporadasFlat) {
     });
 
     for (const [nombreSec, tempsArray] of Object.entries(agrupado)) {
-        // Determinar creador de la sección: si los temps contienen creador_id, usarlo; si no, fallback al creador de la obra
+        // Determinar creador de la sección
         let sectionCreator = '';
         if (tempsArray && tempsArray.length > 0 && tempsArray[0].creador_id) {
             sectionCreator = String(tempsArray[0].creador_id);
