@@ -801,20 +801,16 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
 
 function agregarPropiedadExtra() {
     const contenedor = document.getElementById('contenedor-propiedades-extra');
-    
-    // Creamos el div contenedor de la fila
     const div = document.createElement('div');
-    div.className = 'fila-propiedad-extra';
+    div.className = 'fila-propiedad-extra'; // Esta clase debe coincidir con el CSS
     
-    // Insertamos los inputs y el botón de eliminar
     div.innerHTML = `
         <input type="text" placeholder="Ej: Fansub" class="prop-clave">
         <input type="text" placeholder="Ej: HD 1080p" class="prop-valor">
-        <button type="button" class="btn-eliminar-prop" onclick="eliminarPropiedadExtra(this)">
+        <button type="button" class="btn-eliminar-prop" onclick="this.parentElement.remove()">
             <i class="fa-solid fa-trash"></i>
         </button>
     `;
-    
     contenedor.appendChild(div);
 }
 
