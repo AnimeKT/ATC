@@ -89,6 +89,7 @@ let filtrosActuales = {
 // =========================================
 async function inicializarApp() {
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        // Guardamos el ID del usuario actual para validar permisos después
         userIdActual = String(tg.initDataUnsafe.user.id);
         await cargarFavoritosUsuario();
         
@@ -400,18 +401,19 @@ function actualizarEstadoFavoritoDetalle() {
 }
 
 // =========================================
-// 9. REGISTRO Y EDICIÓN DE OBRAS
+// 9. REGISTRO Y EDICIÓN DE OBRAS (SISTEMA DE ROLES APLICADO)
 // =========================================
 function prepararNuevoRegistro() {
     idAnimeEnEdicion = null; 
     const btn = document.getElementById('btn-publicar');
     if(btn) btn.textContent = "Publicar";
     
+    // Limpiamos los inputs y nos aseguramos de que todos estén HABILITADOS
     document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea, #vista-registro button').forEach(i => {
         i.value = '';
         i.disabled = false;
         i.style.opacity = '1';
-        if(i.tagName === 'BUTTON') i.style.display = ''; 
+        if(i.tagName === 'BUTTON') i.style.display = ''; // Restaurar botones ocultos
     });
     
     cargarDatosTemporadas([]); 
@@ -426,7 +428,7 @@ function prepararEdicionDesdeDetalle() {
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
-    // Llenamos los datos principales
+    // 1. Llenamos los datos principales con los nuevos IDs
     if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
     if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
     if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
@@ -441,9 +443,10 @@ function prepararEdicionDesdeDetalle() {
     if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
-    // Verificar si es el dueño para la Info General
+    // LÓGICA DE ROLES: Verificar si es el dueño
     const esPropietario = String(obraActual.creador_id) === userIdActual;
 
+    // 2. Bloqueamos TODOS los campos de Información General y Multimedia
     const camposPrivados = [
         'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
         'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
@@ -454,20 +457,35 @@ function prepararEdicionDesdeDetalle() {
         const input = document.getElementById(id);
         if (input) {
             input.disabled = !esPropietario;
-            input.style.opacity = esPropietario ? "1" : "0.4";
+            input.style.opacity = esPropietario ? "1" : "0.4"; // Se verá más gris si está bloqueado
         }
     });
 
-    // Cargamos las temporadas. 
-    // NOTA: El bloqueo específico de "aportaciones viejas vs propias" 
-    // ahora se maneja por dentro de cargarDatosTemporadas y agregarSeccionUI
+    // 3. Cargamos las temporadas que ya existen en la base de datos
     cargarDatosTemporadas(obraActual.temporadas || []);
 
-    const btnAddPrincipal = document.querySelector('.btn-add-seccion');
-    if (btnAddPrincipal) {
-        btnAddPrincipal.disabled = false;
-        btnAddPrincipal.style.opacity = "1";
-        btnAddPrincipal.style.display = "flex";
+    // 4. CONGELAR TEMPORADAS EXISTENTES SI NO ES EL DUEÑO
+    if (!esPropietario) {
+        // Seleccionamos todo lo que se acaba de crear dentro de las temporadas viejas
+        const elementosViejos = document.querySelectorAll('#builder-temporadas input, #builder-temporadas button');
+        
+        elementosViejos.forEach(el => {
+            el.disabled = true;
+            el.style.opacity = "0.5";
+            
+            // Si es un botón (como eliminar o añadir sub-idiomas a lo viejo), lo desaparecemos
+            if (el.tagName === 'BUTTON') {
+                el.style.display = 'none';
+            }
+        });
+        
+        // ¡OJO! Nos aseguramos de que el botón PRINCIPAL "+ Añadir Sección" siga vivo
+        const btnAddPrincipal = document.querySelector('.btn-add-seccion');
+        if (btnAddPrincipal) {
+            btnAddPrincipal.disabled = false;
+            btnAddPrincipal.style.opacity = "1";
+            btnAddPrincipal.style.display = "flex";
+        }
     }
 
     cambiarVista('registro');
@@ -494,9 +512,11 @@ async function ejecutarRegistro() {
         let resultado;
         
         if (idAnimeEnEdicion) {
+            // MODO EDICIÓN
             let datosObra = {};
 
             if (esPropietario) {
+                // Dueño actualiza todo (Ahora incluye los nuevos campos)
                 datosObra = {
                     titulo: inTitulo.value.trim(),
                     portada_url: inPortada.value.trim(),
@@ -516,6 +536,7 @@ async function ejecutarRegistro() {
                     temporadas: recolectarDatosTemporadas()
                 };
             } else {
+                // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas con las que acaba de crear)
                 datosObra = {
                     temporadas: recolectarDatosTemporadas()
                 };
@@ -524,6 +545,7 @@ async function ejecutarRegistro() {
             resultado = await _supabase.from('obras').update(datosObra).eq('id', idAnimeEnEdicion);
 
         } else {
+            // MODO CREACIÓN (Incluye los nuevos campos)
             const datosObra = {
                 titulo: inTitulo.value.trim(),
                 portada_url: inPortada.value.trim(),
@@ -666,29 +688,10 @@ function mostrarMensajeAuth(msg, color) {
     }
 }
 
+
 // =========================================
 // 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES
 // =========================================
-function cargarDatosTemporadas(temporadasData) {
-    const container = document.getElementById('builder-temporadas');
-    if(!container) return;
-    container.innerHTML = '';
-
-    if (!temporadasData || !Array.isArray(temporadasData)) return;
-
-    // Agrupar por nombre de sección
-    const seccionesObj = {};
-    temporadasData.forEach((temp) => {
-        const sec = temp.seccion || 'Principal';
-        if (!seccionesObj[sec]) seccionesObj[sec] = [];
-        seccionesObj[sec].push(temp);
-    });
-
-    for (const [secName, tempsArray] of Object.entries(seccionesObj)) {
-        agregarSeccionUI(secName, tempsArray);
-    }
-}
-
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
@@ -697,27 +700,10 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     secBlock.className = 'seccion-block';
     secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
-    // Verificar si esta sección ya tiene temporadas y si son del usuario
-    // Si no es el dueño de la obra y tampoco creó la primera temporada de este bloque, le bloqueamos el nombre de sección
-    let puedeEditarSeccion = true;
-    if (obraActual && String(obraActual.creador_id) !== userIdActual) {
-        if (temporadasArray && temporadasArray.length > 0) {
-            // Evaluamos si él creó el primer elemento de esta sección
-            const creadorDeSeccion = temporadasArray[0].creador_id || 'anonimo';
-            if (String(creadorDeSeccion) !== userIdActual) {
-                puedeEditarSeccion = false;
-            }
-        }
-    }
-
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
-            <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Películas / Ovas)" value="${nombreSeccion}" 
-            style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;" 
-            ${!puedeEditarSeccion ? 'disabled' : ''}>
-            
-            <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;" 
-            ${!puedeEditarSeccion ? 'style="display:none;" disabled' : ''}>
+            <input type="text" class="sec-nombre" placeholder="Nombre de Sección (Ej: Películas / Ovas)" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
+            <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
@@ -731,84 +717,131 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
     const listaTemps = secBlock.querySelector('.lista-temporadas');
 
     if (temporadasArray && Array.isArray(temporadasArray)) {
-        temporadasArray.forEach(tempData => {
-            agregarSubTemporadaUI(listaTemps, tempData);
-        });
+        temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos));
     } else {
-        // Bloque vacío (nuevo)
-        agregarSubTemporadaUI(listaTemps, null);
+        agregarSubTemporadaUI(listaTemps);
     }
 }
 
-function agregarSubTemporadaUI(listaContainer, data = null) {
-    const div = document.createElement('div');
-    div.className = 'temporada-item';
-    div.style.cssText = "border: 1px solid #27272a; padding: 10px; margin-bottom: 10px; border-radius: 6px; background: #18181b;";
+function agregarSubTemporadaUI(containerLista, datos = null) {
+    if (!containerLista) return;
+    const bloque = document.createElement('div');
+    bloque.className = 'temporada-block';
+    const creadorIdBloque = datos?.creador_id || userIdActual;
+    bloque.dataset.creadorId = creadorIdBloque;
     
-    const nombreVal = data ? data.nombre : '';
-    const imgVal = data ? data.imagen : '';
-    const jsonVal = data && data.enlaces ? JSON.stringify(data.enlaces, null, 2) : '{"Latino": {"Capitulo 1": "url..."}}';
+    bloque.style.cssText = "border: 1px solid #27272a; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #18181b;";
 
-    // LA MAGIA DE LOS ROLES ESTÁ AQUÍ
-    const esDuenio = obraActual ? (String(obraActual.creador_id) === userIdActual) : true;
-    const creadorItem = data && data.creador_id ? String(data.creador_id) : userIdActual;
-    const puedeEditar = esDuenio || (creadorItem === userIdActual);
-
-    // Guardamos el id del creador oculto en el HTML para recolectarlo luego
-    div.innerHTML = `
-        <input type="hidden" class="temp-creador-id" value="${creadorItem}">
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${nombreVal}" style="flex:1; padding:8px; border-radius:4px; border:1px solid #3f3f46; background: #0f0f11; color: white;" ${!puedeEditar ? 'disabled' : ''}>
-            <input type="text" class="temp-img" placeholder="URL Imagen (Opcional)" value="${imgVal}" style="flex:1; padding:8px; border-radius:4px; border:1px solid #3f3f46; background: #0f0f11; color: white;" ${!puedeEditar ? 'disabled' : ''}>
-            <button type="button" onclick="this.closest('.temporada-item').remove()" style="background:#ef4444; color:white; border:none; padding: 8px 12px; border-radius: 4px; cursor:pointer; ${!puedeEditar ? 'display:none;' : ''}">X</button>
+    bloque.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+            <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
+            <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
         </div>
-        <textarea class="temp-json" rows="4" style="width: 100%; padding:8px; border-radius:4px; border:1px solid #3f3f46; background: #0f0f11; color: white; resize: vertical;" placeholder="JSON de Enlaces" ${!puedeEditar ? 'disabled' : ''}>${jsonVal}</textarea>
+        <input type="text" class="temp-img" placeholder="URL Imagen Portada (Opcional)" value="${datos?.imagen || ''}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none; margin-bottom: 15px; box-sizing: border-box;">
+        
+        <div class="idiomas-container">
+            <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
+                <i class="fa-solid fa-plus"></i> Añadir Idioma
+            </button>
+        </div>
     `;
 
-    // Efecto visual para lo bloqueado
-    if (!puedeEditar) {
-        div.style.opacity = "0.5";
-    }
+    containerLista.appendChild(bloque);
+    const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
-    listaContainer.appendChild(div);
+    if (datos?.enlaces) {
+        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps));
+    } else {
+        agregarIdiomaUI(listaIdiomas);
+    }
+}
+
+function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
+    if (!containerLista) return;
+    const divIdioma = document.createElement('div');
+    divIdioma.className = 'idioma-bloque';
+    divIdioma.style.cssText = "padding: 10px; background: #0c0c0f; border: 1px solid #27272a; border-radius: 6px;";
+
+    divIdioma.innerHTML = `
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" class="idioma-nombre" placeholder="Idioma" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
+            <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
+        <button type="button" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
+            + Añadir Capítulo
+        </button>
+    `;
+
+    containerLista.appendChild(divIdioma);
+    const listaCaps = divIdioma.querySelector('.lista-capitulos');
+
+    if (capitulos) {
+        Object.entries(capitulos).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u));
+    } else {
+        agregarCapituloUI(listaCaps);
+    }
+}
+
+function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
+    if (!containerCaps) return;
+    const divCap = document.createElement('div');
+    divCap.className = 'capitulo-row';
+    divCap.style.display = "flex";
+    divCap.style.gap = "8px";
+
+    divCap.innerHTML = `
+        <input type="text" class="cap-nombre" placeholder="N°" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
+        <input type="text" class="cap-url" placeholder="URL" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
+        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+    `;
+    containerCaps.appendChild(divCap);
 }
 
 function recolectarDatosTemporadas() {
-    const temporadas = [];
-    const bloquesSeccion = document.querySelectorAll('.seccion-block');
+    const datos = [];
+    
+    document.querySelectorAll('.seccion-block').forEach(secBlock => {
+        const inputSec = secBlock.querySelector('.sec-nombre');
+        const nombreSeccion = inputSec ? inputSec.value.trim() : 'Principal';
+        
+        secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
+            const inputTempN = tempBlock.querySelector('.temp-nombre');
+            const inputTempI = tempBlock.querySelector('.temp-img');
+            const nombre = inputTempN ? inputTempN.value.trim() : '';
+            const imagen = inputTempI ? inputTempI.value.trim() : '';
+            const creadorIdBloque = tempBlock.dataset.creadorId;
+            const enlaces = {};
 
-    bloquesSeccion.forEach(sec => {
-        const seccionNombre = sec.querySelector('.sec-nombre').value.trim() || 'Principal';
-        const items = sec.querySelectorAll('.temporada-item');
+            tempBlock.querySelectorAll('.idioma-bloque').forEach(idBlock => {
+                const inputIdioma = idBlock.querySelector('.idioma-nombre');
+                const idiomaNombre = inputIdioma ? inputIdioma.value.trim() : '';
+                
+                if (idiomaNombre) {
+                    enlaces[idiomaNombre] = {};
+                    idBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
+                        const inputCapN = capRow.querySelector('.cap-nombre');
+                        const inputCapU = capRow.querySelector('.cap-url');
+                        const cNombre = inputCapN ? inputCapN.value.trim() : '';
+                        const cUrl = inputCapU ? inputCapU.value.trim() : '';
+                        
+                        if (cNombre && cUrl) {
+                            enlaces[idiomaNombre][cNombre] = cUrl;
+                        }
+                    });
+                }
+            });
 
-        items.forEach(item => {
-            const nombre = item.querySelector('.temp-nombre').value.trim();
-            const imagen = item.querySelector('.temp-img').value.trim();
-            let creadorId = item.querySelector('.temp-creador-id').value;
-            
-            // Si por algún motivo está vacío, le asignamos el ID actual
-            if (!creadorId) creadorId = userIdActual;
-
-            let enlacesObj = {};
-            try {
-                enlacesObj = JSON.parse(item.querySelector('.temp-json').value.trim());
-            } catch(e) {
-                // En caso de que el JSON no sea válido, no queremos que rompa todo, guardamos vacío.
-            }
-
-            if (nombre) {
-                temporadas.push({
-                    seccion: seccionNombre,
-                    nombre: nombre,
-                    imagen: imagen,
-                    enlaces: enlacesObj,
-                    creador_id: creadorId // <-- CLAVE: Se guarda para que el colaborador pueda seguir editando lo suyo en el futuro
-                });
+            if(nombre) {
+                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces, creador_id: creadorIdBloque });
             }
         });
     });
-
-    return temporadas;
+    
+    return datos;
 }
 
 function cargarDatosTemporadas(temporadasFlat) {
