@@ -427,6 +427,16 @@ function prepararEdicionDesdeDetalle() {
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
+    // Obtenemos el ID del usuario que está usando el bot
+    const idUsuarioAbriendoBot = String(tg.initDataUnsafe.user?.id || "anonimo");
+    
+    // Comparamos con el dueño guardado en la base de datos
+    const esPropietario = String(obraActual.creador_id) === idUsuarioAbriendoBot;
+
+    // DEPURACIÓN: Esto te dirá por qué se bloquea o no.
+    // Si en DB dice "null" o "undefined", el bloqueo no funcionará hasta que actualices la base de datos.
+    alert("Dueño en DB: " + obraActual.creador_id + "\nTu ID actual: " + idUsuarioAbriendoBot);
+
     // 1. Llenamos los datos principales
     if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
     if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
@@ -442,10 +452,7 @@ function prepararEdicionDesdeDetalle() {
     if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
-    // 2. Verificar si es el dueño
-    const esPropietario = String(obraActual.creador_id) === userIdActual;
-
-    // 3. Bloqueamos TODOS los campos de Información General si no eres el dueño
+    // 2. Bloqueamos los campos si no eres el dueño
     const camposPrivados = [
         'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
         'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
@@ -460,16 +467,21 @@ function prepararEdicionDesdeDetalle() {
         }
     });
 
-    // 4. Cargamos las temporadas y delegamos el bloqueo granular a las funciones del Constructor
+    // 3. Cargamos las temporadas
     cargarDatosTemporadas(obraActual.temporadas || []);
 
     cambiarVista('registro');
 }
 
+
+
+
+
 async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
     const inTitulo = document.getElementById('in-titulo');
     const inPortada = document.getElementById('in-portada');
+    
     
     if(!inTitulo || !inPortada) return;
 
@@ -534,7 +546,7 @@ async function ejecutarRegistro() {
                     Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                 },
                 temporadas: recolectarDatosTemporadas(),
-                creador_id: userIdActual 
+                creador_id: userIdActual
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
