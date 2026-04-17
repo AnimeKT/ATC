@@ -409,10 +409,11 @@ function prepararNuevoRegistro() {
     if(btn) btn.textContent = "Publicar";
     
     // Limpiamos los inputs y nos aseguramos de que todos estén HABILITADOS
-    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea').forEach(i => {
+    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea, #vista-registro button').forEach(i => {
         i.value = '';
         i.disabled = false;
         i.style.opacity = '1';
+        if(i.tagName === 'BUTTON') i.style.display = ''; // Restaurar botones ocultos
     });
     
     cargarDatosTemporadas([]); 
@@ -427,7 +428,7 @@ function prepararEdicionDesdeDetalle() {
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
-    // Llenamos los datos principales
+    // 1. Llenamos los datos principales con los nuevos IDs
     if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
     if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
     if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
@@ -435,23 +436,66 @@ function prepararEdicionDesdeDetalle() {
     if(document.getElementById('in-tipo')) document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
     if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
     if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
+    if(document.getElementById('in-estudio')) document.getElementById('in-estudio').value = obraActual.estudio || '';
+    if(document.getElementById('in-origen')) document.getElementById('in-origen').value = obraActual.origen || '';
+    if(document.getElementById('in-estreno')) document.getElementById('in-estreno').value = obraActual.estreno || '';
+    if(document.getElementById('in-dia')) document.getElementById('in-dia').value = obraActual.dia_emision || '';
     if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
     // LÓGICA DE ROLES: Verificar si es el dueño
     const esPropietario = String(obraActual.creador_id) === userIdActual;
 
-    // Si NO es el propietario, bloqueamos los campos generales (Colaborador solo añade temporadas)
-    const camposPrivados = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-japones', 'in-ingles'];
+    // 2. Bloqueamos TODOS los campos de Información General y Multimedia
+    const camposPrivados = [
+        'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
+        'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
+        'in-dia', 'in-japones', 'in-ingles'
+    ];
+    
     camposPrivados.forEach(id => {
         const input = document.getElementById(id);
         if (input) {
             input.disabled = !esPropietario;
-            input.style.opacity = esPropietario ? "1" : "0.5";
+            input.style.opacity = esPropietario ? "1" : "0.4"; // Se verá más gris si está bloqueado
         }
     });
 
+    // 3. Cargamos las temporadas que ya existen en la base de datos
     cargarDatosTemporadas(obraActual.temporadas || []);
+
+    // 4. CONGELAR / PERMITIR EDICIÓN POR SECCIÓN según permisos
+    if (!esPropietario) {
+        const secciones = document.querySelectorAll('#builder-temporadas .seccion-block');
+        secciones.forEach(sec => {
+            const secCreator = sec.dataset.creador || (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : '');
+
+            if (secCreator === String(userIdActual)) {
+                // Sección creada por el colaborador actual: permitir edición completa
+                sec.querySelectorAll('input, button').forEach(el => {
+                    el.disabled = false;
+                    el.style.opacity = '1';
+                    if (el.tagName === 'BUTTON') el.style.display = '';
+                });
+            } else {
+                // Sección del dueño u otro colaborador: bloquear y ocultar controles de borrado/añadido
+                sec.querySelectorAll('input, button').forEach(el => {
+                    el.disabled = true;
+                    el.style.opacity = '0.5';
+                    if (el.tagName === 'BUTTON') el.style.display = 'none';
+                });
+            }
+        });
+
+        // Asegurar que el botón global para añadir secciones siga activo para colaboradores
+        const btnAddPrincipal = document.querySelector('.btn-add-seccion');
+        if (btnAddPrincipal) {
+            btnAddPrincipal.disabled = false;
+            btnAddPrincipal.style.opacity = '1';
+            btnAddPrincipal.style.display = 'flex';
+        }
+    }
+
     cambiarVista('registro');
 }
 
@@ -462,11 +506,8 @@ async function ejecutarRegistro() {
     
     if(!inTitulo || !inPortada) return;
 
-    // Validamos permisos antes de recoger datos
-    // Si la obra es nueva, el creador es el usuario actual. Si existe, revisamos la base de datos local.
     const esPropietario = idAnimeEnEdicion ? (String(obraActual.creador_id) === userIdActual) : true;
 
-    // Solo exigimos titulo y portada si el que está guardando tiene permisos de modificar eso
     if (esPropietario && (!inTitulo.value.trim() || !inPortada.value.trim())) {
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
         return alert("⚠️ Título y Portada son obligatorios.");
@@ -483,7 +524,7 @@ async function ejecutarRegistro() {
             let datosObra = {};
 
             if (esPropietario) {
-                // Dueño actualiza todo
+                // Dueño actualiza todo (Ahora incluye los nuevos campos)
                 datosObra = {
                     titulo: inTitulo.value.trim(),
                     portada_url: inPortada.value.trim(),
@@ -491,7 +532,11 @@ async function ejecutarRegistro() {
                     sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
                     estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
                     tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
+                    estudio: document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '',
                     autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
+                    origen: document.getElementById('in-origen') ? document.getElementById('in-origen').value : '',
+                    estreno: document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '',
+                    dia_emision: document.getElementById('in-dia') ? document.getElementById('in-dia').value : '',
                     nombres_alternativos: {
                         Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                         Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
@@ -499,19 +544,16 @@ async function ejecutarRegistro() {
                     temporadas: recolectarDatosTemporadas()
                 };
             } else {
-                // Colaborador SOLO actualiza las temporadas
+                // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas con las que acaba de crear)
                 datosObra = {
                     temporadas: recolectarDatosTemporadas()
                 };
             }
 
-            resultado = await _supabase
-                .from('obras')
-                .update(datosObra)
-                .eq('id', idAnimeEnEdicion);
+            resultado = await _supabase.from('obras').update(datosObra).eq('id', idAnimeEnEdicion);
 
         } else {
-            // MODO CREACIÓN: Insertar nuevo (asignando creador)
+            // MODO CREACIÓN (Incluye los nuevos campos)
             const datosObra = {
                 titulo: inTitulo.value.trim(),
                 portada_url: inPortada.value.trim(),
@@ -519,18 +561,20 @@ async function ejecutarRegistro() {
                 sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
                 estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
                 tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
+                estudio: document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '',
                 autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
+                origen: document.getElementById('in-origen') ? document.getElementById('in-origen').value : '',
+                estreno: document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '',
+                dia_emision: document.getElementById('in-dia') ? document.getElementById('in-dia').value : '',
                 nombres_alternativos: {
                     Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                     Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                 },
                 temporadas: recolectarDatosTemporadas(),
-                creador_id: userIdActual // <--- CLAVE PARA EL SISTEMA DE ROLES
+                creador_id: userIdActual 
             };
 
-            resultado = await _supabase
-                .from('obras')
-                .insert([datosObra]);
+            resultado = await _supabase.from('obras').insert([datosObra]);
         }
 
         if (resultado.error) throw resultado.error;
@@ -656,7 +700,7 @@ function mostrarMensajeAuth(msg, color) {
 // =========================================
 // 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES
 // =========================================
-function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
+function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
     
@@ -676,6 +720,15 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null) {
             <i class="fa-solid fa-plus"></i> Añadir Bloque a esta Sección
         </button>
     `;
+
+    // Determinar y guardar el creador de esta sección en el DOM
+    // - Si se pasa `creadorId`, usarlo
+    // - Si estamos editando una obra existente (idAnimeEnEdicion), nuevas secciones las marca el usuario actual
+    // - Si no, por defecto intentar usar el creador de la obra (obraActual.creador_id)
+    const resolvedCreador = (creadorId !== null)
+        ? String(creadorId)
+        : (idAnimeEnEdicion ? String(userIdActual) : (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : ''));
+    secBlock.dataset.creador = resolvedCreador;
 
     container.appendChild(secBlock);
     const listaTemps = secBlock.querySelector('.lista-temporadas');
@@ -796,7 +849,10 @@ function recolectarDatosTemporadas() {
             });
 
             if(nombre) {
-                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces });
+                const obj = { seccion: nombreSeccion, nombre, imagen, enlaces };
+                const secCreator = secBlock.dataset.creador || (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : '');
+                if (secCreator) obj.creador_id = secCreator;
+                datos.push(obj);
             }
         });
     });
@@ -822,7 +878,14 @@ function cargarDatosTemporadas(temporadasFlat) {
     });
 
     for (const [nombreSec, tempsArray] of Object.entries(agrupado)) {
-        agregarSeccionUI(nombreSec, tempsArray);
+        // Determinar creador de la sección: si los temps contienen creador_id, usarlo; si no, fallback al creador de la obra
+        let sectionCreator = '';
+        if (tempsArray && tempsArray.length > 0 && tempsArray[0].creador_id) {
+            sectionCreator = String(tempsArray[0].creador_id);
+        } else if (obraActual && obraActual.creador_id) {
+            sectionCreator = String(obraActual.creador_id);
+        }
+        agregarSeccionUI(nombreSec, tempsArray, sectionCreator);
     }
 }
 
