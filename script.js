@@ -427,47 +427,47 @@ function prepararEdicionDesdeDetalle() {
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
-    // Obtenemos el ID del usuario que está usando el bot
-    const idUsuarioAbriendoBot = String(tg.initDataUnsafe.user?.id || "anonimo");
+    // USAMOS LA VARIABLE GLOBAL userIdActual
+    // Aseguramos que ambos sean strings para la comparación
+    const idEnDB = String(obraActual.creador_id || "sin_dueño");
+    const idMia = String(userIdActual);
     
-    // Comparamos con el dueño guardado en la base de datos
-    const esPropietario = String(obraActual.creador_id) === idUsuarioAbriendoBot;
+    const esPropietario = idEnDB === idMia;
 
-    // DEPURACIÓN: Esto te dirá por qué se bloquea o no.
-    // Si en DB dice "null" o "undefined", el bloqueo no funcionará hasta que actualices la base de datos.
-    alert("Dueño en DB: " + obraActual.creador_id + "\nTu ID actual: " + idUsuarioAbriendoBot);
+    // EL ALERT ES TU MEJOR AMIGO:
+    // Si estos dos números son iguales, el bloqueo NO se activará (es correcto).
+    // Si son distintos y puedes editar, entonces hay un error de caché o de ID.
+    alert("Dueño en DB: " + idEnDB + "\nTu ID actual: " + idMia);
 
     // 1. Llenamos los datos principales
-    if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
-    if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
-    if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
-    if(document.getElementById('in-estado')) document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
-    if(document.getElementById('in-tipo')) document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
-    if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
-    if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
-    if(document.getElementById('in-estudio')) document.getElementById('in-estudio').value = obraActual.estudio || '';
-    if(document.getElementById('in-origen')) document.getElementById('in-origen').value = obraActual.origen || '';
-    if(document.getElementById('in-estreno')) document.getElementById('in-estreno').value = obraActual.estreno || '';
-    if(document.getElementById('in-dia')) document.getElementById('in-dia').value = obraActual.dia_emision || '';
-    if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
-    if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
+    const campos = {
+        'in-titulo': obraActual.titulo,
+        'in-portada': obraActual.portada_url,
+        'in-banner': obraActual.banner_url,
+        'in-estado': obraActual.estado || 'En emisión',
+        'in-tipo': obraActual.tipo || 'TV',
+        'in-sinopsis': obraActual.sinopsis,
+        'in-autor': obraActual.autor,
+        'in-estudio': obraActual.estudio,
+        'in-origen': obraActual.origen,
+        'in-estreno': obraActual.estreno,
+        'in-dia': obraActual.dia_emision,
+        'in-japones': obraActual.nombres_alternativos?.Japonés,
+        'in-ingles': obraActual.nombres_alternativos?.Ingles
+    };
 
-    // 2. Bloqueamos los campos si no eres el dueño
-    const camposPrivados = [
-        'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
-        'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
-        'in-dia', 'in-japones', 'in-ingles'
-    ];
-    
-    camposPrivados.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.disabled = !esPropietario;
-            input.style.opacity = esPropietario ? "1" : "0.4";
+    for (const [id, valor] of Object.entries(campos)) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.value = valor || '';
+            // BLOQUEO: Si no es propietario, deshabilitamos
+            el.disabled = !esPropietario;
+            el.style.opacity = esPropietario ? "1" : "0.5";
+            el.style.backgroundColor = esPropietario ? "#0f0f11" : "#27272a";
         }
-    });
+    }
 
-    // 3. Cargamos las temporadas
+    // 2. Cargamos las temporadas (su lógica interna ya usa userIdActual)
     cargarDatosTemporadas(obraActual.temporadas || []);
 
     cambiarVista('registro');
