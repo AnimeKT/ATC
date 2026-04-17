@@ -124,7 +124,14 @@ function abrirDetalle(tituloObra) {
     if(imgPort) {
         imgPort.src = obraActual.portada_url || '';
         imgPort.style.opacity = 1;
-        imgPort.onclick = () => verImagenGrande(imgPort.src);
+        imgPort.style.cursor = 'pointer'; // Crucial para que iOS Safari lo reconozca como botón
+        
+        // Asignar el evento pasando 'e' para bloquear comportamientos nativos de móvil
+        imgPort.onclick = (e) => {
+            e.preventDefault(); // Evita que Telegram o el navegador intenten arrastrar la imagen
+            e.stopPropagation(); // Evita que el clic afecte a elementos que estén detrás
+            verImagenGrande(imgPort.src);
+        };
     }
     
     const detTitulo = document.getElementById('det-titulo');
@@ -931,46 +938,56 @@ function verImagenGrande(url) {
         overlay = document.createElement('div');
         overlay.id = 'viewer-overlay';
         
-        // Estilos para el fondo oscuro
+        // Estilos para el fondo oscuro optimizados para móvil
         overlay.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background: rgba(0, 0, 0, 0.9);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 10000;
+            z-index: 999999; /* Asegura que esté por encima de TODO en la app de Telegram */
             cursor: pointer;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
+            touch-action: none; /* Previene que la pantalla haga scroll por detrás en móviles */
         `;
         
         // La imagen que se verá grande
         const img = document.createElement('img');
         img.id = 'viewer-img';
         img.style.cssText = `
-            max-width: 90%;
-            max-height: 85%;
+            max-width: 95vw; /* Usa 'vw' y 'vh' para adaptarse perfecto a pantallas de celulares */
+            max-height: 85vh;
             border-radius: 12px;
             box-shadow: 0 0 30px rgba(0,0,0,0.5);
             object-fit: contain;
             transition: transform 0.3s ease;
+            pointer-events: none; /* CLAVE: Hace que el toque pase a través de la imagen hacia el overlay para cerrarse siempre */
         `;
         
-        // Botón de cerrar (opcional, ya que cerrarás al tocar el fondo)
+        // Botón de cerrar adaptado para dedos (más área de toque)
         const btnCerrar = document.createElement('div');
         btnCerrar.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-        btnCerrar.style.cssText = "position: absolute; top: 20px; right: 20px; color: white; font-size: 24px;";
+        btnCerrar.style.cssText = `
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            color: white; 
+            font-size: 28px; 
+            padding: 10px; /* Área más grande para tocar en el celular */
+        `;
         
         overlay.appendChild(img);
         overlay.appendChild(btnCerrar);
         document.body.appendChild(overlay);
 
-        // Al hacer click en cualquier parte del fondo, se cierra
-        overlay.onclick = () => {
+        // Al hacer click o tocar cualquier parte del fondo, se cierra
+        overlay.onclick = (e) => {
+            e.preventDefault();
             overlay.style.display = 'none';
         };
     }
