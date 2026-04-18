@@ -641,7 +641,7 @@ async function ejecutarRegistro() {
                 },
                 temporadas: recolectarDatosTemporadas(),
                 creador_id: userIdActual,
-                info_adicional: recolectarInfoAdicional()
+                propiedades_extra: recolectarInfoAdicional()
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
@@ -1039,8 +1039,8 @@ function agregarPropiedadUI(key = '', value = '') {
     row.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
 
     row.innerHTML = `
-        <input type="text" class="prop-key" placeholder="Clave (Ej: Editor, Duración)" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
-        <input type="text" class="prop-value" placeholder="Valor" value="${value}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+        <input type="text" class="prop-key" placeholder="Ej: Editor, Duración" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+        <input type="text" class="prop-value" placeholder="Ej: MAPPA" value="${value}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
         <button type="button" title="Eliminar" style="background:transparent; color:#ef4444; border:none; cursor:pointer; font-size:18px;" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>
     `;
 
