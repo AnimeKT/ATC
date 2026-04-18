@@ -674,7 +674,7 @@ async function ejecutarRegistro() {
                     generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                 temporadas: recolectarDatosTemporadas(),
                 creador_id: userIdActual,
-                propiedades_extra: recolectarCamposExtras()
+                propiedades_extra: recolectarInfoAdicional()
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
@@ -1064,8 +1064,16 @@ function verImagenGrande(url) {
 // Propiedades Dinámicas
 // =========================
 function agregarPropiedadUI(key = '', value = '') {
-    // Si no es dueño, no permitimos añadir filas nuevas
-    if (String(userIdActual) !== "5472844837") return;
+    // DEBUG: Quita esto una vez funcione
+    console.log("Intentando agregar fila. ID Actual:", userIdActual);
+
+    const esDueno = String(userIdActual) === "5472844837";
+    
+    // Si no es dueño, NO permitimos que el botón haga nada
+    if (!esDueno) {
+        console.warn("Bloqueado: El usuario no es el dueño.");
+        return;
+    }
 
     const container = document.getElementById('extra-props-container');
     if (!container) return;
@@ -1075,7 +1083,7 @@ function agregarPropiedadUI(key = '', value = '') {
     row.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
 
     row.innerHTML = `
-        <input type="text" class="prop-key" placeholder="Ej: Editor, Duración" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+        <input type="text" class="prop-key" placeholder="Ej: Editor" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
         <input type="text" class="prop-value" placeholder="Ej: MAPPA" value="${value}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
         <button type="button" title="Eliminar" style="background:transparent; color:#ef4444; border:none; cursor:pointer; font-size:18px;" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>
     `;
@@ -1100,33 +1108,38 @@ function recolectarInfoAdicional() {
 function cargarInfoAdicional(obj) {
     const container = document.getElementById('extra-props-container');
     if (!container) return;
+    
     container.innerHTML = ''; // Limpiar siempre
-
-    // Convertimos a String para evitar errores de comparación (Número vs Texto)
+    
     const esDueno = String(userIdActual) === "5472844837";
 
-    // CASO A: Hay datos guardados
+    // CASO A: Hay datos (Estamos editando algo que ya existe)
     if (obj && typeof obj === 'object' && Object.keys(obj).length > 0) {
         for (const [key, value] of Object.entries(obj)) {
             const row = document.createElement('div');
             row.className = 'prop-row';
+            row.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
             
             const disabledAttr = esDueno ? '' : 'disabled';
             const deleteBtn = esDueno 
-                ? `<button type="button" title="Eliminar" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>` 
+                ? `<button type="button" title="Eliminar" style="background:transparent; color:#ef4444; border:none; cursor:pointer;" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>` 
                 : '';
 
             row.innerHTML = `
-                <input type="text" class="prop-key" placeholder="Propiedad" value="${key}" ${disabledAttr}>
-                <input type="text" class="prop-value" placeholder="Valor" value="${value}" ${disabledAttr}>
+                <input type="text" class="prop-key" placeholder="Propiedad" value="${key}" ${disabledAttr} style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+                <input type="text" class="prop-value" placeholder="Valor" value="${value}" ${disabledAttr} style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
                 ${deleteBtn}
             `;
             container.appendChild(row);
         }
     } 
-    // CASO B: No hay datos pero eres el DUEÑO (Mostramos fila vacía para que puedas escribir)
+    // CASO B: No hay datos (Nuevo registro o anime sin extras)
     else if (esDueno) {
+        // Solo si eres el dueño, creamos la primera fila vacía para que empieces a escribir
         agregarPropiedadUI();
+    } else {
+        // Si eres colaborador y no hay datos, mostramos un mensaje sutil
+        container.innerHTML = '<p style="color: #52525b; font-size: 12px; font-style: italic;">Sin propiedades adicionales.</p>';
     }
 }
 
