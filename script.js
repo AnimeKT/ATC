@@ -507,6 +507,13 @@ function prepararEdicionDesdeDetalle() {
     // LÓGICA DE ROLES: Verificar si es el dueño
     const esPropietario = String(obraActual.creador_id) === userIdActual;
 
+    // Ocultar/mostrar el botón para añadir propiedades según sea el dueño real
+    const esDueno = (userIdActual == 5472844837);
+    const btnAddProp = document.querySelector('button[onclick="agregarPropiedadUI()"]');
+    if (btnAddProp) {
+        btnAddProp.style.display = esDueno ? 'block' : 'none';
+    }
+
     // 2. Bloqueamos TODOS los campos de Información General y Multimedia
     const camposPrivados = [
         'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
@@ -1057,6 +1064,9 @@ function verImagenGrande(url) {
 // Propiedades Dinámicas
 // =========================
 function agregarPropiedadUI(key = '', value = '') {
+    // Seguridad: solo el dueño real puede añadir nuevas propiedades vía UI
+    if (userIdActual != 5472844837) return;
+
     const container = document.getElementById('extra-props-container');
     if (!container) return;
 
@@ -1090,20 +1100,35 @@ function recolectarInfoAdicional() {
 function cargarInfoAdicional(obj) {
     const container = document.getElementById('extra-props-container');
     if (!container) return;
-    
-    // Limpiamos el contenedor para que no se dupliquen campos
     container.innerHTML = '';
 
-    // Si no hay datos, ponemos una fila vacía para que el usuario pueda escribir
-    if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
-        agregarPropiedadUI(); 
+    // Verificamos si es el dueño (ID de Telegram del dueño)
+    const esDueno = (userIdActual == 5472844837);
+
+    // Si no hay datos y es dueño, ponemos una fila vacía
+    if (!obj || Object.keys(obj).length === 0) {
+        if (esDueno) agregarPropiedadUI();
         return;
     }
 
-    // Si HAY datos, recorremos el objeto y creamos una fila por cada propiedad
-    Object.entries(obj).forEach(([k, v]) => {
-        agregarPropiedadUI(k, v);
-    });
+    // Llenamos los campos existentes
+    for (const [key, value] of Object.entries(obj)) {
+        const row = document.createElement('div');
+        row.className = 'prop-row';
+        
+        // Si NO es dueño, añadimos el atributo 'disabled' a los inputs y ocultamos el botón de borrar
+        const disabledAttr = esDueno ? '' : 'disabled';
+        const deleteBtn = esDueno 
+            ? `<button type="button" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>` 
+            : '';
+
+        row.innerHTML = `
+            <input type="text" class="prop-key" placeholder="Propiedad" value="${key}" ${disabledAttr}>
+            <input type="text" class="prop-value" placeholder="Valor" value="${value}" ${disabledAttr}>
+            ${deleteBtn}
+        `;
+        container.appendChild(row);
+    }
 }
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
