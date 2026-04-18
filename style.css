@@ -1100,30 +1100,25 @@ body {
    CHECKBOXES DE GÉNERO
    ========================================= */
 .checkbox-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: 5px;
-    align-items: stretch;
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background: #0f0f11;
-    padding: 10px 14px;
+    padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid #27272a;
     font-size: 13px;
     color: #e0e0e0;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: all 0.2s;
     user-select: none;
-    width: 100%;
-    box-sizing: border-box;
-    justify-content: flex-start;
-    min-height: 44px;
 }
 
 /* Evitamos que el estilo global de inputs estire el checkbox */
@@ -1138,6 +1133,3 @@ body {
     border-color: #3ba4fa;
 }
 
-@media (max-width: 480px) {
-    .checkbox-group { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-}
