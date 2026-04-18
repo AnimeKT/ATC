@@ -798,20 +798,20 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     }
 }
 
-function agregarPropiedadExtra() {
+function agregarPropiedadExtraUI(nombre = '', valor = '') {
     const contenedor = document.getElementById('contenedor-propiedades-extra');
     const div = document.createElement('div');
-    div.className = 'fila-propiedad-extra'; // Esta clase debe coincidir con el CSS
-    
+    div.className = 'fila-propiedad-extra';
     div.innerHTML = `
-        <input type="text" placeholder="Ej: Fansub" class="prop-clave">
-        <input type="text" placeholder="Ej: HD 1080p" class="prop-valor">
+        <input type="text" class="prop-clave" placeholder="Ej: Estudio" value="${nombre}">
+        <input type="text" class="prop-valor" placeholder="Ej: Mappa" value="${valor}">
         <button type="button" class="btn-eliminar-prop" onclick="this.parentElement.remove()">
             <i class="fa-solid fa-trash"></i>
         </button>
     `;
     contenedor.appendChild(div);
 }
+
 
 // 2. Función para eliminar la fila
 function eliminarPropiedadExtra(boton) {
