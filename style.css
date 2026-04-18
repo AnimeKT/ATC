@@ -1132,3 +1132,24 @@ body {
 .checkbox-label:hover {
     border-color: #3ba4fa;
 }
+
+#det-tags {
+    display: flex;
+    flex-wrap: wrap; /* Esto es la magia: permite que salten a la siguiente línea */
+    gap: 8px; /* Espacio entre cada etiqueta */
+    margin-top: 10px;
+    margin-bottom: 20px; 
+    width: 100%; /* Asegura que ocupe todo el ancho disponible a la derecha */
+}
+
+/* Estilo para las etiquetas individuales generadas en el JS */
+#det-tags span {
+    background: #18181b; 
+    border: 1px solid #27272a;
+    color: #a1a1aa;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap; /* Evita que el texto de una etiqueta se rompa a la mitad */
+}
