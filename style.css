@@ -1099,42 +1099,53 @@ body {
 /* =========================================
    CHECKBOXES DE GÉNERO
    ========================================= */
+/* =========================================
+   CONTENEDOR DE GÉNEROS (CORREGIDO)
+   ========================================= */
 .checkbox-group {
-    display: flex;       /* Cambiamos de grid a flex */
-    flex-wrap: wrap;    /* Permite que los botones bajen a la siguiente fila */
-    gap: 10px;
-    margin-top: 5px;
-    width: 100%;
+    display: flex;            /* Usamos Flexbox para que el tamaño dependa del contenido */
+    flex-wrap: wrap;         /* Permite que los botones salten de línea si no caben */
+    gap: 10px;               /* Espacio entre botones */
+    width: 100%;             /* Asegura que use todo el ancho del formulario */
+    box-sizing: border-box;
 }
 
 .checkbox-label {
-    display: flex;
+    /* CLAVE: Crece para llenar el espacio (1), no se encoge menos que el texto (0), tamaño base auto */
+    flex: 1 0 auto; 
+    
+    display: inline-flex;    /* Se ajusta al contenido interno */
     align-items: center;
     justify-content: center;
     gap: 8px;
     background: #0f0f11;
-    padding: 10px 16px; /* Aumentamos un poco el padding lateral */
+    padding: 10px 18px;      /* Espaciado interno generoso para el texto */
     border-radius: 8px;
     border: 1px solid #27272a;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
     
-    /* AJUSTES CLAVE: */
-    width: auto;         /* El ancho base depende del texto */
-    flex: 1 1 auto;      /* Se estiran proporcionalmente para llenar el espacio */
-    white-space: nowrap; /* Evita que el texto del botón se rompa en dos líneas */
+    /* Evita que el texto largo rompa el botón en dos líneas */
+    white-space: nowrap;     
+    min-width: fit-content;  /* El botón nunca será más pequeño que su texto */
 }
 
-/* Evitamos que el estilo global de inputs estire el checkbox */
+/* Estilo para el check interno */
 .checkbox-label input[type="checkbox"] {
-    width: auto;
-    padding: 0;
     margin: 0;
+    width: 16px;
+    height: 16px;
     accent-color: #3ba4fa;
 }
 
 .checkbox-label:hover {
-    background: #27272a;
+    background: #18181b;
+    border-color: #3ba4fa;
+}
+
+/* Si un botón está seleccionado (opcional, por si usas una clase activa) */
+.checkbox-label:has(input:checked) {
+    background: #1e293b;
     border-color: #3ba4fa;
 }
