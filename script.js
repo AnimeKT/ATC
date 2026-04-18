@@ -163,18 +163,17 @@ function abrirDetalle(tituloObra) {
     setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
 
     // --- NUEVA LÓGICA PARA PROPIEDADES EXTRA ---
-    const contenedorExtras = document.getElementById('det-extras-dinamicos');
-    if(contenedorExtras) {
-        contenedorExtras.innerHTML = ''; 
-        if (obraActual.propiedades_extra && typeof obraActual.propiedades_extra === 'object') {
-            Object.entries(obraActual.propiedades_extra).forEach(([clave, valor]) => {
-                const item = document.createElement('div');
-                item.className = 'info-item'; // <--- Usamos tu clase original
-                item.innerHTML = `
-                    <span>${clave}:</span>
-                    <strong>${valor}</strong>
-                `; // <--- Usamos span y strong como en tu CSS
-                contenedorExtras.appendChild(item);
+    const contenedorExtras = document.getElementById('lista-propiedades-extra'); 
+    if (contenedorExtras) {
+        contenedorExtras.innerHTML = ''; // Limpiar previo
+        if (obra.propiedades_extra && Array.isArray(obra.propiedades_extra)) {
+            obra.propiedades_extra.forEach(prop => {
+                if (prop.nombre && prop.valor) {
+                    const div = document.createElement('div');
+                    div.className = 'detalle-item-extra';
+                    div.innerHTML = `<b>${prop.nombre}:</b> <span>${prop.valor}</span>`;
+                    contenedorExtras.appendChild(div);
+                }
             });
         }
     }
