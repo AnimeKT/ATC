@@ -14,7 +14,7 @@ tg.ready();
 tg.expand();
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
-let userIdActual = "anonimo";
+let userIdActual = tg.initDataUnsafe?.user?.id || "anonimo";
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
@@ -1064,8 +1064,8 @@ function verImagenGrande(url) {
 // Propiedades Dinámicas
 // =========================
 function agregarPropiedadUI(key = '', value = '') {
-    // Seguridad: solo el dueño real puede añadir nuevas propiedades vía UI
-    if (userIdActual != 5472844837) return;
+    // Si no es dueño, no permitimos añadir filas nuevas
+    if (String(userIdActual) !== "5472844837") return;
 
     const container = document.getElementById('extra-props-container');
     if (!container) return;
@@ -1100,34 +1100,33 @@ function recolectarInfoAdicional() {
 function cargarInfoAdicional(obj) {
     const container = document.getElementById('extra-props-container');
     if (!container) return;
-    container.innerHTML = '';
+    container.innerHTML = ''; // Limpiar siempre
 
-    // Verificamos si es el dueño (ID de Telegram del dueño)
-    const esDueno = (userIdActual == 5472844837);
+    // Convertimos a String para evitar errores de comparación (Número vs Texto)
+    const esDueno = String(userIdActual) === "5472844837";
 
-    // Si no hay datos y es dueño, ponemos una fila vacía
-    if (!obj || Object.keys(obj).length === 0) {
-        if (esDueno) agregarPropiedadUI();
-        return;
-    }
+    // CASO A: Hay datos guardados
+    if (obj && typeof obj === 'object' && Object.keys(obj).length > 0) {
+        for (const [key, value] of Object.entries(obj)) {
+            const row = document.createElement('div');
+            row.className = 'prop-row';
+            
+            const disabledAttr = esDueno ? '' : 'disabled';
+            const deleteBtn = esDueno 
+                ? `<button type="button" title="Eliminar" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>` 
+                : '';
 
-    // Llenamos los campos existentes
-    for (const [key, value] of Object.entries(obj)) {
-        const row = document.createElement('div');
-        row.className = 'prop-row';
-        
-        // Si NO es dueño, añadimos el atributo 'disabled' a los inputs y ocultamos el botón de borrar
-        const disabledAttr = esDueno ? '' : 'disabled';
-        const deleteBtn = esDueno 
-            ? `<button type="button" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>` 
-            : '';
-
-        row.innerHTML = `
-            <input type="text" class="prop-key" placeholder="Propiedad" value="${key}" ${disabledAttr}>
-            <input type="text" class="prop-value" placeholder="Valor" value="${value}" ${disabledAttr}>
-            ${deleteBtn}
-        `;
-        container.appendChild(row);
+            row.innerHTML = `
+                <input type="text" class="prop-key" placeholder="Propiedad" value="${key}" ${disabledAttr}>
+                <input type="text" class="prop-value" placeholder="Valor" value="${value}" ${disabledAttr}>
+                ${deleteBtn}
+            `;
+            container.appendChild(row);
+        }
+    } 
+    // CASO B: No hay datos pero eres el DUEÑO (Mostramos fila vacía para que puedas escribir)
+    else if (esDueno) {
+        agregarPropiedadUI();
     }
 }
 
