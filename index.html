@@ -101,122 +101,126 @@
         </div>
 
         <div class="contenedor-formulario">
-            <div class="form-seccion">
-                <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
-                <div class="input-group">
-                    <label>Título Principal</label>
-                    <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
-                </div>
+            <div class="form-grid">
+                <div class="form-left">
+                    <div class="form-seccion">
+                        <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
+                        <div class="input-group">
+                            <label>Título Principal</label>
+                            <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
+                        </div>
 
-                <div class="grid-2-col">
-                    <div class="input-group">
-                        <label>Nombre Japonés</label>
-                        <input type="text" id="in-japones" placeholder="Japonés">
-                    </div>
-                    <div class="input-group">
-                        <label>Nombre Inglés</label>
-                        <input type="text" id="in-ingles" placeholder="Inglés">
-                    </div>
-                </div> <div class="input-group full-width">
-                    <label>Sinopsis</label>
-                    <textarea id="in-sinopsis" placeholder="Resumen de la trama..." rows="4"></textarea>
-                </div> 
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label>Nombre Japonés</label>
+                                <input type="text" id="in-japones" placeholder="Japonés">
+                            </div>
+                            <div class="input-group">
+                                <label>Nombre Inglés</label>
+                                <input type="text" id="in-ingles" placeholder="Inglés">
+                            </div>
+                        </div>
 
-                <div class="grid-2-col">
-                    <div class="input-group">
-                        <label>Estado</label>
-                        <select id="in-estado">
-                            <option value="En emisión">En emisión</option>
-                            <option value="Finalizado">Finalizado</option>
-                            <option value="Próximamente">Próximamente</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Tipo</label>
-                        <select id="in-tipo">
-                            <option value="TV">TV</option>
-                            <option value="Película">Película</option>
-                            <option value="OVA">OVA</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Géneros</label>
-                        <div id="in-genero-checkboxes" class="checkbox-group">
-                            <label class="checkbox-label"><input type="checkbox" value="Acción"> Acción</label>
-                            <label class="checkbox-label"><input type="checkbox" value="Aventura"> Aventura</label>
-                            <label class="checkbox-label"><input type="checkbox" value="Comedia"> Comedia</label>
-                            <label class="checkbox-label"><input type="checkbox" value="Drama"> Drama</label>
-                            <label class="checkbox-label"><input type="checkbox" value="Fantasía"> Fantasía</label>
-                            <label class="checkbox-label"><input type="checkbox" value="Romance"> Romance</label>
-                            <label class="checkbox-label"><input type="checkbox" value="Sci-Fi"> Sci-Fi</label>
-                            <label class="checkbox-label"><input type="checkbox" value="Suspenso"> Suspenso</label>
+                        <div class="input-group full-width">
+                            <label>Sinopsis</label>
+                            <textarea id="in-sinopsis" placeholder="Resumen de la trama..." rows="4"></textarea>
+                        </div>
+
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label>Estado</label>
+                                <select id="in-estado">
+                                    <option value="En emisión">En emisión</option>
+                                    <option value="Finalizado">Finalizado</option>
+                                    <option value="Próximamente">Próximamente</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Tipo</label>
+                                <select id="in-tipo">
+                                    <option value="TV">TV</option>
+                                    <option value="Película">Película</option>
+                                    <option value="OVA">OVA</option>
+                                </select>
+                            </div>
+
+                            <div class="grid-2-col">
+                                <div class="input-group">
+                                    <label>Estudio</label>
+                                    <input type="text" id="in-estudio" placeholder="Ej: MAPPA">
+                                </div>
+                                <div class="input-group">
+                                    <label>Autor</label>
+                                    <input type="text" id="in-autor" placeholder="Nombre del autor">
+                                </div>
+                                <div class="input-group">
+                                    <label>Origen</label>
+                                    <input type="text" id="in-origen" placeholder="Ej: Manga">
+                                </div>
+                                <div class="input-group">
+                                    <label>Estreno</label>
+                                    <input type="text" id="in-estreno" placeholder="Ej: 4 de Abril 2026">
+                                </div>
+                                <div class="input-group">
+                                    <label>Emisión</label>
+                                    <input type="text" id="in-dia" placeholder="Ej: Sabado">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label>Propiedades Adicionales</label>
+                            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                                <button type="button" id="btn-add-prop" onclick="agregarPropiedadUI()" style="padding:8px 12px; background:#27272a; color:#3ba4fa; border:1px solid #3ba4fa; border-radius:6px; cursor:pointer;">
+                                    <i class="fa-solid fa-plus"></i> Añadir Propiedad
+                                </button>
+                                <span style="color:#a1a1aa; font-size:13px;">Define tu propiedad personalizada.</span>
+                            </div>
+                            <div id="extra-props-container"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid-2-col">
-                    <div class="input-group">
-                    <label>Estudio</label>
-                    <input type="text" id="in-estudio" placeholder="Ej: MAPPA">
-                </div>
-                <div class="input-group">
-                    <label>Autor</label>
-                    <input type="text" id="in-autor" placeholder="Nombre del autor">
-                </div>
-                <div class="input-group">
-                    <label>Origen</label>
-                    <input type="text" id="in-origen" placeholder="Ej: Manga">
-                </div>
-                <div class="input-group">
-                    <label>Estreno</label>
-                    <input type="text" id="in-estreno" placeholder="Ej: 4 de Abril 2026">
-                </div>
-                <div class="input-group">
-                    <label>Emisión</label>
-                    <input type="text" id="in-dia" placeholder="Ej: Sabado">
-                </div>
-                    
-                </div>
-
-                <div class="input-group full-width">
-                    <label>Propiedades Adicionales</label>
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-                        <button type="button" id="btn-add-prop" onclick="agregarPropiedadUI()" style="padding:8px 12px; background:#27272a; color:#3ba4fa; border:1px solid #3ba4fa; border-radius:6px; cursor:pointer;">
-                            <i class="fa-solid fa-plus"></i> Añadir Propiedad
-                        </button>
-                        <span style="color:#a1a1aa; font-size:13px;">Define tu propiedad personalizada.</span>
+                <div class="form-right">
+                    <div class="form-seccion">
+                        <h3><i class="fa-solid fa-image"></i> Multimedia</h3>
+                        <div class="input-group">
+                            <label>URL Portada (Vertical)</label>
+                            <input type="text" id="in-portada" placeholder="https://...">
+                        </div>
+                        <div class="input-group">
+                            <label>URL Banner (Horizontal)</label>
+                            <input type="text" id="in-banner" placeholder="https://...">
+                        </div>
                     </div>
-                    <div id="extra-props-container"></div>
-                </div>
 
-                
-            </div>
-
-            <div class="form-seccion">
-                <h3><i class="fa-solid fa-image"></i> Multimedia</h3>
-                <div class="input-group">
-                    <label>URL Portada (Vertical)</label>
-                    <input type="text" id="in-portada" placeholder="https://...">
-                </div>
-                <div class="input-group">
-                    <label>URL Banner (Horizontal)</label>
-                    <input type="text" id="in-banner" placeholder="https://...">
-                </div>
-            </div>
-
-            <div class="form-seccion">
-                <div class="header-flex">
-                    <h3><i class="fa-solid fa-list-ol"></i> Temporadas y Enlaces</h3>
-                    <button type="button" class="btn-add-seccion" onclick="agregarSeccionUI()">
-                        <i class="fa-solid fa-plus"></i> Añadir Sección
-                    </button>
-                </div>
-                <div id="builder-temporadas">
+                    <div class="form-seccion">
+                        <div class="header-flex">
+                            <h3><i class="fa-solid fa-list-ol"></i> Temporadas y Enlaces</h3>
+                            <button type="button" class="btn-add-seccion" onclick="agregarSeccionUI()">
+                                <i class="fa-solid fa-plus"></i> Añadir Sección
+                            </button>
+                        </div>
+                        <div id="builder-temporadas">
+                        </div>
+                        <div id="contenedor-extras" class="extras-grid"></div>
                     </div>
-                    
-                    <div id="contenedor-extras" class="extras-grid"></div>
                 </div>
 
+                <div class="form-group full-width-genres">
+                    <label><i class="fa-solid fa-tags"></i> Géneros</label>
+                    <div class="checkbox-group" id="generos-container">
+                        <label class="checkbox-label"><input type="checkbox" value="Acción"> Acción</label>
+                        <label class="checkbox-label"><input type="checkbox" value="Aventura"> Aventura</label>
+                        <label class="checkbox-label"><input type="checkbox" value="Comedia"> Comedia</label>
+                        <label class="checkbox-label"><input type="checkbox" value="Drama"> Drama</label>
+                        <label class="checkbox-label"><input type="checkbox" value="Fantasía"> Fantasía</label>
+                        <label class="checkbox-label"><input type="checkbox" value="Romance"> Romance</label>
+                        <label class="checkbox-label"><input type="checkbox" value="Sci-Fi"> Sci-Fi</label>
+                        <label class="checkbox-label"><input type="checkbox" value="Suspenso"> Suspenso</label>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

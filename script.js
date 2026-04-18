@@ -468,7 +468,7 @@ function prepararNuevoRegistro() {
 
     cargarDatosTemporadas([]); 
     // Resetear checkboxes de géneros
-    document.querySelectorAll('#in-genero-checkboxes input').forEach(cb => {
+    document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.checked = false;
         cb.disabled = false;
     });
@@ -500,7 +500,7 @@ function prepararEdicionDesdeDetalle() {
 
     // Marcar los géneros que ya existen en la obra
     const generosAnime = obraActual.generos || [];
-    document.querySelectorAll('#in-genero-checkboxes input').forEach(cb => {
+    document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.checked = generosAnime.includes(cb.value);
     });
 
@@ -533,7 +533,7 @@ function prepararEdicionDesdeDetalle() {
     });
 
     // Bloqueo de roles para checkboxes
-    document.querySelectorAll('#in-genero-checkboxes input').forEach(cb => {
+    document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.disabled = !esPropietario;
         if (cb.parentElement) {
             cb.parentElement.style.opacity = esPropietario ? "1" : "0.5";
@@ -632,7 +632,7 @@ async function ejecutarRegistro() {
                         Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                     },
                     // Agrega esta línea dentro de las propiedades de datosObra:
-                    generos: Array.from(document.querySelectorAll('#in-genero-checkboxes input:checked')).map(cb => cb.value),
+                    generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                     temporadas: recolectarDatosTemporadas(),
                     propiedades_extra: recolectarInfoAdicional()
                 };
@@ -664,7 +664,7 @@ async function ejecutarRegistro() {
                     Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                 },
                     // Agrega géneros seleccionados en creación
-                    generos: Array.from(document.querySelectorAll('#in-genero-checkboxes input:checked')).map(cb => cb.value),
+                    generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                 temporadas: recolectarDatosTemporadas(),
                 creador_id: userIdActual,
                 propiedades_extra: recolectarCamposExtras()
