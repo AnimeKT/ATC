@@ -1100,25 +1100,30 @@ body {
    CHECKBOXES DE GÉNERO
    ========================================= */
 .checkbox-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
     margin-top: 5px;
+    align-items: stretch;
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     background: #0f0f11;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #27272a;
     font-size: 13px;
     color: #e0e0e0;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.18s ease;
     user-select: none;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    min-height: 44px;
 }
 
 /* Evitamos que el estilo global de inputs estire el checkbox */
@@ -1133,23 +1138,6 @@ body {
     border-color: #3ba4fa;
 }
 
-#det-tags {
-    display: flex;
-    flex-wrap: wrap; /* Esto es la magia: permite que salten a la siguiente línea */
-    gap: 8px; /* Espacio entre cada etiqueta */
-    margin-top: 10px;
-    margin-bottom: 20px; 
-    width: 100%; /* Asegura que ocupe todo el ancho disponible a la derecha */
-}
-
-/* Estilo para las etiquetas individuales generadas en el JS */
-#det-tags span {
-    background: #18181b; 
-    border: 1px solid #27272a;
-    color: #a1a1aa;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    white-space: nowrap; /* Evita que el texto de una etiqueta se rompa a la mitad */
+@media (max-width: 480px) {
+    .checkbox-group { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
