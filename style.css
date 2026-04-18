@@ -1101,29 +1101,27 @@ body {
    ========================================= */
 .checkbox-group {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    /* Cambiamos auto-fill por auto-fit */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
     gap: 10px;
     margin-top: 5px;
     align-items: stretch;
+    width: 100%; /* Aseguramos que el contenedor use el 100% */
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #0f0f11;
+    background: #18181b; /* Un poco más claro que el fondo para que resalte */
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #27272a;
     font-size: 13px;
-    color: #e0e0e0;
     cursor: pointer;
-    transition: all 0.18s ease;
-    user-select: none;
-    width: 100%;
-    box-sizing: border-box;
-    justify-content: flex-start;
-    min-height: 44px;
+    transition: all 0.2s ease;
+    justify-content: flex-start; /* Alinea el texto a la izquierda dentro del botón */
+    width: 100%; /* Obliga al label a ocupar toda su celda del grid */
 }
 
 /* Evitamos que el estilo global de inputs estire el checkbox */
@@ -1135,9 +1133,6 @@ body {
 }
 
 .checkbox-label:hover {
+    background: #27272a;
     border-color: #3ba4fa;
-}
-
-@media (max-width: 480px) {
-    .checkbox-group { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
