@@ -1066,15 +1066,20 @@ function recolectarInfoAdicional() {
 function cargarInfoAdicional(obj) {
     const container = document.getElementById('extra-props-container');
     if (!container) return;
+    
+    // Limpiamos el contenedor para que no se dupliquen campos
     container.innerHTML = '';
 
+    // Si no hay datos, ponemos una fila vacía para que el usuario pueda escribir
     if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
-        // Añadir una fila vacía por defecto
-        agregarPropiedadUI();
+        agregarPropiedadUI(); 
         return;
     }
 
-    Object.entries(obj).forEach(([k, v]) => agregarPropiedadUI(k, v));
+    // Si HAY datos, recorremos el objeto y creamos una fila por cada propiedad
+    Object.entries(obj).forEach(([k, v]) => {
+        agregarPropiedadUI(k, v);
+    });
 }
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
