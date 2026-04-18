@@ -525,7 +525,7 @@ function prepararEdicionDesdeDetalle() {
     cargarDatosTemporadas(obraActual.temporadas || []);
 
     // Cargar propiedades adicionales (info_adicional) en el formulario de edición
-    cargarInfoAdicional(obraActual.info_adicional || {});
+    cargarInfoAdicional(obraActual.propiedades_extra || {});
 
     // 4. CONGELAR / PERMITIR EDICIÓN POR SECCIÓN según permisos
     if (!esPropietario) {
