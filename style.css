@@ -170,32 +170,32 @@ body {
     gap: 20px;
 }
 
-.input-group { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 6px; 
-    margin-bottom: 15px; 
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 5px;
+    align-items: center;
 }
 
-.input-group.full-width { 
-    grid-column: 1 / -1; 
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #0f0f11;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #27272a;
+    font-size: 13px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+    width: auto;
+    box-sizing: border-box;
+    white-space: nowrap;
+    min-height: 36px;
 }
-
-.input-group label { 
-    font-size: 13px; 
-    color: #a1a1aa; 
-    font-weight: 600; 
-}
-
-/* Estilos unificados para inputs */
-.form-grid-complex input, 
-.form-grid-complex select, 
-.form-grid-complex textarea,
-.input-group input, 
-.input-group select, 
-.input-group textarea,
-.contenedor-formulario input, 
-.contenedor-formulario select, 
 .contenedor-formulario textarea {
     width: 100%;
     padding: 12px; 
