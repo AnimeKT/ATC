@@ -163,6 +163,27 @@ function abrirDetalle(tituloObra) {
     setContent('det-autor', obraActual.autor || '--');
     setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
 
+    // Renderizar propiedades adicionales dinámicas en el sidebar
+    (function renderInfoAdicional() {
+        try {
+            const sidebar = document.querySelector('.detalle-sidebar');
+            if (!sidebar) return;
+            // Limpiar propiedades adicionales previas
+            sidebar.querySelectorAll('.info-item[data-din="extra"]').forEach(n => n.remove());
+
+            const info = obraActual.info_adicional;
+            if (info && typeof info === 'object') {
+                Object.entries(info).forEach(([k, v]) => {
+                    const div = document.createElement('div');
+                    div.className = 'info-item';
+                    div.dataset.din = 'extra';
+                    div.innerHTML = `<span>${k}:</span> <strong>${v}</strong>`;
+                    sidebar.appendChild(div);
+                });
+            }
+        } catch (e) { console.error('Error renderizando info_adicional:', e); }
+    })();
+
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
     cambiarVista('detalle');
@@ -440,6 +461,9 @@ function prepararNuevoRegistro() {
         if(i.tagName === 'BUTTON') i.style.display = ''; // Restaurar botones ocultos
     });
     
+    // Limpiar/Resetear propiedades adicionales dinámicas
+    cargarInfoAdicional({});
+
     cargarDatosTemporadas([]); 
     cambiarVista('registro');
 }
@@ -497,6 +521,9 @@ function prepararEdicionDesdeDetalle() {
 
     // 3. Cargamos las temporadas que ya existen en la base de datos
     cargarDatosTemporadas(obraActual.temporadas || []);
+
+    // Cargar propiedades adicionales (info_adicional) en el formulario de edición
+    cargarInfoAdicional(obraActual.info_adicional || {});
 
     // 4. CONGELAR / PERMITIR EDICIÓN POR SECCIÓN según permisos
     if (!esPropietario) {
@@ -582,7 +609,8 @@ async function ejecutarRegistro() {
                         Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                         Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                     },
-                    temporadas: recolectarDatosTemporadas()
+                    temporadas: recolectarDatosTemporadas(),
+                    info_adicional: recolectarInfoAdicional()
                 };
             } else {
                 // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas del dueño con las suyas propias)
@@ -612,7 +640,8 @@ async function ejecutarRegistro() {
                     Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                 },
                 temporadas: recolectarDatosTemporadas(),
-                creador_id: userIdActual 
+                creador_id: userIdActual,
+                info_adicional: recolectarInfoAdicional()
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
@@ -996,6 +1025,54 @@ function verImagenGrande(url) {
     const viewerImg = document.getElementById('viewer-img');
     viewerImg.src = url;
     overlay.style.display = 'flex';
+}
+
+// =========================
+// Propiedades Dinámicas
+// =========================
+function agregarPropiedadUI(key = '', value = '') {
+    const container = document.getElementById('extra-props-container');
+    if (!container) return;
+
+    const row = document.createElement('div');
+    row.className = 'prop-row';
+    row.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
+
+    row.innerHTML = `
+        <input type="text" class="prop-key" placeholder="Clave (Ej: Editor, Duración)" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+        <input type="text" class="prop-value" placeholder="Valor" value="${value}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+        <button type="button" title="Eliminar" style="background:transparent; color:#ef4444; border:none; cursor:pointer; font-size:18px;" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>
+    `;
+
+    container.appendChild(row);
+}
+
+function recolectarInfoAdicional() {
+    const container = document.getElementById('extra-props-container');
+    if (!container) return {};
+
+    const datos = {};
+    container.querySelectorAll('.prop-row').forEach(r => {
+        const k = (r.querySelector('.prop-key')?.value || '').trim();
+        const v = (r.querySelector('.prop-value')?.value || '').trim();
+        if (k) datos[k] = v;
+    });
+
+    return Object.keys(datos).length ? datos : {};
+}
+
+function cargarInfoAdicional(obj) {
+    const container = document.getElementById('extra-props-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
+        // Añadir una fila vacía por defecto
+        agregarPropiedadUI();
+        return;
+    }
+
+    Object.entries(obj).forEach(([k, v]) => agregarPropiedadUI(k, v));
 }
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA

@@ -165,6 +165,17 @@
                     
                 </div>
 
+                <div class="input-group full-width">
+                    <label>Propiedades Adicionales</label>
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                        <button type="button" id="btn-add-prop" onclick="agregarPropiedadUI()" style="padding:8px 12px; background:#27272a; color:#3ba4fa; border:1px solid #3ba4fa; border-radius:6px; cursor:pointer;">
+                            <i class="fa-solid fa-plus"></i> Añadir Propiedad
+                        </button>
+                        <span style="color:#a1a1aa; font-size:13px;">Define pares clave/valor personalizados.</span>
+                    </div>
+                    <div id="extra-props-container"></div>
+                </div>
+
                 
             </div>
 
@@ -189,6 +200,10 @@
                 </div>
                 <div id="builder-temporadas">
                     </div>
+                    
+                    <div id="contenedor-extras" class="extras-grid"></div>
+                </div>
+
             </div>
         </div>
     </section>
