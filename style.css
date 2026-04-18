@@ -1100,28 +1100,26 @@ body {
    CHECKBOXES DE GÉNERO
    ========================================= */
 .checkbox-group {
-    display: grid;
-    /* auto-fit: estira los botones para llenar el espacio sobrante */
-    /* 120px: el tamaño mínimo antes de saltar a la siguiente fila */
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
-    gap: 10px;
-    margin-top: 5px;
-    width: 100%; /* Obliga al contenedor a usar todo el ancho */
+    display: flex;            /* Cambiamos grid por flex */
+    flex-wrap: wrap;         /* Permite que los botones salten de línea */
+    gap: 8px;                /* Espacio entre botones */
+    margin-top: 10px;
+    width: 100%;
 }
 
 .checkbox-label {
-    display: flex;
+    display: inline-flex;    /* Se ajusta al contenido */
     align-items: center;
-    gap: 10px;
-    background: #18181b; /* Un poco más claro que el fondo para que resalte */
-    padding: 10px 14px;
+    gap: 8px;
+    background: #18181b;
+    padding: 8px 14px;       /* Espacio interno para que el texto respire */
     border-radius: 8px;
     border: 1px solid #27272a;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
-    justify-content: flex-start; /* Alinea el texto a la izquierda dentro del botón */
-    width: 100%; /* Obliga al label a ocupar toda su celda del grid */
+    white-space: nowrap;     /* Evita que el texto del género se parta en dos líneas */
+    width: auto;             /* El tamaño depende del texto */
 }
 
 /* Evitamos que el estilo global de inputs estire el checkbox */
