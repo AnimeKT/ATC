@@ -178,7 +178,7 @@ function abrirDetalle(tituloObra) {
             Object.entries(obraActual.propiedades_extra).forEach(([clave, valor]) => {
                 const divExtra = document.createElement('div');
                 divExtra.className = 'info-item';
-                divExtra.dataset.din = 'extra'; // Marcamos que es dinámico para poder borrarlo luego
+                divExtra.dataset.din = 'extra'; 
                 divExtra.innerHTML = `<span>${clave}:</span> <strong>${valor}</strong>`;
                 infoSidebar.appendChild(divExtra);
             });
@@ -612,7 +612,7 @@ async function ejecutarRegistro() {
                         Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                     },
                     temporadas: recolectarDatosTemporadas(),
-                    info_adicional: recolectarInfoAdicional()
+                    propiedades_extra: recolectarInfoAdicional()
                 };
             } else {
                 // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas del dueño con las suyas propias)
