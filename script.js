@@ -467,6 +467,11 @@ function prepararNuevoRegistro() {
     cargarInfoAdicional({});
 
     cargarDatosTemporadas([]); 
+    // Resetear checkboxes de géneros
+    document.querySelectorAll('#in-genero-checkboxes input').forEach(cb => {
+        cb.checked = false;
+        cb.disabled = false;
+    });
     cambiarVista('registro');
 }
 
@@ -493,6 +498,12 @@ function prepararEdicionDesdeDetalle() {
     if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
+    // Marcar los géneros que ya existen en la obra
+    const generosAnime = obraActual.generos || [];
+    document.querySelectorAll('#in-genero-checkboxes input').forEach(cb => {
+        cb.checked = generosAnime.includes(cb.value);
+    });
+
     // LÓGICA DE ROLES: Verificar si es el dueño
     const esPropietario = String(obraActual.creador_id) === userIdActual;
 
@@ -518,6 +529,15 @@ function prepararEdicionDesdeDetalle() {
                 input.style.filter = "none";
                 input.style.cursor = "text";
             }
+        }
+    });
+
+    // Bloqueo de roles para checkboxes
+    document.querySelectorAll('#in-genero-checkboxes input').forEach(cb => {
+        cb.disabled = !esPropietario;
+        if (cb.parentElement) {
+            cb.parentElement.style.opacity = esPropietario ? "1" : "0.5";
+            cb.parentElement.style.cursor = esPropietario ? "pointer" : "not-allowed";
         }
     });
 
@@ -611,6 +631,8 @@ async function ejecutarRegistro() {
                         Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                         Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                     },
+                    // Agrega esta línea dentro de las propiedades de datosObra:
+                    generos: Array.from(document.querySelectorAll('#in-genero-checkboxes input:checked')).map(cb => cb.value),
                     temporadas: recolectarDatosTemporadas(),
                     propiedades_extra: recolectarInfoAdicional()
                 };
@@ -641,6 +663,8 @@ async function ejecutarRegistro() {
                     Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
                     Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
                 },
+                    // Agrega géneros seleccionados en creación
+                    generos: Array.from(document.querySelectorAll('#in-genero-checkboxes input:checked')).map(cb => cb.value),
                 temporadas: recolectarDatosTemporadas(),
                 creador_id: userIdActual,
                 propiedades_extra: recolectarCamposExtras()
