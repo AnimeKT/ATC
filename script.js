@@ -114,9 +114,11 @@ function volverAlCatalogo() {
 // =========================================
 function abrirDetalle(tituloObra) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('medium');
+    
     obraActual = todasLasObras.find(o => o.titulo === tituloObra);
     if (!obraActual) return;
 
+    // --- SECCIÓN DE IMÁGENES ---
     const imgBanner = document.getElementById('det-banner');
     if(imgBanner) imgBanner.src = obraActual.banner_url || obraActual.portada_url || '';
     
@@ -124,16 +126,16 @@ function abrirDetalle(tituloObra) {
     if(imgPort) {
         imgPort.src = obraActual.portada_url || '';
         imgPort.style.opacity = 1;
-        imgPort.style.cursor = 'pointer'; // Crucial para que iOS Safari lo reconozca como botón
+        imgPort.style.cursor = 'pointer';
         
-        // Asignar el evento pasando 'e' para bloquear comportamientos nativos de móvil
         imgPort.onclick = (e) => {
-            e.preventDefault(); // Evita que Telegram o el navegador intenten arrastrar la imagen
-            e.stopPropagation(); // Evita que el clic afecte a elementos que estén detrás
+            e.preventDefault();
+            e.stopPropagation();
             verImagenGrande(imgPort.src);
         };
     }
     
+    // --- TÍTULOS Y NOMBRES ALTERNATIVOS ---
     const detTitulo = document.getElementById('det-titulo');
     if(detTitulo) detTitulo.textContent = obraActual.titulo || 'Sin título';
     
@@ -143,6 +145,7 @@ function abrirDetalle(tituloObra) {
     const detNombresAlt = document.getElementById('det-nombres-alt');
     if(detNombresAlt) detNombresAlt.textContent = nombresAlt.join(' • ');
 
+    // --- GÉNEROS (TAGS) ---
     const tagsContainer = document.getElementById('det-tags');
     if(tagsContainer) {
         tagsContainer.innerHTML = '';
@@ -153,6 +156,7 @@ function abrirDetalle(tituloObra) {
         }
     }
 
+    // --- DATOS FIJOS ---
     const setContent = (id, value) => { if(document.getElementById(id)) document.getElementById(id).textContent = value; };
     setContent('det-estado', obraActual.estado || '--');
     setContent('det-tipo', obraActual.tipo || '--');
@@ -163,27 +167,25 @@ function abrirDetalle(tituloObra) {
     setContent('det-autor', obraActual.autor || '--');
     setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
 
-    // Renderizar propiedades adicionales dinámicas en el sidebar
-    (function renderInfoAdicional() {
-        try {
-            const sidebar = document.querySelector('.detalle-sidebar');
-            if (!sidebar) return;
-            // Limpiar propiedades adicionales previas
-            sidebar.querySelectorAll('.info-item[data-din="extra"]').forEach(n => n.remove());
+    // --- SECCIÓN DE PROPIEDADES EXTRA (INTEGRACIÓN NUEVA) ---
+    const infoSidebar = document.querySelector('.detalle-sidebar');
+    if (infoSidebar) {
+        // 1. Borramos solo los extras de la obra anterior (para no borrar Genero, Estado, etc)
+        infoSidebar.querySelectorAll('.info-item[data-din="extra"]').forEach(n => n.remove());
 
-            const info = obraActual.info_adicional;
-            if (info && typeof info === 'object') {
-                Object.entries(info).forEach(([k, v]) => {
-                    const div = document.createElement('div');
-                    div.className = 'info-item';
-                    div.dataset.din = 'extra';
-                    div.innerHTML = `<span>${k}:</span> <strong>${v}</strong>`;
-                    sidebar.appendChild(div);
-                });
-            }
-        } catch (e) { console.error('Error renderizando info_adicional:', e); }
-    })();
+        // 2. Si la obra tiene propiedades_extra, las agregamos una por una
+        if (obraActual.propiedades_extra && typeof obraActual.propiedades_extra === 'object') {
+            Object.entries(obraActual.propiedades_extra).forEach(([clave, valor]) => {
+                const divExtra = document.createElement('div');
+                divExtra.className = 'info-item';
+                divExtra.dataset.din = 'extra'; // Marcamos que es dinámico para poder borrarlo luego
+                divExtra.innerHTML = `<span>${clave}:</span> <strong>${valor}</strong>`;
+                infoSidebar.appendChild(divExtra);
+            });
+        }
+    }
 
+    // --- NAVEGACIÓN Y VISTA ---
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
     cambiarVista('detalle');
@@ -641,7 +643,7 @@ async function ejecutarRegistro() {
                 },
                 temporadas: recolectarDatosTemporadas(),
                 creador_id: userIdActual,
-                propiedades_extra: recolectarInfoAdicional()
+                propiedades_extra: recolectarCamposExtras()
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
