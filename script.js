@@ -14,7 +14,7 @@ tg.ready();
 tg.expand();
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
-let userIdActual = tg.initDataUnsafe?.user?.id || "anonimo";
+let userIdActual = "anonimo";
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
@@ -507,13 +507,6 @@ function prepararEdicionDesdeDetalle() {
     // LÓGICA DE ROLES: Verificar si es el dueño
     const esPropietario = String(obraActual.creador_id) === userIdActual;
 
-    // Ocultar/mostrar el botón para añadir propiedades según sea el dueño real
-    const esDueno = (userIdActual == 5472844837);
-    const btnAddProp = document.querySelector('button[onclick="agregarPropiedadUI()"]');
-    if (btnAddProp) {
-        btnAddProp.style.display = esDueno ? 'block' : 'none';
-    }
-
     // 2. Bloqueamos TODOS los campos de Información General y Multimedia
     const camposPrivados = [
         'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
@@ -674,7 +667,7 @@ async function ejecutarRegistro() {
                     generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                 temporadas: recolectarDatosTemporadas(),
                 creador_id: userIdActual,
-                propiedades_extra: recolectarInfoAdicional()
+                propiedades_extra: recolectarCamposExtras()
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
@@ -1064,17 +1057,6 @@ function verImagenGrande(url) {
 // Propiedades Dinámicas
 // =========================
 function agregarPropiedadUI(key = '', value = '') {
-    // DEBUG: Quita esto una vez funcione
-    console.log("Intentando agregar fila. ID Actual:", userIdActual);
-
-    const esDueno = String(userIdActual) === "5472844837";
-    
-    // Si no es dueño, NO permitimos que el botón haga nada
-    if (!esDueno) {
-        console.warn("Bloqueado: El usuario no es el dueño.");
-        return;
-    }
-
     const container = document.getElementById('extra-props-container');
     if (!container) return;
 
@@ -1083,7 +1065,7 @@ function agregarPropiedadUI(key = '', value = '') {
     row.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
 
     row.innerHTML = `
-        <input type="text" class="prop-key" placeholder="Ej: Editor" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+        <input type="text" class="prop-key" placeholder="Ej: Editor, Duración" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
         <input type="text" class="prop-value" placeholder="Ej: MAPPA" value="${value}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
         <button type="button" title="Eliminar" style="background:transparent; color:#ef4444; border:none; cursor:pointer; font-size:18px;" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>
     `;
@@ -1109,38 +1091,19 @@ function cargarInfoAdicional(obj) {
     const container = document.getElementById('extra-props-container');
     if (!container) return;
     
-    container.innerHTML = ''; // Limpiar siempre
-    
-    const esDueno = String(userIdActual) === "5472844837";
+    // Limpiamos el contenedor para que no se dupliquen campos
+    container.innerHTML = '';
 
-    // CASO A: Hay datos (Estamos editando algo que ya existe)
-    if (obj && typeof obj === 'object' && Object.keys(obj).length > 0) {
-        for (const [key, value] of Object.entries(obj)) {
-            const row = document.createElement('div');
-            row.className = 'prop-row';
-            row.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
-            
-            const disabledAttr = esDueno ? '' : 'disabled';
-            const deleteBtn = esDueno 
-                ? `<button type="button" title="Eliminar" style="background:transparent; color:#ef4444; border:none; cursor:pointer;" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>` 
-                : '';
-
-            row.innerHTML = `
-                <input type="text" class="prop-key" placeholder="Propiedad" value="${key}" ${disabledAttr} style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
-                <input type="text" class="prop-value" placeholder="Valor" value="${value}" ${disabledAttr} style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
-                ${deleteBtn}
-            `;
-            container.appendChild(row);
-        }
-    } 
-    // CASO B: No hay datos (Nuevo registro o anime sin extras)
-    else if (esDueno) {
-        // Solo si eres el dueño, creamos la primera fila vacía para que empieces a escribir
-        agregarPropiedadUI();
-    } else {
-        // Si eres colaborador y no hay datos, mostramos un mensaje sutil
-        container.innerHTML = '<p style="color: #52525b; font-size: 12px; font-style: italic;">Sin propiedades adicionales.</p>';
+    // Si no hay datos, ponemos una fila vacía para que el usuario pueda escribir
+    if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
+        agregarPropiedadUI(); 
+        return;
     }
+
+    // Si HAY datos, recorremos el objeto y creamos una fila por cada propiedad
+    Object.entries(obj).forEach(([k, v]) => {
+        agregarPropiedadUI(k, v);
+    });
 }
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
