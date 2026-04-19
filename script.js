@@ -549,6 +549,31 @@ function prepararEdicionDesdeDetalle() {
 
     // 4. CONGELAR / PERMITIR EDICIÓN POR SECCIÓN según permisos
     if (!esPropietario) {
+        
+        // ---- CÓDIGO AÑADIDO: BLOQUEAR PROPIEDADES ADICIONALES ----
+        const btnAddProp = document.getElementById('btn-add-prop');
+        if (btnAddProp) {
+            btnAddProp.disabled = true;
+            btnAddProp.style.opacity = "0.5";
+            btnAddProp.style.cursor = "not-allowed";
+        }
+
+        const extraPropsContainer = document.getElementById('extra-props-container');
+        if (extraPropsContainer) {
+            extraPropsContainer.querySelectorAll('input, button').forEach(el => {
+                el.disabled = true;
+                if (el.tagName === 'INPUT') {
+                    el.style.opacity = "0.5";
+                    el.style.filter = "grayscale(100%)";
+                    el.style.cursor = "not-allowed";
+                } else if (el.tagName === 'BUTTON') {
+                    // Ocultamos el botón de la papelera para los colaboradores
+                    el.style.display = 'none'; 
+                }
+            });
+        }
+        // -----------------------------------------------------------
+
         const secciones = document.querySelectorAll('#builder-temporadas .seccion-block');
         secciones.forEach(sec => {
             const secCreator = sec.dataset.creador || (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : '');
