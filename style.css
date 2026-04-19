@@ -577,21 +577,35 @@ body {
 
 .detalle-banner {
     width: 100%;
-    height: 250px;
+    height: auto; /* Cambiamos 250px por auto */
+    max-height: 500px; /* Un límite para que no sea infinita */
     position: relative;
+    background-color: #050505;
+    display: flex;
+    justify-content: center;
 }
 
 .detalle-banner img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto; /* La imagen dicta su propia altura */
+    max-height: 500px;
+    object-fit: contain; /* Esto asegura que no se pierda ni un pixel */
 }
 
 .detalle-banner-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, #050505 5%, transparent 90%);
+    background: linear-gradient(to top, #050505 5%, transparent 50%);
 }
+
+
+
+
+
+
+
+
+
 
 .contenedor-detalle {
     position: relative;
