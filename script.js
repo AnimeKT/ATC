@@ -449,28 +449,50 @@ function actualizarEstadoFavoritoDetalle() {
 // 9. REGISTRO Y EDICIÓN DE OBRAS (SISTEMA DE ROLES APLICADO)
 // =========================================
 function prepararNuevoRegistro() {
-    idAnimeEnEdicion = null; 
-    const btn = document.getElementById('btn-publicar');
-    if(btn) btn.textContent = "Publicar";
-    
-    // Limpiamos los inputs y nos aseguramos de que todos estén HABILITADOS y sin filtros
-    document.querySelectorAll('#vista-registro input, #vista-registro select, #vista-registro textarea, #vista-registro button').forEach(i => {
-        i.value = '';
-        i.disabled = false;
-        i.style.opacity = '1';
-        i.style.filter = 'none';
-        i.style.cursor = 'auto';
-        if(i.tagName === 'BUTTON') i.style.display = ''; // Restaurar botones ocultos
-    });
-    
-    // Limpiar/Resetear propiedades adicionales dinámicas
-    cargarInfoAdicional({});
+    idAnimeEnEdicion = null;
+    obraActual = null;
 
-    cargarDatosTemporadas([]); 
-    // Resetear checkboxes de géneros
+    const btnPublicar = document.getElementById('btn-publicar');
+    if(btnPublicar) btnPublicar.textContent = "Publicar Obra";
+    const form = document.getElementById('form-anime');
+    if(form) form.reset();
+    const builder = document.getElementById('builder-temporadas');
+    if(builder) builder.innerHTML = '';
+    
+    const containerExtra = document.getElementById('extra-props-container');
+    if(containerExtra) {
+        containerExtra.innerHTML = '';
+        containerExtra.style.pointerEvents = "auto";
+        containerExtra.style.opacity = "1";
+    }
+    const btnAddProp = document.getElementById('btn-add-prop');
+    if (btnAddProp) {
+        btnAddProp.disabled = false;
+        btnAddProp.style.opacity = "1";
+        btnAddProp.style.cursor = "pointer";
+        btnAddProp.style.pointerEvents = "auto";
+        btnAddProp.setAttribute('onclick', 'agregarPropiedadUI()');
+    }
+    const camposPrivados = [
+        'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
+        'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
+        'in-dia', 'in-japones', 'in-ingles'
+    ];
+    camposPrivados.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.disabled = false;
+            input.style.opacity = "1";
+            input.style.filter = "none";
+            input.style.cursor = "text";
+        }
+    });
     document.querySelectorAll('#generos-container input').forEach(cb => {
-        cb.checked = false;
         cb.disabled = false;
+        if (cb.parentElement) {
+            cb.parentElement.style.opacity = "1";
+            cb.parentElement.style.cursor = "pointer";
+        }
     });
     cambiarVista('registro');
 }
@@ -483,7 +505,7 @@ function prepararEdicionDesdeDetalle() {
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
 
-    // 1. Llenamos los datos principales con los nuevos IDs
+    // 1. Llenamos los datos principales
     if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
     if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
     if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
@@ -498,16 +520,16 @@ function prepararEdicionDesdeDetalle() {
     if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
     if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
 
-    // Marcar los géneros que ya existen en la obra
+    // Marcar géneros
     const generosAnime = obraActual.generos || [];
     document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.checked = generosAnime.includes(cb.value);
     });
 
-    // LÓGICA DE ROLES: Verificar si es el dueño
+    // LÓGICA DE ROLES
     const esPropietario = String(obraActual.creador_id) === userIdActual;
 
-    // 2. Bloqueamos TODOS los campos de Información General y Multimedia
+    // 2. Bloqueo visual de campos principales
     const camposPrivados = [
         'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
         'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
@@ -518,104 +540,84 @@ function prepararEdicionDesdeDetalle() {
         const input = document.getElementById(id);
         if (input) {
             input.disabled = !esPropietario;
-            
-            // Si NO es el dueño, se pone gris, se reduce la opacidad y se bloquea el cursor
-            if (!esPropietario) {
-                input.style.opacity = "0.5";
-                input.style.filter = "grayscale(100%)";
-                input.style.cursor = "not-allowed";
-            } else {
-                input.style.opacity = "1";
-                input.style.filter = "none";
-                input.style.cursor = "text";
-            }
+            input.style.opacity = esPropietario ? "1" : "0.5";
+            input.style.filter = esPropietario ? "none" : "grayscale(100%)";
+            input.style.cursor = esPropietario ? "text" : "not-allowed";
         }
     });
 
-    // Bloqueo de roles para checkboxes
     document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.disabled = !esPropietario;
         if (cb.parentElement) {
             cb.parentElement.style.opacity = esPropietario ? "1" : "0.5";
-            cb.parentElement.style.cursor = esPropietario ? "pointer" : "not-allowed";
         }
     });
 
-    // 3. Cargamos las temporadas que ya existen en la base de datos
+    // 3. Cargamos temporadas y propiedades adicionales
     cargarDatosTemporadas(obraActual.temporadas || []);
-
-    // Cargar propiedades adicionales (info_adicional) en el formulario de edición
     cargarInfoAdicional(obraActual.propiedades_extra || {});
 
-    // 4. CONGELAR / PERMITIR EDICIÓN POR SECCIÓN según permisos
+    // Referencias para bloqueo de Propiedades Extra
+    const btnAddProp = document.getElementById('btn-add-prop');
+    const extraPropsContainer = document.getElementById('extra-props-container');
+
+    // 4. Lógica de bloqueo para Colaboradores vs Dueño
     if (!esPropietario) {
-        
-        // ---- CÓDIGO AÑADIDO: BLOQUEAR PROPIEDADES ADICIONALES ----
-        const btnAddProp = document.getElementById('btn-add-prop');
+        // Bloqueo estricto para colaboradores
         if (btnAddProp) {
             btnAddProp.disabled = true;
-            btnAddProp.removeAttribute('onclick'); // Destruye el evento de clic
+            btnAddProp.removeAttribute('onclick');
             btnAddProp.style.opacity = "0.5";
-            btnAddProp.style.cursor = "not-allowed";
-            btnAddProp.style.pointerEvents = "none"; // Anula físicamente el puntero
+            btnAddProp.style.pointerEvents = "none";
         }
 
-        const extraPropsContainer = document.getElementById('extra-props-container');
         if (extraPropsContainer) {
-            // Congelamos el contenedor entero. Nada adentro podrá ser clickeado.
-            extraPropsContainer.style.pointerEvents = "none"; 
-
+            extraPropsContainer.style.pointerEvents = "none";
             extraPropsContainer.querySelectorAll('input, button, textarea').forEach(el => {
                 el.disabled = true;
-                
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                    el.readOnly = true; // Doble candado: no se puede escribir
+                    el.readOnly = true;
                     el.style.opacity = "0.5";
-                    el.style.filter = "grayscale(100%)";
-                    el.style.cursor = "not-allowed";
-                    el.style.backgroundColor = "#27272a"; // Oscurecer el fondo para que se vea inactivo
+                    el.style.backgroundColor = "#27272a";
                 } else if (el.tagName === 'BUTTON') {
-                    // Desaparecemos la papelera
                     el.style.display = 'none'; 
                 }
             });
         }
-        // -----------------------------------------------------------
 
+        // Bloqueo de secciones/temporadas según quién las creó
         const secciones = document.querySelectorAll('#builder-temporadas .seccion-block');
         secciones.forEach(sec => {
-            const secCreator = sec.dataset.creador || (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : '');
-
+            const secCreator = sec.dataset.creador || String(obraActual.creador_id);
             if (secCreator === String(userIdActual)) {
-                // Sección creada por el colaborador actual: permitir edición completa y restaurar estilos
                 sec.style.opacity = '1';
                 sec.style.pointerEvents = 'auto';
                 sec.style.filter = 'none';
-                
                 sec.querySelectorAll('input, button').forEach(el => {
                     el.disabled = false;
-                    if (el.tagName === 'BUTTON') el.style.display = ''; // Mostrar botones de la sección propia
+                    if (el.tagName === 'BUTTON') el.style.display = '';
                 });
             } else {
-                // Sección del dueño (o de otro colaborador): Poner completamente gris y bloquear interacciones
                 sec.style.opacity = '0.5';
                 sec.style.filter = 'grayscale(100%)';
-                sec.style.pointerEvents = 'none'; // ¡CLAVE! Bloquea todo tipo de clic en la tarjeta
-
+                sec.style.pointerEvents = 'none';
                 sec.querySelectorAll('input, button').forEach(el => {
                     el.disabled = true;
-                    // Ocultar por completo los botones de añadir o eliminar para no causar confusión
                     if (el.tagName === 'BUTTON') el.style.display = 'none';
                 });
             }
         });
-
-        // Asegurar que el botón global para añadir NUEVAS secciones siga activo para los colaboradores
-        const btnAddPrincipal = document.querySelector('.btn-add-seccion');
-        if (btnAddPrincipal) {
-            btnAddPrincipal.disabled = false;
-            btnAddPrincipal.style.opacity = '1';
-            btnAddPrincipal.style.display = 'flex';
+    } else {
+        // Desbloqueo total para el dueño
+        if (btnAddProp) {
+            btnAddProp.disabled = false;
+            btnAddProp.setAttribute('onclick', 'agregarPropiedadUI()');
+            btnAddProp.style.opacity = "1";
+            btnAddProp.style.pointerEvents = "auto";
+        }
+        if (extraPropsContainer) {
+            extraPropsContainer.style.pointerEvents = "auto";
+            extraPropsContainer.style.opacity = "1";
         }
     }
 
