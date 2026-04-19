@@ -756,8 +756,8 @@ async function ejecutarRegistro() {
 
                 datosObra = {
                     titulo: sanitizar(titulo),
-                    portada_url: sanitizar(portadaUrl),
-                    banner_url: sanitizar(bannerUrl),
+                    portada_url: portadaUrl,
+                    banner_url: bannerUrl,
                     sinopsis: sanitizar(descripcion),
                     estado: sanitizar(estado),
                     tipo: sanitizar(tipo),
@@ -807,8 +807,8 @@ async function ejecutarRegistro() {
 
             const datosObra = {
                 titulo: sanitizar(titulo),
-                portada_url: sanitizar(portadaUrl),
-                banner_url: sanitizar(bannerUrl),
+                portada_url: portadaUrl,
+                banner_url: bannerUrl,
                 sinopsis: sanitizar(descripcion),
                 estado: sanitizar(estado),
                 tipo: sanitizar(tipo),
