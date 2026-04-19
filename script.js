@@ -5,6 +5,13 @@ const SUPABASE_URL = "https://urmnngtfoavnmvbwqepq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVybW5uZ3Rmb2F2bm12YndxZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MTE4NzcsImV4cCI6MjA5MTI4Nzg3N30.HnfoffLftMYWt2ZEkv1YEbG0vqRPWjB5IeQunj2I5cs";
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Función para evitar que inyecten código malicioso (XSS)
+function sanitizar(texto) {
+    if (!texto) return "";
+    const div = document.createElement('div');
+    div.textContent = texto; // Convierte <script> en texto plano
+    return div.innerHTML;
+}
 
 // =========================================
 // 2. INICIALIZAR TELEGRAM WEB APP
@@ -727,27 +734,44 @@ async function ejecutarRegistro() {
             let datosObra = {};
 
             if (esPropietario) {
-                // Dueño actualiza todo
+                // Dueño actualiza todo: leemos primero en variables, luego sanitizamos
+                const titulo = inTitulo.value.trim();
+                const portadaUrl = inPortada.value.trim();
+                const bannerUrl = document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '';
+                const descripcion = document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : '';
+                const estado = document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión';
+                const tipo = document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV';
+                const estudio = document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '';
+                const autor = document.getElementById('in-autor') ? document.getElementById('in-autor').value : '';
+                const origen = document.getElementById('in-origen') ? document.getElementById('in-origen').value : '';
+                const estreno = document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '';
+                const dia_emision = document.getElementById('in-dia') ? document.getElementById('in-dia').value : '';
+                const nombresAlt = {
+                    Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
+                    Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
+                };
+                const generosSeleccionados = Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value);
+                const temporadas = recolectarDatosTemporadas();
                 const infoAdicional = recolectarCamposExtras();
+
                 datosObra = {
-                    titulo: inTitulo.value.trim(),
-                    portada_url: inPortada.value.trim(),
-                    banner_url: document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '',
-                    sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
-                    estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
-                    tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
-                    estudio: document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '',
-                    autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
-                    origen: document.getElementById('in-origen') ? document.getElementById('in-origen').value : '',
-                    estreno: document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '',
-                    dia_emision: document.getElementById('in-dia') ? document.getElementById('in-dia').value : '',
+                    titulo: sanitizar(titulo),
+                    portada_url: sanitizar(portadaUrl),
+                    banner_url: sanitizar(bannerUrl),
+                    sinopsis: sanitizar(descripcion),
+                    estado: sanitizar(estado),
+                    tipo: sanitizar(tipo),
+                    estudio: sanitizar(estudio),
+                    autor: sanitizar(autor),
+                    origen: sanitizar(origen),
+                    estreno: sanitizar(estreno),
+                    dia_emision: sanitizar(dia_emision),
                     nombres_alternativos: {
-                        Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
-                        Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
+                        Japonés: sanitizar(nombresAlt.Japonés),
+                        Ingles: sanitizar(nombresAlt.Ingles)
                     },
-                    // Agrega esta línea dentro de las propiedades de datosObra:
-                    generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
-                    temporadas: recolectarDatosTemporadas(),
+                    generos: generosSeleccionados,
+                    temporadas: temporadas,
                     propiedades_extra: infoAdicional
                 };
             } else {
@@ -761,27 +785,46 @@ async function ejecutarRegistro() {
 
         } else {
             // MODO CREACIÓN
+            // MODO CREACIÓN: leemos y sanitizamos antes de insertar
+            const titulo = inTitulo.value.trim();
+            const portadaUrl = inPortada.value.trim();
+            const bannerUrl = document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '';
+            const descripcion = document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : '';
+            const estado = document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión';
+            const tipo = document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV';
+            const estudio = document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '';
+            const autor = document.getElementById('in-autor') ? document.getElementById('in-autor').value : '';
+            const origen = document.getElementById('in-origen') ? document.getElementById('in-origen').value : '';
+            const estreno = document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '';
+            const dia_emision = document.getElementById('in-dia') ? document.getElementById('in-dia').value : '';
+            const nombresAlt = {
+                Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
+                Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
+            };
+            const generosSeleccionados = Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value);
+            const temporadas = recolectarDatosTemporadas();
+            const infoAdicional = recolectarCamposExtras();
+
             const datosObra = {
-                titulo: inTitulo.value.trim(),
-                portada_url: inPortada.value.trim(),
-                banner_url: document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '',
-                sinopsis: document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : null,
-                estado: document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión',
-                tipo: document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV',
-                estudio: document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '',
-                autor: document.getElementById('in-autor') ? document.getElementById('in-autor').value : '',
-                origen: document.getElementById('in-origen') ? document.getElementById('in-origen').value : '',
-                estreno: document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '',
-                dia_emision: document.getElementById('in-dia') ? document.getElementById('in-dia').value : '',
+                titulo: sanitizar(titulo),
+                portada_url: sanitizar(portadaUrl),
+                banner_url: sanitizar(bannerUrl),
+                sinopsis: sanitizar(descripcion),
+                estado: sanitizar(estado),
+                tipo: sanitizar(tipo),
+                estudio: sanitizar(estudio),
+                autor: sanitizar(autor),
+                origen: sanitizar(origen),
+                estreno: sanitizar(estreno),
+                dia_emision: sanitizar(dia_emision),
                 nombres_alternativos: {
-                    Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
-                    Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
+                    Japonés: sanitizar(nombresAlt.Japonés),
+                    Ingles: sanitizar(nombresAlt.Ingles)
                 },
-                    // Agrega géneros seleccionados en creación
-                    generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
-                temporadas: recolectarDatosTemporadas(),
+                generos: generosSeleccionados,
+                temporadas: temporadas,
                 creador_id: userIdActual,
-                propiedades_extra: recolectarCamposExtras()
+                propiedades_extra: infoAdicional
             };
 
             resultado = await _supabase.from('obras').insert([datosObra]);
