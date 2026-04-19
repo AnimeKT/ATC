@@ -169,7 +169,7 @@ function volverAlCatalogo() {
 }
 
 // =========================================
-// 6. RENDERIZAR VISTA DE DETALLES  BANNER 
+// 6. RENDERIZAR VISTA DE DETALLES
 // =========================================
 function abrirDetalle(tituloObra) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('medium');
@@ -178,30 +178,8 @@ function abrirDetalle(tituloObra) {
     if (!obraActual) return;
 
     // --- SECCIÓN DE IMÁGENES ---
-    // Manejo más robusto del banner: mostrar/ocultar según exista
-    const contenedorBanner = document.querySelector('.detalle-banner');
-    const imagenBanner = document.getElementById('detalle-img-banner');
-
-    // 1. Aquí pegas el link de tu imagen predeterminada
-    const BANNER_DEFAULT = "https://i.postimg.cc/YjKT2ZGR/78b2ed6142014e9c59ba32b80ba72c43.jpg";
-
-    const bannerUrl = (obraActual.banner_url || obraActual.banner || '').trim();
-
-    if (imagenBanner && contenedorBanner) {
-        if (bannerUrl && bannerUrl !== '') {
-            // Si hay un banner en la base de datos, lo usamos
-            imagenBanner.src = bannerUrl;
-            contenedorBanner.style.display = 'block';
-        } else {
-            // Si no hay banner, usamos el predeterminado
-            imagenBanner.src = BANNER_DEFAULT;
-            contenedorBanner.style.display = 'block'; // Lo dejamos en block para que se vea
-            
-            /* Nota: Si prefieres que NO aparezca nada en lugar de la imagen default,
-            comenta las dos líneas de arriba y deja solo:
-            contenedorBanner.style.display = 'none'; */
-        }
-    }
+    const imgBanner = document.getElementById('det-banner');
+    if(imgBanner) imgBanner.src = obraActual.banner_url || obraActual.portada_url || '';
     
     const imgPort = document.getElementById('det-portada');
     if(imgPort) {
