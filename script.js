@@ -454,30 +454,39 @@ function prepararNuevoRegistro() {
 
     const btnPublicar = document.getElementById('btn-publicar');
     if(btnPublicar) btnPublicar.textContent = "Publicar Obra";
+
     const form = document.getElementById('form-anime');
     if(form) form.reset();
+
+    // Limpiar temporadas
     const builder = document.getElementById('builder-temporadas');
     if(builder) builder.innerHTML = '';
     
+    // --- RESETEO TOTAL DE PROPIEDADES EXTRA ---
     const containerExtra = document.getElementById('extra-props-container');
     if(containerExtra) {
         containerExtra.innerHTML = '';
-        containerExtra.style.pointerEvents = "auto";
+        containerExtra.style.pointerEvents = "auto"; // Permitir clics
         containerExtra.style.opacity = "1";
     }
+
     const btnAddProp = document.getElementById('btn-add-prop');
     if (btnAddProp) {
         btnAddProp.disabled = false;
         btnAddProp.style.opacity = "1";
-        btnAddProp.style.cursor = "pointer";
         btnAddProp.style.pointerEvents = "auto";
+        btnAddProp.style.cursor = "pointer";
+        // IMPORTANTE: Devolverle su función de clic
         btnAddProp.setAttribute('onclick', 'agregarPropiedadUI()');
     }
+
+    // Desbloquear campos principales
     const camposPrivados = [
         'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
         'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
         'in-dia', 'in-japones', 'in-ingles'
     ];
+    
     camposPrivados.forEach(id => {
         const input = document.getElementById(id);
         if (input) {
@@ -487,13 +496,15 @@ function prepararNuevoRegistro() {
             input.style.cursor = "text";
         }
     });
+
     document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.disabled = false;
-        if (cb.parentElement) {
-            cb.parentElement.style.opacity = "1";
-            cb.parentElement.style.cursor = "pointer";
-        }
+        if (cb.parentElement) cb.parentElement.style.opacity = "1";
     });
+
+    // Empezar con una fila vacía para que el usuario pueda escribir de inmediato
+    agregarPropiedadUI();
+
     cambiarVista('registro');
 }
 
@@ -650,6 +661,7 @@ async function ejecutarRegistro() {
 
             if (esPropietario) {
                 // Dueño actualiza todo
+                const infoAdicional = recolectarCamposExtras();
                 datosObra = {
                     titulo: inTitulo.value.trim(),
                     portada_url: inPortada.value.trim(),
@@ -669,7 +681,7 @@ async function ejecutarRegistro() {
                     // Agrega esta línea dentro de las propiedades de datosObra:
                     generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                     temporadas: recolectarDatosTemporadas(),
-                    propiedades_extra: recolectarInfoAdicional()
+                    propiedades_extra: infoAdicional
                 };
             } else {
                 // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas del dueño con las suyas propias)
@@ -1108,7 +1120,7 @@ function agregarPropiedadUI(key = '', value = '') {
     container.appendChild(row);
 }
 
-function recolectarInfoAdicional() {
+function recolectarCamposExtras() {
     const container = document.getElementById('extra-props-container');
     if (!container) return {};
 
