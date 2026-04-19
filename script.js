@@ -791,7 +791,10 @@ async function ejecutarRegistro() {
 
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('success');
         alert(idAnimeEnEdicion ? "✅ Cambios guardados" : "✅ Publicado con éxito");
-        
+
+        // --- Limpiar el formulario para permitir un nuevo registro ---
+        prepararNuevoRegistro(); // Limpia inputs y contenedores dinámicos
+
         idAnimeEnEdicion = null;
         await cargarObras(); 
         cambiarVista('catalogo');
