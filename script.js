@@ -167,6 +167,14 @@ function abrirDetalle(tituloObra) {
     setContent('det-autor', obraActual.autor || '--');
     setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
 
+    // Mover el contenedor de géneros debajo de la sinopsis para mostrarlo en la sección principal
+    const tagsEl = document.getElementById('det-tags');
+    const sinopsisEl = document.getElementById('det-sinopsis');
+    if (tagsEl && sinopsisEl && sinopsisEl.parentNode) {
+        // Insertar justo después de la sinopsis
+        sinopsisEl.parentNode.insertBefore(tagsEl, sinopsisEl.nextSibling);
+    }
+
     // --- SECCIÓN DE PROPIEDADES EXTRA (INTEGRACIÓN NUEVA) ---
     const infoSidebar = document.querySelector('.detalle-sidebar');
     if (infoSidebar) {
