@@ -927,7 +927,7 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
         </div>
         <div class="lista-temporadas"></div>
         <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
-            <i class="fa-solid fa-plus"></i> Añadir Bloque a esta Sección
+            <i class="fa-solid fa-plus"></i> Añadir Nueva Temporada
         </button>
     `;
 
