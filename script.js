@@ -554,20 +554,28 @@ function prepararEdicionDesdeDetalle() {
         const btnAddProp = document.getElementById('btn-add-prop');
         if (btnAddProp) {
             btnAddProp.disabled = true;
+            btnAddProp.removeAttribute('onclick'); // Destruye el evento de clic
             btnAddProp.style.opacity = "0.5";
             btnAddProp.style.cursor = "not-allowed";
+            btnAddProp.style.pointerEvents = "none"; // Anula físicamente el puntero
         }
 
         const extraPropsContainer = document.getElementById('extra-props-container');
         if (extraPropsContainer) {
-            extraPropsContainer.querySelectorAll('input, button').forEach(el => {
+            // Congelamos el contenedor entero. Nada adentro podrá ser clickeado.
+            extraPropsContainer.style.pointerEvents = "none"; 
+
+            extraPropsContainer.querySelectorAll('input, button, textarea').forEach(el => {
                 el.disabled = true;
-                if (el.tagName === 'INPUT') {
+                
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.readOnly = true; // Doble candado: no se puede escribir
                     el.style.opacity = "0.5";
                     el.style.filter = "grayscale(100%)";
                     el.style.cursor = "not-allowed";
+                    el.style.backgroundColor = "#27272a"; // Oscurecer el fondo para que se vea inactivo
                 } else if (el.tagName === 'BUTTON') {
-                    // Ocultamos el botón de la papelera para los colaboradores
+                    // Desaparecemos la papelera
                     el.style.display = 'none'; 
                 }
             });
