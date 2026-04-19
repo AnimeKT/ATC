@@ -84,6 +84,65 @@ let filtrosActuales = {
     soloFavoritos: false
 };
 
+// Para filtrado dinámico de géneros
+let generoSeleccionado = null; // Para saber qué género está activo
+
+// 1. Mostrar/Ocultar el panel y cargar los géneros
+function togglePanelGeneros() {
+    const panel = document.getElementById('panel-generos-dinamico');
+    if (!panel) return;
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+        actualizarListaGeneros(); // Escaneamos los géneros al abrir
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+// 2. Escanear 'todasLasObras' y mostrar solo los géneros existentes
+function actualizarListaGeneros() {
+    const container = document.getElementById('lista-generos-disponibles');
+    if (!container) return;
+
+    // Extraemos todos los géneros de todas las obras y los aplanamos en una sola lista
+    // Luego usamos Set para eliminar duplicados
+    const generosEnUso = [...new Set(todasLasObras.flatMap(obra => obra.generos || []))].sort();
+
+    if (generosEnUso.length === 0) {
+        container.innerHTML = '<p style="font-size: 12px; color: #71717a; padding: 10px;">No hay géneros detectados en las obras.</p>';
+        return;
+    }
+
+    // Creamos los botones dinámicamente
+    container.innerHTML = generosEnUso.map(gen => `
+        <button class="btn-filtro ${generoSeleccionado === gen ? 'active' : ''}"
+                onclick="filtrarPorGenero('${gen}', event)">
+            ${gen}
+        </button>
+    `).join('');
+}
+
+// 3. Función para filtrar cuando hagas clic en un género detectado
+function filtrarPorGenero(genero, event) {
+    // Quitar 'active' de otros botones de género
+    document.querySelectorAll('#lista-generos-disponibles .btn-filtro').forEach(b => b.classList.remove('active'));
+    
+    if (generoSeleccionado === genero) {
+        // Si haces clic en el que ya está activo, lo desactivamos (volvemos a 'Todos')
+        generoSeleccionado = null;
+        renderizarObras(todasLasObras);
+    } else {
+        // Filtramos las obras que contengan ese género
+        generoSeleccionado = genero;
+        if (event && event.currentTarget) event.currentTarget.classList.add('active');
+        
+        const filtradas = todasLasObras.filter(obra => 
+            obra.generos && obra.generos.includes(genero)
+        );
+        renderizarObras(filtradas);
+    }
+}
+
 // =========================================
 // 4. INICIALIZACIÓN
 // =========================================

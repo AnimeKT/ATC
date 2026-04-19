@@ -1139,3 +1139,17 @@ body {
     background: #27272a;
     border-color: #3ba4fa;
 }
+
+#panel-generos-dinamico {
+    display: none; /* Se activa por JS */
+    padding: 0;    /* Quitamos todo el relleno */
+    margin: 0;     /* Quitamos márgenes */
+    background: transparent !important; /* Quitamos el color gris */
+    border: none !important;           /* Quitamos la línea de borde */
+}
+
+#lista-generos-disponibles .btn-filtro {
+    font-size: 12px; /* Un poco más pequeños que los filtros principales */
+    padding: 6px 12px;
+}
+

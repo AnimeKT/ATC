@@ -36,8 +36,13 @@
             <button class="btn-filtro" onclick="filtrar('En emisión', event)"><i class="fa-solid fa-play"></i> Emisión</button>
             <button class="btn-filtro" onclick="filtrar('Finalizado', event)"><i class="fa-solid fa-check-circle"></i> Finalizados</button>
             <button class="btn-filtro" onclick="filtrar('Favoritos', event)"><i class="fa-solid fa-heart"></i> Favoritos</button>
-            <button class="btn-filtro"><i class="fa-solid fa-tags"></i> Géneros</button>
+            <button class="btn-filtro" onclick="togglePanelGeneros()"><i class="fa-solid fa-tags"></i> Géneros</button>
         </nav>
+
+        <div id="panel-generos-dinamico" style="display: none; padding: 10px; background: #18181b; border-bottom: 1px solid #27272a; margin-top: -10px;">
+            <div id="lista-generos-disponibles" class="checkbox-group">
+                </div>
+        </div>
 
         <main class="contenedor">
             <h2 class="titulo-seccion">Catálogo Global</h2>
@@ -45,6 +50,7 @@
                 </div>
         </main>
     </div>
+    
 
     <div id="vista-detalle" style="display: none;">
 
