@@ -23,7 +23,7 @@ const tg = window.Telegram.WebApp;
 function loguearUsuario(user) {
     if (!user) return;
 
-    localStorage.removeItem('borrar_sesion');
+    localStorage.removeItem('bloquear_login');
     
     userIdActual = user.id.toString();
     localStorage.setItem('tg_user', JSON.stringify(user));
@@ -59,12 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.expand();
 
     // 1. Miramos si el usuario cerró sesión voluntariamente
-    const sesionDesactivada = localStorage.getItem('borrar_sesion') === 'true';
+    const loginBloqueado = localStorage.getItem('bloquear_login') === 'true';
 
     // 2. Lógica de Login Automático
     // Solo logueamos si NO hay una marca de logout manual
-    if (!sesionDesactivada) {
+    if (!loginBloqueado) {
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            console.log("Login automático por Mini App");
             loguearUsuario(tg.initDataUnsafe.user);
         } else {
             const userGuardado = localStorage.getItem('tg_user');
@@ -72,6 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 loguearUsuario(JSON.parse(userGuardado));
             }
         }
+    } else {
+        console.log("El usuario cerró sesión. No se logueará hasta que pulse Login.");
     }
 
     history.replaceState({ vista: 'catalogo' }, "", "");
@@ -1386,7 +1389,7 @@ window.addEventListener('popstate', (event) => {
 
 function cerrarSesion() {
    
-    localStorage.setItem('borrar_sesion', 'true');
+    localStorage.setItem('bloquear_login', 'true');
     localStorage.removeItem('tg_user');
     
     userIdActual = "anonimo";
