@@ -22,35 +22,31 @@ const tg = window.Telegram.WebApp;
 // Esta función centraliza todo el login
 function loguearUsuario(user) {
     if (!user) return;
-
-    localStorage.removeItem('sesion_cerrada');
     
     userIdActual = user.id.toString();
-    localStorage.setItem('tg_user', JSON.stringify(user)); 
+    localStorage.setItem('tg_user', JSON.stringify(user)); // Persistencia en PC
     
+    // Esperamos un milisegundo para asegurar que el HTML cargó
     setTimeout(() => {
         const authContainer = document.getElementById('auth-container');
         if (authContainer) {
             const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
-            
-            // Aquí añadimos el botón de cerrar sesión al lado del nombre
             authContainer.innerHTML = `
-                <div class="user-profile-nav">
-                    <img src="${fotoUrl}" alt="User" class="nav-avatar">
-                    <span class="user-name">${user.first_name}</span>
-                    <button class="btn-logout" onclick="cerrarSesion()">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
+                <div class="user-profile-nav" onclick="abrirPerfil()">
+                    <img src="${fotoUrl}" alt="${user.first_name}" class="nav-avatar">
+                    <span class="nav-username hide-mobile">${user.first_name}</span>
                 </div>
             `;
         }
-        
-        // Activar botones si es admin
+
+        // Si es el admin (tu ID), mostrar botón añadir
         if (userIdActual === "1310733615") {
             const btnAdmin = document.getElementById('btn-admin-view');
             if (btnAdmin) btnAdmin.style.display = 'flex';
         }
-    }, 10);
+        
+        cargarFavoritosUsuario();
+    }, 100);
 }
 
 // ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
@@ -58,28 +54,24 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // Comprobamos si el usuario cerró sesión manualmente en esta sesión
-    const sesionCerradaManualmente = localStorage.getItem('sesion_cerrada');
-
-    // CASO A: Estamos en Telegram Mini App
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user && !sesionCerradaManualmente) {
+    // CASO A: Estamos en Telegram Mini App (Login Automático)
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         console.log("Login automático por Mini App");
         loguearUsuario(tg.initDataUnsafe.user);
     } 
-    // CASO B: Estamos en PC/Navegador o se cerró sesión en Mini App
+    // CASO B: Estamos en PC/Navegador (Login Persistente)
     else {
         const userGuardado = localStorage.getItem('tg_user');
-        if (userGuardado && !sesionCerradaManualmente) {
+        if (userGuardado) {
             console.log("Sesión recuperada del navegador");
             loguearUsuario(JSON.parse(userGuardado));
-        } else {
-            // Si no hay usuario o cerró sesión, nos aseguramos de mostrar el botón de login
-            mostrarBotonLoginEnNav();
         }
     }
-
     history.replaceState({ vista: 'catalogo' }, "", "");
+
+    // Siempre cargar el catálogo al iniciar
     mostrarCatalogo();
+    
 });
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
@@ -329,16 +321,6 @@ function abrirDetalle(tituloObra) {
         }
     }
 
-    const btnEditar = document.getElementById('btn-edit-serie');
-    if (btnEditar) {
-        // Verificamos si el ID actual es el tuyo
-        if (userIdActual === "1310733615") {
-            btnEditar.style.display = 'flex'; // Mostrar si eres tú
-        } else {
-            btnEditar.style.display = 'none'; // Ocultar para otros
-        }
-    }
-
     // --- NAVEGACIÓN Y VISTA ---
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
@@ -527,13 +509,13 @@ function esFavorito(animeId) {
 }
 
 async function cargarFavoritosUsuario() {
-    // Usamos el ID que ya tenemos guardado (funciona en PC y Móvil)
-    if (!userIdActual || userIdActual === "anonimo") return;
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return;
 
     const { data, error } = await _supabase
         .from('favoritos')
         .select('nombre_item')
-        .eq('user_id_telegram', userIdActual);
+        .eq('user_id_telegram', String(userId));
 
     if (error) {
         console.error('Error cargando favoritos:', error);
@@ -552,16 +534,11 @@ function esAdmin() {
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation(); 
     
-    // Si no está logueado, le pedimos que inicie sesión
-    if (!userIdActual || userIdActual === "anonimo") {
-        alert('Inicia sesión con Telegram para guardar tus favoritos.');
-        if (typeof abrirModalAuth === 'function') abrirModalAuth();
-        return;
-    }
-    
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return alert('Favoritos solo están disponibles en Telegram.');
     if (!animeId) return;
 
-    const userIdStr = String(userIdActual);
+    const userIdStr = String(userId);
     const nombreItem = String(animeId);
     const yaEsFavorito = esFavorito(nombreItem);
 
@@ -1332,31 +1309,18 @@ function cargarInfoAdicional(obj) {
 window.onTelegramAuth = function(user) {
     console.log("Datos recibidos de Telegram:", user);
     
-    // 1. Guardar el ID y persistir la sesión en el navegador
+    // 1. Guardamos el ID del usuario de Telegram
     userIdActual = user.id.toString(); 
-    localStorage.setItem('tg_user', JSON.stringify(user)); 
 
-    // 2. Activar funciones de administrador si el ID coincide
-    if (userIdActual === "1310733615") {
-        // Mostrar botón de "Añadir" en la navbar
-        const btnAdmin = document.getElementById('btn-admin-view');
-        if (btnAdmin) btnAdmin.style.display = 'flex';
-
-        // Mostrar el botón del lápiz si ya estás dentro de un detalle
-        const btnEditar = document.getElementById('btn-edit-serie');
-        if (btnEditar) btnEditar.style.display = 'flex';
-    }
-
-    // 3. Mostrar mensaje de éxito en el modal
+    // 2. Mostramos un mensaje de éxito
     const mensaje = document.getElementById('auth-mensaje');
-    if (mensaje) {
-        mensaje.style.color = "#4ade80";
-        mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
-    }
+    mensaje.style.color = "#4ade80";
+    mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
 
-    // 4. Cerrar el modal después de un momento
+    // 3. Cerramos el modal después de un breve momento
     setTimeout(() => {
         cerrarModalAuth();
+        // Aquí puedes añadir lógica para guardar al usuario en tu base de datos Supabase si lo deseas
         actualizarInterfazUsuario(user); 
     }, 1500);
 };
@@ -1377,42 +1341,6 @@ window.addEventListener('popstate', (event) => {
         cambiarVista('catalogo', false);
     }
 });
-
-function cerrarSesion() {
-    // 1. Resetear el ID a anónimo
-    userIdActual = "anonimo";
-    
-    // 2. Borrar los datos guardados en el navegador
-    localStorage.removeItem('tg_user');
-    
-    // 3. Limpiar la lista de favoritos localmente
-    listaFavoritos = [];
-
-    // 4. Ocultar funciones de administrador
-    const btnAdmin = document.getElementById('btn-admin-view');
-    if (btnAdmin) btnAdmin.style.display = 'none';
-    
-    const btnEditar = document.getElementById('btn-edit-serie');
-    if (btnEditar) btnEditar.style.display = 'none';
-
-    // 5. Restaurar el botón de Login en la navbar
-    const authContainer = document.getElementById('auth-container');
-    if (authContainer) {
-        authContainer.innerHTML = `
-            <button class="btn-login" onclick="abrirModalAuth()">
-                <i class="fa-solid fa-user"></i> <span>Login</span>
-            </button>
-        `;
-    }
-
-    // 6. Actualizar la vista (por si hay corazones pintados)
-    aplicarTodosLosFiltros();
-    
-    console.log("Sesión cerrada.");
-    alert("Has cerrado sesión correctamente.");
-
-    window.location.reload();
-}
 
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA

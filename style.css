@@ -1171,22 +1171,22 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    cursor: pointer;
 }
 
 .nav-avatar {
-    width: 35px !important; /* Forzamos el tamaño para que no lo ignore */
-    height: 35px !important;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
-    object-fit: cover;
     border: 2px solid #3ba4fa;
-    flex-shrink: 0; /* Evita que la imagen se aplaste si el nombre es largo */
+    object-fit: cover; /* Añade esto */
+    cursor: pointer;
 }
 
-.user-name {
+.nav-username {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: #fff;
-    white-space: nowrap; /* Evita que el nombre salte de línea */
 }
 
 /* Ajuste para móviles */
@@ -1195,52 +1195,5 @@ body {
         width: 32px;
         height: 32px;
     }
-}
-
- /* Boton para desloguear */
-
-/* Asegurar que el contenedor principal no aplaste los botones */
-.user-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: nowrap; /* Obliga a que todos los botones se queden en la misma línea */
-}
-
-/* Contenedor del perfil de usuario en el nav */
-.user-profile-nav img {
-    width: 35px; /* Un poco menos que la altura del contenedor (45px) para dejar margen */
-    height: 35px;
-    border-radius: 50%; /* Hace que la imagen sea perfectamente circular */
-    object-fit: cover; /* Evita que la imagen se estire, recortándola si es necesario */
-    border: 2px solid #3ba4fa; /* Un pequeño borde azul que resalte con tu diseño */
-}
-
-/* Controles estrictos para el botón de logout */
-.btn-logout {
-    background: transparent;
-    border: none;
-    color: #ef4444;
-    cursor: pointer;
-    /* Candado de tamaño para que no explote */
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px; /* Evita que flexbox lo encoja o lo estire */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s;
-}
-
-/* Forzar el tamaño exacto del icono interior */
-.btn-logout i {
-    font-size: 16px !important; 
-    margin: 0;
-    padding: 0;
-}
-
-.btn-logout:hover {
-    transform: scale(1.1);
-    color: #f87171;
 }
 
