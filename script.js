@@ -24,30 +24,36 @@ function loguearUsuario(user) {
     if (!user) return;
     
     userIdActual = user.id.toString();
-    localStorage.setItem('tg_user', JSON.stringify(user)); // Persistencia en PC
+    localStorage.setItem('tg_user', JSON.stringify(user)); 
     
-    // Esperamos un milisegundo para asegurar que el HTML cargó
-    setTimeout(() => {
-        const authContainer = document.getElementById('auth-container');
-        if (authContainer) {
-            const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
-            authContainer.innerHTML = `
-                <div class="user-profile-nav">
-                    <img src="${fotoUrl}" alt="User" class="nav-avatar">
-                    <span class="user-name">${user.first_name}</span>
-                    <button class="btn-logout" onclick="cerrarSesion()">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                </div>
-            `;
-        }
+    const authContainer = document.getElementById('auth-container');
+    if (authContainer) {
+        const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
+        authContainer.innerHTML = `
+            <div class="user-profile-nav">
+                <img src="${fotoUrl}" alt="User" class="nav-avatar">
+                <span class="user-name">${user.first_name}</span>
+                <button class="btn-logout" onclick="cerrarSesion()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        `;
+    }
 
-        // Si es el admin (tu ID), mostrar botón añadir
-        if (userIdActual === "1310733615") {
-            const btnAdmin = document.getElementById('btn-admin-view');
-            if (btnAdmin) btnAdmin.style.display = 'flex';
-        }
-    }, 10);
+    // Llamamos a la verificación inmediatamente
+    verificarPermisosAdmin();
+}
+
+function verificarPermisosAdmin() {
+    const btnAdmin = document.getElementById('btn-admin-view');
+    if (!btnAdmin) return;
+
+    // Tu ID de administrador
+    if (userIdActual === "1310733615") {
+        btnAdmin.style.setProperty('display', 'flex', 'important');
+    } else {
+        btnAdmin.style.display = 'none';
+    }
 }
 
 // ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
@@ -55,24 +61,23 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // CASO A: Estamos en Telegram Mini App (Login Automático)
+    // 1. Intentar recuperar usuario (Prioridad: Telegram > LocalStorage)
+    let userToLog = null;
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        console.log("Login automático por Mini App");
-        loguearUsuario(tg.initDataUnsafe.user);
-    } 
-    // CASO B: Estamos en PC/Navegador (Login Persistente)
-    else {
-        const userGuardado = localStorage.getItem('tg_user');
-        if (userGuardado) {
-            console.log("Sesión recuperada del navegador");
-            loguearUsuario(JSON.parse(userGuardado));
-        }
+        userToLog = tg.initDataUnsafe.user;
+    } else {
+        const saved = localStorage.getItem('tg_user');
+        if (saved) userToLog = JSON.parse(saved);
     }
-    history.replaceState({ vista: 'catalogo' }, "", "");
 
-    // Siempre cargar el catálogo al iniciar
+    // 2. Si hay usuario, loguear y verificar admin
+    if (userToLog) {
+        loguearUsuario(userToLog);
+    }
+
+    // 3. Configuración de navegación
+    history.replaceState({ vista: 'catalogo' }, "", "");
     mostrarCatalogo();
-    
 });
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
@@ -136,6 +141,8 @@ function ejecutarCambioVista(vista) {
         tg.BackButton.show();
         window.scrollTo(0, 0);
     }
+    
+    verificarPermisosAdmin();
 }
 
 // =========================================
