@@ -14,58 +14,63 @@ function sanitizar(texto) {
 // 2. INICIALIZAR TELEGRAM WEB APP
 // =========================================
 // Al inicio de tu script.js o donde inicializas 'tg'
+// =========================================
+// 2. INICIALIZAR Y LOGUEAR
+// =========================================
 const tg = window.Telegram.WebApp;
 
-const userGuardado = localStorage.getItem('tg_user');
-if (userGuardado) {
-    const user = JSON.parse(userGuardado);
+// Esta función centraliza todo el login
+function loguearUsuario(user) {
+    if (!user) return;
+    
     userIdActual = user.id.toString();
-    renderUsuarioLogueado(user);
+    localStorage.setItem('tg_user', JSON.stringify(user)); // Persistencia en PC
+    
+    // Esperamos un milisegundo para asegurar que el HTML cargó
+    setTimeout(() => {
+        const authContainer = document.getElementById('auth-container');
+        if (authContainer) {
+            const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
+            authContainer.innerHTML = `
+                <div class="user-profile-nav" onclick="abrirPerfil()">
+                    <img src="${fotoUrl}" alt="${user.first_name}" class="nav-avatar">
+                    <span class="nav-username hide-mobile">${user.first_name}</span>
+                </div>
+            `;
+        }
+
+        // Si es el admin (tu ID), mostrar botón añadir
+        if (userIdActual === "1310733615") {
+            const btnAdmin = document.getElementById('btn-admin-view');
+            if (btnAdmin) btnAdmin.style.display = 'flex';
+        }
+        
+        cargarFavoritosUsuario();
+    }, 100);
 }
 
-tg.ready();
+// ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
+document.addEventListener('DOMContentLoaded', () => {
+    tg.ready();
+    tg.expand();
 
-
-
-// Función para actualizar la UI con la foto del usuario
-function renderUsuarioLogueado(user) {
-    const authContainer = document.getElementById('auth-container');
-    if (!authContainer) return;
-
-    // Si el usuario no tiene foto, usamos una por defecto
-    const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
-
-    authContainer.innerHTML = `
-        <div class="user-profile-nav">
-            <img src="${fotoUrl}" alt="${user.first_name}" class="nav-avatar" onclick="abrirPerfil()">
-            <span class="nav-username hide-mobile">${user.first_name}</span>
-        </div>
-    `;
-
-    // Lógica de administrador (usando tu ID que vi en el archivo)
-    if (user.id.toString() === "1310733615") {
-        const btnAdmin = document.getElementById('btn-admin-view');
-        if (btnAdmin) btnAdmin.style.display = 'flex';
+    // CASO A: Estamos en Telegram Mini App (Login Automático)
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        console.log("Login automático por Mini App");
+        loguearUsuario(tg.initDataUnsafe.user);
+    } 
+    // CASO B: Estamos en PC/Navegador (Login Persistente)
+    else {
+        const userGuardado = localStorage.getItem('tg_user');
+        if (userGuardado) {
+            console.log("Sesión recuperada del navegador");
+            loguearUsuario(JSON.parse(userGuardado));
+        }
     }
-}
 
-// DETECCIÓN AUTOMÁTICA (Mini App)
-if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-    console.log("Detectado en Mini App - Login Automático");
-    const user = tg.initDataUnsafe.user;
-    userIdActual = user.id.toString();
-    renderUsuarioLogueado(user);
-    // Opcional: cargar favoritos automáticamente aquí
-    if (typeof cargarFavoritosUsuario === 'function') cargarFavoritosUsuario();
-}
-
-// LOGIN MANUAL (Navegador - Widget)
-window.onTelegramAuth = function(user) {
-    localStorage.setItem('tg_user', JSON.stringify(user)); // Guarda la sesión
-    userIdActual = user.id.toString();
-    renderUsuarioLogueado(user);
-    cerrarModalAuth();
-};
+    // Siempre cargar el catálogo al iniciar
+    mostrarCatalogo();
+});
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
 let userIdActual = "anonimo";
@@ -1292,22 +1297,16 @@ function cargarInfoAdicional(obj) {
 
 // Función global que llama el widget de Telegram al autenticarse
 window.onTelegramAuth = function(user) {
-    console.log("Datos recibidos de Telegram:", user);
-    
-    // 1. Guardamos el ID del usuario de Telegram
-    userIdActual = user.id.toString(); 
-
-    // 2. Mostramos un mensaje de éxito
     const mensaje = document.getElementById('auth-mensaje');
-    mensaje.style.color = "#4ade80";
-    mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
+    if (mensaje) {
+        mensaje.style.color = "#4ade80";
+        mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
+    }
 
-    // 3. Cerramos el modal después de un breve momento
     setTimeout(() => {
         cerrarModalAuth();
-        // Aquí puedes añadir lógica para guardar al usuario en tu base de datos Supabase si lo deseas
-        actualizarInterfazUsuario(user); 
-    }, 1500);
+        loguearUsuario(user); // Usamos la misma función de arriba
+    }, 1000);
 };
 
 // Función opcional para actualizar elementos visuales con la info de Telegram
