@@ -36,7 +36,7 @@ function loguearUsuario(user) {
         `;
     }
 
-    // Llamamos a la verificación inmediatamente
+    // Sin esperas, verificamos permisos ya mismo
     verificarPermisosAdmin();
 }
 
@@ -53,21 +53,30 @@ function verificarPermisosAdmin() {
 }
 
 // ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     tg.ready();
     tg.expand();
 
-    // 1. Si ya tenemos el ID desde el inicio (paso 1), verificamos permisos ya mismo
-    verificarPermisosAdmin();
+    // 1. Cargar las obras de la base de datos primero
+    await cargarObras();
 
-    // 2. Si venimos de la App de Telegram, actualizamos por si acaso
+    // 2. Intentar recuperar usuario (Telegram > LocalStorage)
+    let userToLog = null;
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        loguearUsuario(tg.initDataUnsafe.user);
+        userToLog = tg.initDataUnsafe.user;
     } else {
         const saved = localStorage.getItem('tg_user');
-        if (saved) loguearUsuario(JSON.parse(saved));
+        if (saved) userToLog = JSON.parse(saved);
     }
 
+    // 3. Si hay usuario, loguear y verificar admin inmediatamente
+    if (userToLog) {
+        loguearUsuario(userToLog);
+    } else {
+        verificarPermisosAdmin(); // Para asegurar que esté oculto si no hay nadie
+    }
+
+    // 4. Mostrar la vista inicial
     history.replaceState({ vista: 'catalogo' }, "", "");
     mostrarCatalogo();
 });
@@ -938,34 +947,6 @@ async function ejecutarRegistro() {
 const btnAdminView = document.getElementById('btn-admin-view');
 const btnAuth = document.getElementById('btn-auth');
 const authMensaje = document.getElementById('auth-mensaje');
-
-_supabase.auth.onAuthStateChange((event, session) => {
-    const isAdmin = !!session; 
-    const btnAdminView = document.getElementById('btn-admin-view');
-    const btnEdit = document.getElementById('btn-edit-serie'); 
-    const btnAuth = document.getElementById('btn-auth');
-
-    if(btnAdminView) btnAdminView.style.display = isAdmin ? 'flex' : 'none';
-    if(btnEdit) btnEdit.style.display = isAdmin ? 'flex' : 'none';
-
-    if (session) {
-        if(btnAuth) {
-            btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
-            btnAuth.onclick = cerrarSesion;
-        }
-        cerrarModalAuth();
-    } else {
-        if(btnAuth) {
-            btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
-            btnAuth.onclick = abrirModalAuth;
-        }
-        if(todasLasObras.length > 0) cambiarVista('catalogo');
-    }
-});
-
-_supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session && btnAdminView) btnAdminView.style.display = 'flex';
-});
 
 function abrirModalAuth() {
     const modal = document.getElementById('modal-auth');
