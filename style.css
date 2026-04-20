@@ -1278,5 +1278,10 @@ body.usuario-identificado #btn-edit-serie {
     color: #71717a !important;
     cursor: not-allowed !important;
     border-color: #27272a !important;
-    pointer-events: none; /* Evita cualquier interacción */
+    pointer-events: none !important; /* Evita cualquier interacción o clic */
+    opacity: 0.6;
+}
+
+.campo-bloqueado button {
+    display: none !important;
 }

@@ -21,16 +21,16 @@
         </div>
         
         <div class="user-actions">
-        <button id="btn-admin-view" class="btn-login" style="display: none;" onclick="prepararNuevoRegistro()">
-            <i class="fa-solid fa-plus"></i> <span class="hide-mobile">Añadir</span>
-        </button>
-        
-        <div id="auth-container">
-            <button id="btn-login-trigger" class="btn-login" onclick="abrirModalAuth()">
-                <i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>
+            <button id="btn-admin-view" class="btn-login" style="display: none;" onclick="prepararNuevoRegistro()">
+                <i class="fa-solid fa-plus"></i> <span class="hide-mobile">Añadir</span>
             </button>
+            
+            <div id="auth-container">
+                <button id="btn-login-trigger" class="btn-login" onclick="abrirModalAuth()">
+                    <i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>
+                </button>
+            </div>
         </div>
-    </div>
     </header>
 
     <div id="vista-catalogo">
@@ -43,20 +43,16 @@
         </nav>
 
         <div id="panel-generos-dinamico" style="display: none; padding: 10px; background: #18181b; border-bottom: 1px solid #27272a; margin-top: -10px;">
-            <div id="lista-generos-disponibles" class="checkbox-group">
-                </div>
+            <div id="lista-generos-disponibles" class="checkbox-group"></div>
         </div>
 
         <main class="contenedor">
             <h2 class="titulo-seccion">Catálogo Global</h2>
-            <div id="grid-obras" class="grid-animes">
-                </div>
+            <div id="grid-obras" class="grid-animes"></div>
         </main>
     </div>
     
-
     <div id="vista-detalle" style="display: none;">
-
         <button id="btn-edit-serie" class="btn-editar" onclick="prepararEdicionDesdeDetalle()" style="display: none; z-index: 100;">
             <i class="fa-solid fa-pencil"></i>
         </button>
@@ -126,7 +122,8 @@
                         <label>Nombre Inglés</label>
                         <input type="text" id="in-ingles" placeholder="Inglés">
                     </div>
-                </div> <div class="input-group full-width">
+                </div> 
+                <div class="input-group full-width">
                     <label>Sinopsis</label>
                     <textarea id="in-sinopsis" placeholder="Resumen de la trama..." rows="4"></textarea>
                 </div> 
@@ -197,26 +194,25 @@
 
                 <div class="grid-2-col">
                     <div class="input-group">
-                    <label>Estudio</label>
-                    <input type="text" id="in-estudio" placeholder="Ej: MAPPA">
-                </div>
-                <div class="input-group">
-                    <label>Autor</label>
-                    <input type="text" id="in-autor" placeholder="Nombre del autor">
-                </div>
-                <div class="input-group">
-                    <label>Origen</label>
-                    <input type="text" id="in-origen" placeholder="Ej: Manga">
-                </div>
-                <div class="input-group">
-                    <label>Estreno</label>
-                    <input type="text" id="in-estreno" placeholder="Ej: 4 de Abril 2026">
-                </div>
-                <div class="input-group">
-                    <label>Emisión</label>
-                    <input type="text" id="in-dia" placeholder="Ej: Sabado">
-                </div>
-                    
+                        <label>Estudio</label>
+                        <input type="text" id="in-estudio" placeholder="Ej: MAPPA">
+                    </div>
+                    <div class="input-group">
+                        <label>Autor</label>
+                        <input type="text" id="in-autor" placeholder="Nombre del autor">
+                    </div>
+                    <div class="input-group">
+                        <label>Origen</label>
+                        <input type="text" id="in-origen" placeholder="Ej: Manga">
+                    </div>
+                    <div class="input-group">
+                        <label>Estreno</label>
+                        <input type="text" id="in-estreno" placeholder="Ej: 4 de Abril 2026">
+                    </div>
+                    <div class="input-group">
+                        <label>Emisión</label>
+                        <input type="text" id="in-dia" placeholder="Ej: Sabado">
+                    </div>
                 </div>
 
                 <div class="input-group full-width">
@@ -229,8 +225,6 @@
                     </div>
                     <div id="extra-props-container"></div>
                 </div>
-
-                
             </div>
 
             <div class="form-seccion">
@@ -248,16 +242,11 @@
             <div class="form-seccion">
                 <div class="header-flex">
                     <h3><i class="fa-solid fa-list-ol"></i> Temporadas y Enlaces</h3>
-                    <button type="button" class="btn-add-seccion" onclick="agregarSeccionUI()">
+                    <button type="button" class="btn-add-seccion" id="btn-add-seccion-gral" onclick="agregarSeccionUI()">
                         <i class="fa-solid fa-plus"></i> Añadir Sección
                     </button>
                 </div>
-                <div id="builder-temporadas">
-                    </div>
-                    
-                    <div id="contenedor-extras" class="extras-grid"></div>
-                </div>
-
+                <div id="builder-temporadas"></div>
             </div>
         </div>
     </section>

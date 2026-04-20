@@ -1,21 +1,21 @@
 // =========================================
-// 1. CONFIGURACIÓN DE SUPABASE
+// 1. CONFIGURACIÓN DE SUPABASE Y CONSTANTES
 // =========================================
 const _supabase = supabase.createClient(ENV.SUPABASE_URL, ENV.SUPABASE_KEY);
-// Función para evitar que inyecten código malicioso (XSS)
+
 function sanitizar(texto) {
     if (!texto) return "";
     const div = document.createElement('div');
-    div.textContent = texto; // Convierte <script> en texto plano
+    div.textContent = texto; 
     return div.innerHTML;
 }
 
 const userGuardado = localStorage.getItem('tg_user');
 let userIdActual = userGuardado ? JSON.parse(userGuardado).id.toString() : "anonimo";
 const tg = window.Telegram.WebApp;
-const ADMIN_ID = "1310733615"; // Tu ID definido
+const ADMIN_ID = "1310733615"; // Tu ID definido (Admin Súper Dueño)
 
-// Esta función centraliza todo el login
+// Función centralizada para el login
 function loguearUsuario(user) {
     if (!user) return;
     
@@ -29,19 +29,16 @@ function loguearUsuario(user) {
             <div class="user-profile-nav">
                 <img src="${fotoUrl}" alt="User" class="nav-avatar">
                 <span class="user-name">${user.first_name}</span>
-                <button class="btn-logout" onclick="cerrarSesion()">
+                <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         `;
     }
-
-    // Sin esperas, verificamos permisos ya mismo
     verificarPermisosAdmin();
 }
 
 function verificarPermisosAdmin() {
-    // Si el ID es distinto a "anonimo", significa que hay alguien logueado
     if (userIdActual !== "anonimo") {
         document.body.classList.add('usuario-identificado');
     } else {
@@ -49,15 +46,14 @@ function verificarPermisosAdmin() {
     }
 }
 
-// ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
+// =========================================
+// 2. INICIO DE LA APLICACIÓN
+// =========================================
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Verificar identidad inmediatamente
     verificarPermisosAdmin();
-
     tg.ready();
     tg.expand();
 
-    // 2. Luego el resto de la lógica...
     await cargarObras();
     
     let userToLog = null;
@@ -69,14 +65,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (userToLog) loguearUsuario(userToLog);
-    
     mostrarCatalogo();
 });
 
-
+async function inicializarApp() {
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userIdActual = String(tg.initDataUnsafe.user.id);
+        await cargarFavoritosUsuario();
+    }
+    await cargarObras(); 
+}
 
 // =========================================
-// SISTEMA DE HISTORIAL DE NAVEGACIÓN
+// 3. NAVEGACIÓN Y VISTAS
 // =========================================
 let historialNavegacion = ['catalogo'];
 
@@ -91,54 +92,52 @@ tg.BackButton.onClick(() => {
 });
 
 function cambiarVista(vista, saveHistory = true) {
-    // Si saveHistory es true, guardamos el estado en el navegador
-    if (saveHistory) {
-        history.pushState({ vista: vista }, "", "");
-    }
+    if (saveHistory) history.pushState({ vista: vista }, "", "");
 
-    // Tu lógica original de historial para Telegram
     if (vista === 'catalogo') {
         historialNavegacion = ['catalogo'];
     } else if (historialNavegacion[historialNavegacion.length - 1] !== vista) {
         historialNavegacion.push(vista);
     }
-    
-    // Ejecutamos el cambio visual que ya tienes
     ejecutarCambioVista(vista);
 }
 
 function ejecutarCambioVista(vista) {
-    const vistaCatalogo = document.getElementById('vista-catalogo');
-    const vistaRegistro = document.getElementById('vista-registro');
-    const vistaDetalle = document.getElementById('vista-detalle');
-    const barraBusqueda = document.getElementById('barra-busqueda');
-
-    if (vistaCatalogo && vistaCatalogo.style.display !== 'none') {
+    const vistas = ['vista-catalogo', 'vista-registro', 'vista-detalle', 'barra-busqueda'];
+    
+    if (document.getElementById('vista-catalogo') && document.getElementById('vista-catalogo').style.display !== 'none') {
         posicionScrollGuardada = window.scrollY;
     }
 
-    if(vistaCatalogo) vistaCatalogo.style.display = 'none';
-    if(vistaRegistro) vistaRegistro.style.display = 'none';
-    if(vistaDetalle) vistaDetalle.style.display = 'none';
-    if(barraBusqueda) barraBusqueda.style.display = 'none';
+    vistas.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
 
     if (vista === 'catalogo') {
-        if(vistaCatalogo) vistaCatalogo.style.display = 'block';
-        if(barraBusqueda) barraBusqueda.style.display = 'block';
+        const vc = document.getElementById('vista-catalogo');
+        const bb = document.getElementById('barra-busqueda');
+        if(vc) vc.style.display = 'block';
+        if(bb) bb.style.display = 'block';
         tg.BackButton.hide();
         setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     } else {
-        if (vista === 'registro' && vistaRegistro) vistaRegistro.style.display = 'block';
-        if (vista === 'detalle' && vistaDetalle) vistaDetalle.style.display = 'block';
+        const vr = document.getElementById(`vista-${vista}`);
+        if(vr) vr.style.display = 'block';
         tg.BackButton.show();
         window.scrollTo(0, 0);
     }
-    
     verificarPermisosAdmin();
 }
 
+function mostrarCatalogo() { cambiarVista('catalogo', false); }
+function volverAlCatalogo() {
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
+    cambiarVista('catalogo');
+}
+
 // =========================================
-// 3. ESTADO GLOBAL DE LA APP
+// 4. ESTADO GLOBAL
 // =========================================
 let idAnimeEnEdicion = null;
 let todasLasObras = []; 
@@ -146,43 +145,35 @@ let obraActual = null;
 let posicionScrollGuardada = 0;
 let timeoutBusqueda = null;
 let listaFavoritos = [];
+let generoSeleccionado = null;
 
-let filtrosActuales = {
-    texto: '',
-    estado: 'Todos',
-    soloFavoritos: false
-};
+let filtrosActuales = { texto: '', estado: 'Todos', soloFavoritos: false };
 
-// Para filtrado dinámico de géneros
-let generoSeleccionado = null; // Para saber qué género está activo
-
-// 1. Mostrar/Ocultar el panel y cargar los géneros
+// =========================================
+// 5. SISTEMA DE GÉNEROS DINÁMICOS
+// =========================================
 function togglePanelGeneros() {
     const panel = document.getElementById('panel-generos-dinamico');
     if (!panel) return;
     if (panel.style.display === 'none' || panel.style.display === '') {
         panel.style.display = 'block';
-        actualizarListaGeneros(); // Escaneamos los géneros al abrir
+        actualizarListaGeneros();
     } else {
         panel.style.display = 'none';
     }
 }
 
-// 2. Escanear 'todasLasObras' y mostrar solo los géneros existentes
 function actualizarListaGeneros() {
     const container = document.getElementById('lista-generos-disponibles');
     if (!container) return;
 
-    // Extraemos todos los géneros de todas las obras y los aplanamos en una sola lista
-    // Luego usamos Set para eliminar duplicados
     const generosEnUso = [...new Set(todasLasObras.flatMap(obra => obra.generos || []))].sort();
 
     if (generosEnUso.length === 0) {
-        container.innerHTML = '<p style="font-size: 12px; color: #71717a; padding: 10px;">No hay géneros detectados en las obras.</p>';
+        container.innerHTML = '<p style="font-size: 12px; color: #71717a; padding: 10px;">No hay géneros detectados.</p>';
         return;
     }
 
-    // Creamos los botones dinámicamente
     container.innerHTML = generosEnUso.map(gen => `
         <button class="btn-filtro ${generoSeleccionado === gen ? 'active' : ''}"
                 onclick="filtrarPorGenero('${gen}', event)">
@@ -191,311 +182,22 @@ function actualizarListaGeneros() {
     `).join('');
 }
 
-// 3. Función para filtrar cuando hagas clic en un género detectado
 function filtrarPorGenero(genero, event) {
-    // Quitar 'active' de otros botones de género
     document.querySelectorAll('#lista-generos-disponibles .btn-filtro').forEach(b => b.classList.remove('active'));
     
     if (generoSeleccionado === genero) {
-        // Si haces clic en el que ya está activo, lo desactivamos (volvemos a 'Todos')
         generoSeleccionado = null;
         renderizarObras(todasLasObras);
     } else {
-        // Filtramos las obras que contengan ese género
         generoSeleccionado = genero;
         if (event && event.currentTarget) event.currentTarget.classList.add('active');
-        
-        const filtradas = todasLasObras.filter(obra => 
-            obra.generos && obra.generos.includes(genero)
-        );
+        const filtradas = todasLasObras.filter(o => o.generos && o.generos.includes(genero));
         renderizarObras(filtradas);
     }
 }
 
 // =========================================
-// 4. INICIALIZACIÓN
-// =========================================
-async function inicializarApp() {
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        // Guardamos el ID del usuario actual para validar permisos después
-        userIdActual = String(tg.initDataUnsafe.user.id);
-        await cargarFavoritosUsuario();
-        
-        tg.CloudStorage.getItem('vistos_anime', (err, value) => {
-            if (!err && value) {
-                try { listaFavoritos = JSON.parse(value); } 
-                catch (e) { listaFavoritos = []; }
-            }
-        });
-    }
-
-    await cargarObras(); 
-}
-
-function volverAlCatalogo() {
-    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
-    cambiarVista('catalogo');
-}
-
-// =========================================
-// 6. RENDERIZAR VISTA DE DETALLES
-// =========================================
-function abrirDetalle(tituloObra) {
-    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('medium');
-    
-    obraActual = todasLasObras.find(o => o.titulo === tituloObra);
-    if (!obraActual) return;
-
-    // --- SECCIÓN DE IMÁGENES ---
-    const imgBanner = document.getElementById('det-banner');
-    if(imgBanner) imgBanner.src = obraActual.banner_url || obraActual.portada_url || '';
-    
-    const imgPort = document.getElementById('det-portada');
-    if(imgPort) {
-        imgPort.src = obraActual.portada_url || '';
-        imgPort.style.opacity = 1;
-        imgPort.style.cursor = 'pointer';
-        
-        imgPort.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            verImagenGrande(imgPort.src);
-        };
-    }
-    
-    // --- TÍTULOS Y NOMBRES ALTERNATIVOS ---
-    const detTitulo = document.getElementById('det-titulo');
-    if(detTitulo) detTitulo.textContent = obraActual.titulo || 'Sin título';
-    
-    let nombresAlt = [];
-    if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
-    if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
-    const detNombresAlt = document.getElementById('det-nombres-alt');
-    if(detNombresAlt) detNombresAlt.textContent = nombresAlt.join(' • ');
-
-    // --- GÉNEROS (TAGS) ---
-    const tagsContainer = document.getElementById('det-tags');
-    if(tagsContainer) {
-        tagsContainer.innerHTML = '';
-        if(Array.isArray(obraActual.generos)) {
-            obraActual.generos.forEach(g => {
-                tagsContainer.innerHTML += `<span class="tag">${g}</span>`;
-            });
-        }
-    }
-
-    // --- DATOS FIJOS ---
-    const setContent = (id, value) => { if(document.getElementById(id)) document.getElementById(id).textContent = value; };
-    setContent('det-estado', obraActual.estado || '--');
-    setContent('det-tipo', obraActual.tipo || '--');
-    setContent('det-estudio', obraActual.estudio || '--');
-    setContent('det-origen', obraActual.origen || '--');
-    setContent('det-dia', obraActual.dia_emision || '--');
-    setContent('det-estreno', obraActual.estreno || '--');
-    setContent('det-autor', obraActual.autor || '--');
-    setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
-
-    // Mover el contenedor de géneros debajo de la sinopsis para mostrarlo en la sección principal
-    const tagsEl = document.getElementById('det-tags');
-    const sinopsisEl = document.getElementById('det-sinopsis');
-    if (tagsEl && sinopsisEl && sinopsisEl.parentNode) {
-        // Insertar justo después de la sinopsis
-        sinopsisEl.parentNode.insertBefore(tagsEl, sinopsisEl.nextSibling);
-    }
-
-    // --- SECCIÓN DE PROPIEDADES EXTRA (INTEGRACIÓN NUEVA) ---
-    const infoSidebar = document.querySelector('.detalle-sidebar');
-    if (infoSidebar) {
-        // 1. Borramos solo los extras de la obra anterior (para no borrar Genero, Estado, etc)
-        infoSidebar.querySelectorAll('.info-item[data-din="extra"]').forEach(n => n.remove());
-
-        // 2. Si la obra tiene propiedades_extra, las agregamos una por una
-        if (obraActual.propiedades_extra && typeof obraActual.propiedades_extra === 'object') {
-            Object.entries(obraActual.propiedades_extra).forEach(([clave, valor]) => {
-                const divExtra = document.createElement('div');
-                divExtra.className = 'info-item';
-                divExtra.dataset.din = 'extra'; 
-                divExtra.innerHTML = `<span>${clave}:</span> <strong>${valor}</strong>`;
-                infoSidebar.appendChild(divExtra);
-            });
-        }
-    }
-
-    const btnEditar = document.getElementById('btn-edit-serie');
-    if (btnEditar) {
-    // Si hay un usuario logueado, mostramos el botón editar
-    if (userIdActual !== "anonimo") {
-        btnEditar.style.setProperty('display', 'block', 'important');
-        btnEditar.onclick = () => prepararEdicion(obra);
-    } else {
-        btnEditar.style.setProperty('display', 'none', 'important');
-    }
-}
-
-    // --- NAVEGACIÓN Y VISTA ---
-    iniciarNavegacionContenido(obraActual.temporadas);
-    actualizarEstadoFavoritoDetalle();
-    cambiarVista('detalle');
-}
-
-function prepararEdicion(obra) {
-    // 1. Definir quién tiene poder total
-    const esAdmin = userIdActual === "1310733615";
-    const esDuenio = userIdActual === obra.user_id; // Suponiendo que guardas user_id en la DB
-    
-    const tienePermisoTotal = esAdmin || esDuenio;
-
-    // 2. Cambiar a la vista de registro/edición
-    cambiarVista('registro');
-    
-    // 3. Llenar los campos básicos
-    document.getElementById('reg-id').value = obra.id;
-    document.getElementById('reg-titulo').value = obra.titulo;
-    document.getElementById('reg-descripcion').value = obra.descripcion;
-    document.getElementById('reg-portada').value = obra.portada;
-    document.getElementById('reg-banner').value = obra.banner || "";
-    document.getElementById('reg-tipo').value = obra.tipo;
-    document.getElementById('reg-estado').value = obra.estado;
-
-    // --- EL BLOQUEO ---
-    const inputsPrincipales = [
-        'reg-titulo', 'reg-descripcion', 'reg-portada', 
-        'reg-banner', 'reg-tipo', 'reg-estado'
-    ];
-
-    if (!tienePermisoTotal) {
-        // MODO COLABORADOR: Bloqueamos los inputs principales
-        inputsPrincipales.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.disabled = true;
-                el.style.opacity = "0.5";
-                el.style.cursor = "not-allowed";
-            }
-        });
-        console.log("Modo Colaborador: Solo puedes añadir secciones.");
-    } else {
-        // MODO DUEÑO: Desbloqueamos todo por si acaso
-        inputsPrincipales.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.disabled = false;
-                el.style.opacity = "1";
-                el.style.cursor = "text";
-            }
-        });
-    }
-
-    // 4. Limpiar y cargar temporadas (esto siempre lo puede hacer el colaborador)
-    const container = document.getElementById('builder-temporadas');
-    container.innerHTML = "";
-    if (obra.temporadas && obra.temporadas.length > 0) {
-        obra.temporadas.forEach(temp => agregarTemporadaAlDOM(temp));
-    }
-}
-
-// =========================================
-// 7. JERARQUÍA DINÁMICA (Temporadas -> Idiomas -> Caps)
-// =========================================
-function iniciarNavegacionContenido(temporadasData) {
-    const contenedor = document.getElementById('det-temporadas');
-    if(!contenedor) return;
-    
-    // 1. Limpiamos la lista actual
-    contenedor.innerHTML = '';
-
-    // 2. REINICIO DE IMAGEN: Volver a la portada original de la obra
-    const imgPortada = document.getElementById('det-portada');
-    if (imgPortada && obraActual) {
-        // Restauramos la URL original que se guardó al abrir el detalle
-        imgPortada.src = obraActual.portada_url || ''; 
-        imgPortada.style.opacity = 1; // Nos aseguramos de que sea visible
-    }
-
-    if (!temporadasData || !Array.isArray(temporadasData) || temporadasData.length === 0) {
-        contenedor.innerHTML = '<p class="text-muted" style="color: #a1a1aa;">Aún no hay enlaces disponibles.</p>';
-        return;
-    }
-
-    const seccionesObj = {};
-    temporadasData.forEach((temp) => {
-        const nombreSeccion = temp.seccion || "Contenido Principal";
-        if (!seccionesObj[nombreSeccion]) seccionesObj[nombreSeccion] = [];
-        seccionesObj[nombreSeccion].push(temp);
-    });
-
-    for (const [secName, temps] of Object.entries(seccionesObj)) {
-        // Crear el título de sección con createElement para evitar problemas de eventos
-        const titulo = document.createElement('h4');
-        titulo.style.cssText = "margin-top: 15px; margin-bottom: 10px; color: #3ba4fa; font-size: 14px;";
-        titulo.textContent = secName;
-        contenedor.appendChild(titulo);
-        
-        temps.forEach((temp) => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-dinamico';
-            btn.style.cssText = "display: block; width: 100%; text-align: left; background: #18181b; border: 1px solid #27272a; padding: 12px; border-radius: 8px; color: white; margin-bottom: 8px; cursor: pointer;";
-            btn.innerHTML = `<i class="fa-solid fa-folder-open" style="color: #3ba4fa; margin-right: 8px;"></i> ${temp.nombre}`;
-            btn.onclick = () => mostrarIdiomas(temp);
-            contenedor.appendChild(btn);
-        });
-    }
-}
-
-function mostrarIdiomas(temporadaObj) {
-    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
-    const contenedor = document.getElementById('det-temporadas');
-    
-    contenedor.innerHTML = `<button onclick="iniciarNavegacionContenido(obraActual.temporadas)" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Temporadas</button>`;
-
-    if(temporadaObj.imagen && temporadaObj.imagen !== "") {
-        const imgPortada = document.getElementById('det-portada');
-        if(imgPortada) {
-            imgPortada.style.opacity = 0.3;
-            setTimeout(() => {
-                imgPortada.src = temporadaObj.imagen;
-                imgPortada.style.opacity = 1;
-            }, 150);
-        }
-    }
-
-    if (temporadaObj.enlaces) {
-        for (const [idioma, capitulos] of Object.entries(temporadaObj.enlaces)) {
-            const btn = document.createElement('button');
-            btn.style.cssText = "display: block; width: 100%; text-align: left; background: #18181b; border: 1px solid #27272a; padding: 12px; border-radius: 8px; color: white; margin-bottom: 8px; cursor: pointer;";
-            btn.innerHTML = `<i class="fa-solid fa-language" style="color: #10b981; margin-right: 8px;"></i> Audio: ${idioma}`;
-            btn.onclick = () => mostrarCapitulos(capitulos, temporadaObj);
-            contenedor.appendChild(btn);
-        }
-    }
-}
-
-function mostrarCapitulos(capitulosObj, temporadaPadre) {
-    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
-    const contenedor = document.getElementById('det-temporadas');
-    
-    contenedor.innerHTML = `<button onclick="mostrarIdiomas(obraActual.temporadas.find(t => t.nombre === '${temporadaPadre.nombre}'))" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Idiomas</button>`;
-
-    for (const [capitulo, url] of Object.entries(capitulosObj)) {
-        const btn = document.createElement('button');
-        btn.style.cssText = "display: block; width: 100%; text-align: left; background: #18181b; border: 1px solid #3ba4fa; padding: 12px; border-radius: 8px; color: white; margin-bottom: 8px; cursor: pointer;";
-        btn.innerHTML = `<i class="fa-solid fa-play" style="color: #3ba4fa; margin-right: 8px;"></i> ${capitulo}`;
-        btn.onclick = () => abrirEnlaceTelegram(url);
-        contenedor.appendChild(btn);
-    }
-}
-
-function abrirEnlaceTelegram(url) {
-    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
-    if (url.includes('t.me')) {
-        tg.openTelegramLink(url);
-    } else {
-        tg.openLink(url);
-    }
-}
-
-// =========================================
-// 8. FILTROS, BUSCADOR Y RENDERIZADO CATÁLOGO
+// 6. CATÁLOGO Y FILTROS
 // =========================================
 async function cargarObras() {
     const { data: obras, error } = await _supabase
@@ -538,12 +240,11 @@ if(inputBuscador) {
 
 function filtrar(estado, evento) {
     if (tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
-    document.querySelectorAll('.btn-filtro, .categoria-item').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('active'));
     if(evento) evento.currentTarget.classList.add('active');
 
     filtrosActuales.estado = estado;
     filtrosActuales.soloFavoritos = estado === 'Favoritos';
-    
     aplicarTodosLosFiltros();
 }
 
@@ -570,13 +271,15 @@ function renderizarObras(obras) {
     }).join('');
 }
 
+// =========================================
+// 7. FAVORITOS
+// =========================================
 function esFavorito(animeId) {
     if (!animeId) return false;
     return listaFavoritos.map(String).includes(String(animeId));
 }
 
 async function cargarFavoritosUsuario() {
-    // Usamos el ID que ya tenemos guardado (funciona en PC y Móvil)
     if (!userIdActual || userIdActual === "anonimo") return;
 
     const { data, error } = await _supabase
@@ -584,30 +287,16 @@ async function cargarFavoritosUsuario() {
         .select('nombre_item')
         .eq('user_id_telegram', userIdActual);
 
-    if (error) {
-        console.error('Error cargando favoritos:', error);
-        return;
-    }
-
-    listaFavoritos = Array.isArray(data) ? data.map(item => String(item.nombre_item)) : [];
-}
-
-function esAdmin() {
-    // Reemplaza "tu_id_de_telegram" por tu número de ID real
-    // Ejemplo: return userIdActual === "123456789";
-    return userIdActual === "1310733615"; // ID de Telegram de Kaergsty
+    if (!error) listaFavoritos = Array.isArray(data) ? data.map(i => String(i.nombre_item)) : [];
 }
 
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation(); 
-    
-    // Si no está logueado, le pedimos que inicie sesión
     if (!userIdActual || userIdActual === "anonimo") {
         alert('Inicia sesión con Telegram para guardar tus favoritos.');
-        if (typeof abrirModalAuth === 'function') abrirModalAuth();
+        abrirModalAuth();
         return;
     }
-    
     if (!animeId) return;
 
     const userIdStr = String(userIdActual);
@@ -617,40 +306,30 @@ async function toggleFavorito(event, animeId) {
     try {
         let resultado;
         if (yaEsFavorito) {
-            resultado = await _supabase
-                .from('favoritos')
-                .delete()
-                .eq('user_id_telegram', userIdStr)
-                .eq('nombre_item', nombreItem);
+            resultado = await _supabase.from('favoritos').delete().eq('user_id_telegram', userIdStr).eq('nombre_item', nombreItem);
         } else {
-            resultado = await _supabase
-                .from('favoritos')
-                .insert([{ user_id_telegram: userIdStr, nombre_item: nombreItem }]);
+            resultado = await _supabase.from('favoritos').insert([{ user_id_telegram: userIdStr, nombre_item: nombreItem }]);
         }
-
         if (resultado.error) throw resultado.error;
 
         await cargarFavoritosUsuario();
         aplicarTodosLosFiltros(); 
         actualizarEstadoFavoritoDetalle(); 
     } catch (error) {
-        console.error('Error:', error);
-        alert('No se pudo actualizar el favorito.');
+        console.error('Error favoritos:', error);
     }
 }
 
 function toggleFavoritoDetalle(event) {
     if (event) event.stopPropagation();
-    if (!obraActual) return;
-    toggleFavorito(event, obraActual.id);
+    if (obraActual) toggleFavorito(event, obraActual.id);
 }
 
 function actualizarEstadoFavoritoDetalle() {
     const btn = document.getElementById('det-favorito-btn');
-    if (!btn) return;
+    if (!btn || !obraActual) return;
 
-    const esFav = obraActual && esFavorito(String(obraActual.id));
-    if (esFav) {
+    if (esFavorito(String(obraActual.id))) {
         btn.classList.add('favorito-activo');
         btn.innerHTML = '<i class="fa-solid fa-heart" style="color:#ff4757;"></i> Quitar de favoritos';
     } else {
@@ -660,247 +339,262 @@ function actualizarEstadoFavoritoDetalle() {
 }
 
 // =========================================
-// 9. REGISTRO Y EDICIÓN DE OBRAS (SISTEMA DE ROLES APLICADO)
+// 8. VISTA DETALLE
 // =========================================
+function abrirDetalle(tituloObra) {
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('medium');
+    
+    obraActual = todasLasObras.find(o => o.titulo === tituloObra);
+    if (!obraActual) return;
+
+    const setContent = (id, value) => { if(document.getElementById(id)) document.getElementById(id).textContent = value; };
+    const imgBanner = document.getElementById('det-banner');
+    if(imgBanner) imgBanner.src = obraActual.banner_url || obraActual.portada_url || '';
+    
+    const imgPort = document.getElementById('det-portada');
+    if(imgPort) {
+        imgPort.src = obraActual.portada_url || '';
+        imgPort.style.opacity = 1;
+        imgPort.onclick = (e) => { e.preventDefault(); e.stopPropagation(); verImagenGrande(imgPort.src); };
+    }
+    
+    setContent('det-titulo', obraActual.titulo || 'Sin título');
+    
+    let nombresAlt = [];
+    if(obraActual.nombres_alternativos?.Japonés) nombresAlt.push(obraActual.nombres_alternativos.Japonés);
+    if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
+    setContent('det-nombres-alt', nombresAlt.join(' • '));
+
+    const tagsContainer = document.getElementById('det-tags');
+    if(tagsContainer) {
+        tagsContainer.innerHTML = '';
+        (obraActual.generos || []).forEach(g => tagsContainer.innerHTML += `<span class="tag">${g}</span>`);
+    }
+
+    setContent('det-estado', obraActual.estado || '--');
+    setContent('det-tipo', obraActual.tipo || '--');
+    setContent('det-estudio', obraActual.estudio || '--');
+    setContent('det-origen', obraActual.origen || '--');
+    setContent('det-dia', obraActual.dia_emision || '--');
+    setContent('det-estreno', obraActual.estreno || '--');
+    setContent('det-autor', obraActual.autor || '--');
+    setContent('det-sinopsis', obraActual.sinopsis || 'Sin descripción.');
+
+    const infoSidebar = document.querySelector('.detalle-sidebar');
+    if (infoSidebar) {
+        infoSidebar.querySelectorAll('.info-item[data-din="extra"]').forEach(n => n.remove());
+        if (obraActual.propiedades_extra && typeof obraActual.propiedades_extra === 'object') {
+            Object.entries(obraActual.propiedades_extra).forEach(([clave, valor]) => {
+                const divExtra = document.createElement('div');
+                divExtra.className = 'info-item';
+                divExtra.dataset.din = 'extra'; 
+                divExtra.innerHTML = `<span>${clave}:</span> <strong>${valor}</strong>`;
+                infoSidebar.appendChild(divExtra);
+            });
+        }
+    }
+
+    const btnEditar = document.getElementById('btn-edit-serie');
+    if (btnEditar) {
+        // CUALQUIER USUARIO LOGUEADO PUEDE EDITAR (Para ser colaborador)
+        if (userIdActual !== "anonimo") {
+            btnEditar.style.setProperty('display', 'block', 'important');
+        } else {
+            btnEditar.style.setProperty('display', 'none', 'important');
+        }
+    }
+
+    iniciarNavegacionContenido(obraActual.temporadas);
+    actualizarEstadoFavoritoDetalle();
+    cambiarVista('detalle');
+}
+
+// =========================================
+// 9. NAVEGACIÓN DE CAPÍTULOS
+// =========================================
+function iniciarNavegacionContenido(temporadasData) {
+    const contenedor = document.getElementById('det-temporadas');
+    if(!contenedor) return;
+    
+    contenedor.innerHTML = '';
+    const imgPortada = document.getElementById('det-portada');
+    if (imgPortada && obraActual) {
+        imgPortada.src = obraActual.portada_url || ''; 
+        imgPortada.style.opacity = 1;
+    }
+
+    if (!temporadasData || !Array.isArray(temporadasData) || temporadasData.length === 0) {
+        contenedor.innerHTML = '<p class="text-muted" style="color: #a1a1aa;">Aún no hay enlaces disponibles.</p>';
+        return;
+    }
+
+    const seccionesObj = {};
+    temporadasData.forEach(temp => {
+        const nombreSeccion = temp.seccion || "Contenido Principal";
+        if (!seccionesObj[nombreSeccion]) seccionesObj[nombreSeccion] = [];
+        seccionesObj[nombreSeccion].push(temp);
+    });
+
+    for (const [secName, temps] of Object.entries(seccionesObj)) {
+        const titulo = document.createElement('h4');
+        titulo.style.cssText = "margin-top: 15px; margin-bottom: 10px; color: #3ba4fa; font-size: 14px;";
+        titulo.textContent = secName;
+        contenedor.appendChild(titulo);
+        
+        temps.forEach(temp => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-dinamico';
+            btn.innerHTML = `<i class="fa-solid fa-folder-open" style="color: #3ba4fa; margin-right: 8px;"></i> ${temp.nombre}`;
+            btn.onclick = () => mostrarIdiomas(temp);
+            contenedor.appendChild(btn);
+        });
+    }
+}
+
+function mostrarIdiomas(temporadaObj) {
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
+    const contenedor = document.getElementById('det-temporadas');
+    
+    contenedor.innerHTML = `<button onclick="iniciarNavegacionContenido(obraActual.temporadas)" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Temporadas</button>`;
+
+    if(temporadaObj.imagen && temporadaObj.imagen !== "") {
+        const imgPortada = document.getElementById('det-portada');
+        if(imgPortada) {
+            imgPortada.style.opacity = 0.3;
+            setTimeout(() => { imgPortada.src = temporadaObj.imagen; imgPortada.style.opacity = 1; }, 150);
+        }
+    }
+
+    if (temporadaObj.enlaces) {
+        for (const [idioma, capitulos] of Object.entries(temporadaObj.enlaces)) {
+            const btn = document.createElement('button');
+            btn.className = 'btn-dinamico';
+            btn.innerHTML = `<i class="fa-solid fa-language" style="color: #10b981; margin-right: 8px;"></i> Audio: ${idioma}`;
+            btn.onclick = () => mostrarCapitulos(capitulos, temporadaObj);
+            contenedor.appendChild(btn);
+        }
+    }
+}
+
+function mostrarCapitulos(capitulosObj, temporadaPadre) {
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
+    const contenedor = document.getElementById('det-temporadas');
+    
+    contenedor.innerHTML = `<button onclick="mostrarIdiomas(obraActual.temporadas.find(t => t.nombre === '${temporadaPadre.nombre}'))" style="background: transparent; border: none; color: #a1a1aa; padding-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-chevron-left"></i> Volver a Idiomas</button>`;
+
+    for (const [capitulo, url] of Object.entries(capitulosObj)) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-dinamico';
+        btn.style.borderColor = '#3ba4fa';
+        btn.innerHTML = `<i class="fa-solid fa-play" style="color: #3ba4fa; margin-right: 8px;"></i> ${capitulo}`;
+        btn.onclick = () => abrirEnlaceTelegram(url);
+        contenedor.appendChild(btn);
+    }
+}
+
+function abrirEnlaceTelegram(url) {
+    if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
+    url.includes('t.me') ? tg.openTelegramLink(url) : tg.openLink(url);
+}
+
+// =========================================
+// 10. LÓGICA DE ROLES Y REGISTRO (CORREGIDO)
+// =========================================
+
+// Para CREAR un nuevo anime (Eres dueño automáticamente)
 function prepararNuevoRegistro() {
     idAnimeEnEdicion = null;
     obraActual = null;
 
-    const btnPublicar = document.getElementById('btn-publicar');
-    if(btnPublicar) btnPublicar.textContent = "Publicar Obra";
-
-    const form = document.getElementById('form-anime');
-    if(form) form.reset();
-
-    // Limpiar temporadas
-    const builder = document.getElementById('builder-temporadas');
-    if(builder) builder.innerHTML = '';
+    document.getElementById('btn-publicar').textContent = "Publicar Obra";
     
-    // --- RESETEO TOTAL DE PROPIEDADES EXTRA ---
-    const containerExtra = document.getElementById('extra-props-container');
-    if(containerExtra) {
-        containerExtra.innerHTML = '';
-        containerExtra.style.pointerEvents = "auto"; // Permitir clics
-        containerExtra.style.opacity = "1";
-    }
-
-    const btnAddProp = document.getElementById('btn-add-prop');
-    if (btnAddProp) {
-        btnAddProp.disabled = false;
-        btnAddProp.style.opacity = "1";
-        btnAddProp.style.pointerEvents = "auto";
-        btnAddProp.style.cursor = "pointer";
-        // IMPORTANTE: Devolverle su función de clic
-        btnAddProp.setAttribute('onclick', 'agregarPropiedadUI()');
-    }
-
-    // Desbloquear campos principales
-    const camposPrivados = [
-        'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
-        'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
-        'in-dia', 'in-japones', 'in-ingles'
-    ];
-    
-    camposPrivados.forEach(id => {
+    // Limpiar campos
+    const inputsId = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 'in-dia', 'in-japones', 'in-ingles'];
+    inputsId.forEach(id => {
         const input = document.getElementById(id);
         if (input) {
+            input.value = "";
             input.disabled = false;
-            input.style.opacity = "1";
-            input.style.filter = "none";
-            input.style.cursor = "text";
+            input.classList.remove('campo-bloqueado');
         }
     });
 
-    document.querySelectorAll('#generos-container input').forEach(cb => {
-        cb.disabled = false;
-        if (cb.parentElement) cb.parentElement.style.opacity = "1";
-    });
+    document.querySelectorAll('#generos-container input').forEach(cb => { cb.checked = false; cb.disabled = false; cb.parentElement.classList.remove('campo-bloqueado'); });
+    document.getElementById('builder-temporadas').innerHTML = '';
+    
+    const containerExtra = document.getElementById('extra-props-container');
+    if(containerExtra) { containerExtra.innerHTML = ''; containerExtra.classList.remove('campo-bloqueado'); }
+    
+    const btnAddProp = document.getElementById('btn-add-prop');
+    if (btnAddProp) { btnAddProp.disabled = false; btnAddProp.style.display = 'block'; }
 
-    // Empezar con una fila vacía para que el usuario pueda escribir de inmediato
     agregarPropiedadUI();
-
     cambiarVista('registro');
 }
 
+// Para EDITAR un anime existente (Valida si eres Dueño o Colaborador)
 function prepararEdicionDesdeDetalle() {
     if (!obraActual) return;
-
     idAnimeEnEdicion = obraActual.id; 
-    
-    const btnPublicar = document.getElementById('btn-publicar');
-    if(btnPublicar) btnPublicar.textContent = "Guardar Cambios";
+    document.getElementById('btn-publicar').textContent = "Guardar Cambios";
 
-    // 1. Llenamos los datos principales
-    if(document.getElementById('in-titulo')) document.getElementById('in-titulo').value = obraActual.titulo || '';
-    if(document.getElementById('in-portada')) document.getElementById('in-portada').value = obraActual.portada_url || '';
-    if(document.getElementById('in-banner')) document.getElementById('in-banner').value = obraActual.banner_url || '';
-    if(document.getElementById('in-estado')) document.getElementById('in-estado').value = obraActual.estado || 'En emisión';
-    if(document.getElementById('in-tipo')) document.getElementById('in-tipo').value = obraActual.tipo || 'TV';
-    if(document.getElementById('in-sinopsis')) document.getElementById('in-sinopsis').value = obraActual.sinopsis || '';
-    if(document.getElementById('in-autor')) document.getElementById('in-autor').value = obraActual.autor || '';
-    if(document.getElementById('in-estudio')) document.getElementById('in-estudio').value = obraActual.estudio || '';
-    if(document.getElementById('in-origen')) document.getElementById('in-origen').value = obraActual.origen || '';
-    if(document.getElementById('in-estreno')) document.getElementById('in-estreno').value = obraActual.estreno || '';
-    if(document.getElementById('in-dia')) document.getElementById('in-dia').value = obraActual.dia_emision || '';
-    if(document.getElementById('in-japones')) document.getElementById('in-japones').value = obraActual.nombres_alternativos?.Japonés || '';
-    if(document.getElementById('in-ingles')) document.getElementById('in-ingles').value = obraActual.nombres_alternativos?.Ingles || '';
+    // 1. Validar Permisos
+    const esPropietario = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
 
-    // Marcar géneros
+    // 2. Llenar datos base
+    const mapVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ''; };
+    mapVal('in-titulo', obraActual.titulo);
+    mapVal('in-portada', obraActual.portada_url);
+    mapVal('in-banner', obraActual.banner_url);
+    mapVal('in-estado', obraActual.estado || 'En emisión');
+    mapVal('in-tipo', obraActual.tipo || 'TV');
+    mapVal('in-sinopsis', obraActual.sinopsis);
+    mapVal('in-autor', obraActual.autor);
+    mapVal('in-estudio', obraActual.estudio);
+    mapVal('in-origen', obraActual.origen);
+    mapVal('in-estreno', obraActual.estreno);
+    mapVal('in-dia', obraActual.dia_emision);
+    mapVal('in-japones', obraActual.nombres_alternativos?.Japonés);
+    mapVal('in-ingles', obraActual.nombres_alternativos?.Ingles);
+
     const generosAnime = obraActual.generos || [];
-    document.querySelectorAll('#generos-container input').forEach(cb => {
-        cb.checked = generosAnime.includes(cb.value);
-    });
+    document.querySelectorAll('#generos-container input').forEach(cb => cb.checked = generosAnime.includes(cb.value));
 
-    // LÓGICA DE ROLES
-    const esPropietario = String(obraActual.creador_id) === userIdActual;
-
-    // 2. Bloqueo visual de campos principales
-    const camposPrivados = [
-        'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
-        'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
-        'in-dia', 'in-japones', 'in-ingles'
-    ];
+    // 3. Aplicar Bloqueos si es Colaborador
+    const camposPrivados = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 'in-dia', 'in-japones', 'in-ingles'];
     
     camposPrivados.forEach(id => {
         const input = document.getElementById(id);
         if (input) {
             input.disabled = !esPropietario;
-            input.style.opacity = esPropietario ? "1" : "0.5";
-            input.style.filter = esPropietario ? "none" : "grayscale(100%)";
-            input.style.cursor = esPropietario ? "text" : "not-allowed";
+            if(!esPropietario) input.classList.add('campo-bloqueado'); else input.classList.remove('campo-bloqueado');
         }
     });
 
     document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.disabled = !esPropietario;
-        if (cb.parentElement) {
-            cb.parentElement.style.opacity = esPropietario ? "1" : "0.5";
-        }
+        if(!esPropietario && cb.parentElement) cb.parentElement.classList.add('campo-bloqueado');
+        else if (cb.parentElement) cb.parentElement.classList.remove('campo-bloqueado');
     });
 
-    // 3. Cargamos temporadas y propiedades adicionales
-    cargarDatosTemporadas(obraActual.temporadas || []);
-    cargarInfoAdicional(obraActual.propiedades_extra || {});
-
-    // Referencias para bloqueo de Propiedades Extra
     const btnAddProp = document.getElementById('btn-add-prop');
     const extraPropsContainer = document.getElementById('extra-props-container');
-
-    // 4. Lógica de bloqueo para Colaboradores vs Dueño
     if (!esPropietario) {
-        // Bloqueo estricto para colaboradores
-        if (btnAddProp) {
-            btnAddProp.disabled = true;
-            btnAddProp.removeAttribute('onclick');
-            btnAddProp.style.opacity = "0.5";
-            btnAddProp.style.pointerEvents = "none";
-        }
-
-        if (extraPropsContainer) {
-            extraPropsContainer.style.pointerEvents = "none";
-            extraPropsContainer.querySelectorAll('input, button, textarea').forEach(el => {
-                el.disabled = true;
-                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                    el.readOnly = true;
-                    el.style.opacity = "0.5";
-                    el.style.backgroundColor = "#27272a";
-                } else if (el.tagName === 'BUTTON') {
-                    el.style.display = 'none'; 
-                }
-            });
-        }
-
-        // Bloqueo de secciones/temporadas según quién las creó
-        const secciones = document.querySelectorAll('#builder-temporadas .seccion-block');
-        secciones.forEach(sec => {
-            const secCreator = sec.dataset.creador || String(obraActual.creador_id);
-            if (secCreator === String(userIdActual)) {
-                sec.style.opacity = '1';
-                sec.style.pointerEvents = 'auto';
-                sec.style.filter = 'none';
-                sec.querySelectorAll('input, button').forEach(el => {
-                    el.disabled = false;
-                    if (el.tagName === 'BUTTON') el.style.display = '';
-                });
-            } else {
-                sec.style.opacity = '0.5';
-                sec.style.filter = 'grayscale(100%)';
-                sec.style.pointerEvents = 'none';
-                sec.querySelectorAll('input, button').forEach(el => {
-                    el.disabled = true;
-                    if (el.tagName === 'BUTTON') el.style.display = 'none';
-                });
-            }
-        });
-        btnEditar.onclick = () => prepararEdicion(obra);
+        if (btnAddProp) btnAddProp.style.display = 'none';
+        if (extraPropsContainer) extraPropsContainer.classList.add('campo-bloqueado');
     } else {
-        btnEditar.style.display = 'none';
-    
+        if (btnAddProp) btnAddProp.style.display = 'block';
+        if (extraPropsContainer) extraPropsContainer.classList.remove('campo-bloqueado');
     }
 
+    // 4. Cargar Temporadas y Extras
+    cargarInfoAdicional(obraActual.propiedades_extra || {});
+    cargarDatosTemporadas(obraActual.temporadas || []);
+
     cambiarVista('registro');
-
-    document.getElementById('form-registro').reset();
-    document.getElementById('reg-id').value = "";
-    document.getElementById('builder-temporadas').innerHTML = "";
-
-    // Desbloquear todo para nuevos registros
-    const campos = ['reg-titulo', 'reg-descripcion', 'reg-portada', 'reg-banner', 'reg-tipo', 'reg-estado'];
-    campos.forEach(id => {
-        const input = document.getElementById(id);
-        if(input) {
-            input.disabled = false;
-            input.classList.remove('campo-bloqueado');
-        }
-    });
 }
 
-// NUEVA FUNCIÓN: Pégala después de mostrarDetalle
-function prepararEdicion(obra) {
-    // 1. Definir permisos (Admin o creador de la obra)
-    const esAdmin = userIdActual === ADMIN_ID; 
-    const esDuenio = userIdActual === obra.user_id; 
-    const tienePermisoTotal = esAdmin || esDuenio;
-
-    // 2. Cambiar a la vista de registro
-    cambiarVista('registro');
-
-    // 3. Llenar los campos (usando los IDs que tienes en tu index.html)
-    document.getElementById('reg-id').value = obra.id || "";
-    document.getElementById('reg-titulo').value = obra.titulo || "";
-    document.getElementById('reg-descripcion').value = obra.descripcion || "";
-    document.getElementById('reg-portada').value = obra.portada || "";
-    document.getElementById('reg-banner').value = obra.banner || "";
-    document.getElementById('reg-tipo').value = obra.tipo || "Anime";
-    document.getElementById('reg-estado').value = obra.estado || "En Emisión";
-
-    // 4. Lógica de bloqueo para Colaboradores
-    const camposPrincipales = [
-        'reg-titulo', 'reg-descripcion', 'reg-portada', 
-        'reg-banner', 'reg-tipo', 'reg-estado'
-    ];
-
-    camposPrincipales.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            if (tienePermisoTotal) {
-                input.classList.remove('campo-bloqueado');
-                input.disabled = false;
-            } else {
-                input.classList.add('campo-bloqueado');
-                input.disabled = true;
-            }
-        }
-    });
-
-    // 5. Cargar las temporadas (Esto el colaborador SÍ puede editarlo)
-    const container = document.getElementById('builder-temporadas');
-    container.innerHTML = "";
-    if (obra.temporadas && Array.isArray(obra.temporadas)) {
-        obra.temporadas.forEach(temp => agregarTemporadaAlDOM(temp));
-    }
-}
-
+// Al presionar Guardar/Publicar
 async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
     const inTitulo = document.getElementById('in-titulo');
@@ -908,7 +602,8 @@ async function ejecutarRegistro() {
     
     if(!inTitulo || !inPortada) return;
 
-    const esPropietario = idAnimeEnEdicion ? (String(obraActual.creador_id) === userIdActual) : true;
+    // Lógica de validación
+    const esPropietario = idAnimeEnEdicion ? ((String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID)) : true;
 
     if (esPropietario && (!inTitulo.value.trim() || !inPortada.value.trim())) {
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
@@ -919,106 +614,47 @@ async function ejecutarRegistro() {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
 
     try {
-        let resultado;
+        let datosObra = {};
         
-        if (idAnimeEnEdicion) {
-            // MODO EDICIÓN
-            let datosObra = {};
-
-            if (esPropietario) {
-                // Dueño actualiza todo: leemos primero en variables, luego sanitizamos
-                const titulo = inTitulo.value.trim();
-                const portadaUrl = inPortada.value.trim();
-                const bannerUrl = document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '';
-                const descripcion = document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : '';
-                const estado = document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión';
-                const tipo = document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV';
-                const estudio = document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '';
-                const autor = document.getElementById('in-autor') ? document.getElementById('in-autor').value : '';
-                const origen = document.getElementById('in-origen') ? document.getElementById('in-origen').value : '';
-                const estreno = document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '';
-                const dia_emision = document.getElementById('in-dia') ? document.getElementById('in-dia').value : '';
-                const nombresAlt = {
-                    Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
-                    Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
-                };
-                const generosSeleccionados = Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value);
-                const temporadas = recolectarDatosTemporadas();
-                const infoAdicional = recolectarCamposExtras();
-
-                datosObra = {
-                    titulo: sanitizar(titulo),
-                    portada_url: portadaUrl,
-                    banner_url: bannerUrl,
-                    sinopsis: sanitizar(descripcion),
-                    estado: sanitizar(estado),
-                    tipo: sanitizar(tipo),
-                    estudio: sanitizar(estudio),
-                    autor: sanitizar(autor),
-                    origen: sanitizar(origen),
-                    estreno: sanitizar(estreno),
-                    dia_emision: sanitizar(dia_emision),
-                    nombres_alternativos: {
-                        Japonés: sanitizar(nombresAlt.Japonés),
-                        Ingles: sanitizar(nombresAlt.Ingles)
-                    },
-                    generos: generosSeleccionados,
-                    temporadas: temporadas,
-                    propiedades_extra: infoAdicional
-                };
-            } else {
-                // Colaborador SOLO actualiza las temporadas (Mezcla las bloqueadas del dueño con las suyas propias)
-                datosObra = {
-                    temporadas: recolectarDatosTemporadas()
-                };
-            }
-
-            resultado = await _supabase.from('obras').update(datosObra).eq('id', idAnimeEnEdicion);
-
-        } else {
-            // MODO CREACIÓN
-            // MODO CREACIÓN: leemos y sanitizamos antes de insertar
-            const titulo = inTitulo.value.trim();
-            const portadaUrl = inPortada.value.trim();
-            const bannerUrl = document.getElementById('in-banner') ? document.getElementById('in-banner').value.trim() : '';
-            const descripcion = document.getElementById('in-sinopsis') ? document.getElementById('in-sinopsis').value.trim() : '';
-            const estado = document.getElementById('in-estado') ? document.getElementById('in-estado').value : 'En emisión';
-            const tipo = document.getElementById('in-tipo') ? document.getElementById('in-tipo').value : 'TV';
-            const estudio = document.getElementById('in-estudio') ? document.getElementById('in-estudio').value : '';
-            const autor = document.getElementById('in-autor') ? document.getElementById('in-autor').value : '';
-            const origen = document.getElementById('in-origen') ? document.getElementById('in-origen').value : '';
-            const estreno = document.getElementById('in-estreno') ? document.getElementById('in-estreno').value : '';
-            const dia_emision = document.getElementById('in-dia') ? document.getElementById('in-dia').value : '';
-            const nombresAlt = {
-                Japonés: document.getElementById('in-japones') ? document.getElementById('in-japones').value.trim() : '',
-                Ingles: document.getElementById('in-ingles') ? document.getElementById('in-ingles').value.trim() : ''
-            };
-            const generosSeleccionados = Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value);
-            const temporadas = recolectarDatosTemporadas();
-            const infoAdicional = recolectarCamposExtras();
-
-            const datosObra = {
-                titulo: sanitizar(titulo),
-                portada_url: portadaUrl,
-                banner_url: bannerUrl,
-                sinopsis: sanitizar(descripcion),
-                estado: sanitizar(estado),
-                tipo: sanitizar(tipo),
-                estudio: sanitizar(estudio),
-                autor: sanitizar(autor),
-                origen: sanitizar(origen),
-                estreno: sanitizar(estreno),
-                dia_emision: sanitizar(dia_emision),
+        // Si eres el dueño (o estás creando algo nuevo), actualizas todo.
+        if (esPropietario) {
+            const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value.trim() : '';
+            datosObra = {
+                titulo: sanitizar(getVal('in-titulo')),
+                portada_url: getVal('in-portada'),
+                banner_url: getVal('in-banner'),
+                sinopsis: sanitizar(getVal('in-sinopsis')),
+                estado: sanitizar(getVal('in-estado') || 'En emisión'),
+                tipo: sanitizar(getVal('in-tipo') || 'TV'),
+                estudio: sanitizar(getVal('in-estudio')),
+                autor: sanitizar(getVal('in-autor')),
+                origen: sanitizar(getVal('in-origen')),
+                estreno: sanitizar(getVal('in-estreno')),
+                dia_emision: sanitizar(getVal('in-dia')),
                 nombres_alternativos: {
-                    Japonés: sanitizar(nombresAlt.Japonés),
-                    Ingles: sanitizar(nombresAlt.Ingles)
+                    Japonés: sanitizar(getVal('in-japones')),
+                    Ingles: sanitizar(getVal('in-ingles'))
                 },
-                generos: generosSeleccionados,
-                temporadas: temporadas,
-                creador_id: userIdActual,
-                propiedades_extra: infoAdicional
+                generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
+                temporadas: recolectarDatosTemporadas(), // Recoge todo
+                propiedades_extra: recolectarCamposExtras()
             };
 
+            if (!idAnimeEnEdicion) {
+                datosObra.creador_id = userIdActual; // Al crear, se registra como dueño
+            }
+        } else {
+            // SI ERES COLABORADOR: SOLO se actualiza el array de temporadas.
+            // recolectarDatosTemporadas() recogerá también los inputs bloqueados (los del dueño) y los tuyos nuevos.
+            datosObra = {
+                temporadas: recolectarDatosTemporadas()
+            };
+        }
+
+        let resultado;
+        if (idAnimeEnEdicion) {
+            resultado = await _supabase.from('obras').update(datosObra).eq('id', idAnimeEnEdicion);
+        } else {
             resultado = await _supabase.from('obras').insert([datosObra]);
         }
 
@@ -1026,9 +662,6 @@ async function ejecutarRegistro() {
 
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('success');
         alert(idAnimeEnEdicion ? "✅ Cambios guardados" : "✅ Publicado con éxito");
-
-        // --- Limpiar el formulario para permitir un nuevo registro ---
-        prepararNuevoRegistro(); // Limpia inputs y contenedores dinámicos
 
         idAnimeEnEdicion = null;
         await cargarObras(); 
@@ -1043,53 +676,7 @@ async function ejecutarRegistro() {
 }
 
 // =========================================
-// 10. SISTEMA DE AUTENTICACIÓN
-// =========================================
-const btnAdminView = document.getElementById('btn-admin-view');
-const btnAuth = document.getElementById('btn-auth');
-const authMensaje = document.getElementById('auth-mensaje');
-
-function abrirModalAuth() {
-    const modal = document.getElementById('modal-auth');
-    if (modal) {
-        modal.classList.remove('modal-oculto');
-        if(document.getElementById('auth-password')) document.getElementById('auth-password').value = "";
-        if(document.getElementById('auth-mensaje')) document.getElementById('auth-mensaje').innerText = "";
-    }
-}
-
-function cerrarModalAuth() {
-    const modal = document.getElementById('modal-auth');
-    if (modal) {
-        modal.classList.add('modal-oculto');
-        if(document.getElementById('auth-password')) document.getElementById('auth-password').value = "";
-    }
-}
-
-function obtenerEmailVirtual() {
-    const user = tg.initDataUnsafe?.user;
-    if (!user || !user.id) return "admin_pc@kaergsty.hub"; 
-    return `${user.id}@kaergsty.hub`;
-}
-
-function mostrarErrorAuth(msg) {
-    const authMensaje = document.getElementById('auth-mensaje');
-    if(authMensaje) {
-        authMensaje.style.color = '#ef4444';
-        authMensaje.textContent = msg;
-    }
-}
-function mostrarMensajeAuth(msg, color) {
-    const authMensaje = document.getElementById('auth-mensaje');
-    if(authMensaje) {
-        authMensaje.style.color = color;
-        authMensaje.textContent = msg;
-    }
-}
-
-
-// =========================================
-// 11. CONSTRUCTOR VISUAL DE TEMPORADAS Y SECCIONES
+// 11. CONSTRUCTOR VISUAL DE TEMPORADAS (CORREGIDO PARA ROLES)
 // =========================================
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null) {
     const container = document.getElementById('builder-temporadas');
@@ -1099,36 +686,48 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     secBlock.className = 'seccion-block';
     secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
+    // Definir quién es el creador de esta sección para el bloqueo
+    const resolvedCreador = (creadorId !== null && creadorId !== undefined && creadorId !== '') 
+        ? String(creadorId) 
+        : String(userIdActual); // Si es nueva, el creador es el que la está agregando ahora mismo.
+        
+    secBlock.dataset.creador = resolvedCreador;
+
+    // Verificamos si el usuario actual tiene permiso de editar ESTA sección específica
+    const puedeEditarEstaSeccion = (resolvedCreador === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
+
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
-            <input type="text" class="sec-nombre" placeholder="Nombre de tu Pagina o Grupo" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
-            <button type="button" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
+            <input type="text" class="sec-nombre" placeholder="Nombre de tu Página o Grupo" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
+            <button type="button" class="btn-delete-sec" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
         <div class="lista-temporadas"></div>
-        <button type="button" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+        <button type="button" class="btn-add-sub" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
             <i class="fa-solid fa-plus"></i> Añadir Nueva Temporada
         </button>
     `;
 
-    // Determinar y guardar el creador de esta sección en el DOM
-    const resolvedCreador = (creadorId !== null)
-        ? String(creadorId)
-        : (idAnimeEnEdicion ? String(userIdActual) : (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : ''));
-    secBlock.dataset.creador = resolvedCreador;
-
     container.appendChild(secBlock);
+
+    // Aplicar bloqueo visual si no puede editarla
+    if (!puedeEditarEstaSeccion) {
+        secBlock.classList.add('campo-bloqueado');
+        secBlock.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        secBlock.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
+    }
+
     const listaTemps = secBlock.querySelector('.lista-temporadas');
 
     if (temporadasArray && Array.isArray(temporadasArray)) {
-        temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos));
+        temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos, puedeEditarEstaSeccion));
     } else {
-        agregarSubTemporadaUI(listaTemps);
+        agregarSubTemporadaUI(listaTemps, null, puedeEditarEstaSeccion);
     }
 }
 
-function agregarSubTemporadaUI(containerLista, datos = null) {
+function agregarSubTemporadaUI(containerLista, datos = null, puedeEditar = true) {
     if (!containerLista) return;
     const bloque = document.createElement('div');
     bloque.className = 'temporada-block';
@@ -1137,7 +736,7 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
     bloque.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
             <input type="text" class="temp-nombre" placeholder="Nombre (Ej: Temporada 1)" value="${datos?.nombre || ''}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #27272a; background: #0f0f11; color: white; outline: none;">
-            <button type="button" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
+            <button type="button" class="btn-del-sub" onclick="this.closest('.temporada-block').remove()" style="background:transparent; color:#ef4444; border:none; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
@@ -1145,23 +744,28 @@ function agregarSubTemporadaUI(containerLista, datos = null) {
         
         <div class="idiomas-container">
             <div class="lista-idiomas" style="display: flex; flex-direction: column; gap: 10px;"></div>
-            <button type="button" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
+            <button type="button" class="btn-add-idioma" onclick="agregarIdiomaUI(this.previousElementSibling)" style="margin-top: 10px; padding: 8px 15px; background:#27272a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
                 <i class="fa-solid fa-plus"></i> Añadir Idioma
             </button>
         </div>
     `;
 
     containerLista.appendChild(bloque);
-    const listaIdiomas = bloque.querySelector('.lista-idiomas');
 
+    if (!puedeEditar) {
+        bloque.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        bloque.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
+    }
+
+    const listaIdiomas = bloque.querySelector('.lista-idiomas');
     if (datos?.enlaces) {
-        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps));
+        Object.entries(datos.enlaces).forEach(([idioma, caps]) => agregarIdiomaUI(listaIdiomas, idioma, caps, puedeEditar));
     } else {
-        agregarIdiomaUI(listaIdiomas);
+        agregarIdiomaUI(listaIdiomas, '', null, puedeEditar);
     }
 }
 
-function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
+function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null, puedeEditar = true) {
     if (!containerLista) return;
     const divIdioma = document.createElement('div');
     divIdioma.className = 'idioma-bloque';
@@ -1170,81 +774,77 @@ function agregarIdiomaUI(containerLista, nombreIdioma = '', capitulos = null) {
     divIdioma.innerHTML = `
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <input type="text" class="idioma-nombre" placeholder="Idioma" value="${nombreIdioma}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; outline: none;">
-            <button type="button" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-del-id" onclick="this.closest('.idioma-bloque').remove()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; padding: 8px 12px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="lista-capitulos" style="display: flex; flex-direction: column; gap: 5px; margin-left: 10px; border-left: 2px solid #27272a; padding-left: 10px;"></div>
-        <button type="button" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
+        <button type="button" class="btn-add-cap" onclick="agregarCapituloUI(this.previousElementSibling)" style="margin-top: 10px; margin-left: 10px; padding: 6px 12px; background: transparent; border: 1px dashed #3ba4fa; color: #3ba4fa; border-radius: 6px; cursor: pointer; font-size: 12px;">
             + Añadir Capítulo
         </button>
     `;
 
     containerLista.appendChild(divIdioma);
-    const listaCaps = divIdioma.querySelector('.lista-capitulos');
+    
+    if (!puedeEditar) {
+        divIdioma.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        divIdioma.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
+    }
 
+    const listaCaps = divIdioma.querySelector('.lista-capitulos');
     if (capitulos) {
-        Object.entries(capitulos).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u));
+        Object.entries(capitulos).forEach(([n, u]) => agregarCapituloUI(listaCaps, n, u, puedeEditar));
     } else {
-        agregarCapituloUI(listaCaps);
+        agregarCapituloUI(listaCaps, '', '', puedeEditar);
     }
 }
 
-function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '') {
+function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '', puedeEditar = true) {
     if (!containerCaps) return;
     const divCap = document.createElement('div');
     divCap.className = 'capitulo-row';
-    divCap.style.display = "flex";
-    divCap.style.gap = "8px";
+    divCap.style.cssText = "display: flex; gap: 8px;";
 
     divCap.innerHTML = `
         <input type="text" class="cap-nombre" placeholder="N°" value="${capNombre}" style="width: 35%; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
         <input type="text" class="cap-url" placeholder="URL" value="${capUrl}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #18181b; color: white; font-size: 13px;">
-        <button type="button" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+        <button type="button" class="btn-del-cap" onclick="this.closest('.capitulo-row').remove()" style="background: transparent; color: #a1a1aa; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
     `;
     containerCaps.appendChild(divCap);
+    
+    if (!puedeEditar) {
+        divCap.querySelectorAll('input').forEach(inp => inp.disabled = true);
+        divCap.querySelector('button').style.display = 'none';
+    }
 }
 
 function recolectarDatosTemporadas() {
     const datos = [];
-    
     document.querySelectorAll('.seccion-block').forEach(secBlock => {
         const inputSec = secBlock.querySelector('.sec-nombre');
         const nombreSeccion = inputSec ? inputSec.value.trim() : 'Principal';
-        
+        const creadorId = secBlock.dataset.creador || ''; // Toma el creador guardado en el DOM
+
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
-            const inputTempN = tempBlock.querySelector('.temp-nombre');
-            const inputTempI = tempBlock.querySelector('.temp-img');
-            const nombre = inputTempN ? inputTempN.value.trim() : '';
-            const imagen = inputTempI ? inputTempI.value.trim() : '';
+            const nombre = tempBlock.querySelector('.temp-nombre')?.value.trim() || '';
+            const imagen = tempBlock.querySelector('.temp-img')?.value.trim() || '';
             const enlaces = {};
 
             tempBlock.querySelectorAll('.idioma-bloque').forEach(idBlock => {
-                const inputIdioma = idBlock.querySelector('.idioma-nombre');
-                const idiomaNombre = inputIdioma ? inputIdioma.value.trim() : '';
-                
+                const idiomaNombre = idBlock.querySelector('.idioma-nombre')?.value.trim() || '';
                 if (idiomaNombre) {
                     enlaces[idiomaNombre] = {};
                     idBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
-                        const inputCapN = capRow.querySelector('.cap-nombre');
-                        const inputCapU = capRow.querySelector('.cap-url');
-                        const cNombre = inputCapN ? inputCapN.value.trim() : '';
-                        const cUrl = inputCapU ? inputCapU.value.trim() : '';
-                        
-                        if (cNombre && cUrl) {
-                            enlaces[idiomaNombre][cNombre] = cUrl;
-                        }
+                        const cNombre = capRow.querySelector('.cap-nombre')?.value.trim() || '';
+                        const cUrl = capRow.querySelector('.cap-url')?.value.trim() || '';
+                        if (cNombre && cUrl) enlaces[idiomaNombre][cNombre] = cUrl;
                     });
                 }
             });
 
             if(nombre) {
-                const obj = { seccion: nombreSeccion, nombre, imagen, enlaces };
-                const secCreator = secBlock.dataset.creador || (obraActual && obraActual.creador_id ? String(obraActual.creador_id) : '');
-                if (secCreator) obj.creador_id = secCreator;
-                datos.push(obj);
+                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces, creador_id: creadorId });
             }
         });
     });
-    
     return datos;
 }
 
@@ -1254,8 +854,7 @@ function cargarDatosTemporadas(temporadasFlat) {
     container.innerHTML = ''; 
 
     if (!Array.isArray(temporadasFlat) || temporadasFlat.length === 0) {
-        agregarSeccionUI();
-        return;
+        return; 
     }
 
     const agrupado = {};
@@ -1266,91 +865,15 @@ function cargarDatosTemporadas(temporadasFlat) {
     });
 
     for (const [nombreSec, tempsArray] of Object.entries(agrupado)) {
-        // Determinar creador de la sección
-        let sectionCreator = '';
-        if (tempsArray && tempsArray.length > 0 && tempsArray[0].creador_id) {
-            sectionCreator = String(tempsArray[0].creador_id);
-        } else if (obraActual && obraActual.creador_id) {
-            sectionCreator = String(obraActual.creador_id);
-        }
+        // Tomamos el creador del primer elemento de esa sección
+        const sectionCreator = (tempsArray && tempsArray.length > 0 && tempsArray[0].creador_id) ? tempsArray[0].creador_id : (obraActual.creador_id || '');
         agregarSeccionUI(nombreSec, tempsArray, sectionCreator);
     }
 }
 
-function verImagenGrande(url) {
-    if (!url || url === "") return;
-    
-    // Intentamos obtener el visualizador si ya existe
-    let overlay = document.getElementById('viewer-overlay');
-    
-    // Si no existe, lo creamos desde cero
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'viewer-overlay';
-        
-        // Estilos para el fondo oscuro optimizados para móvil
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 999999; /* Asegura que esté por encima de TODO en la app de Telegram */
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            touch-action: none; /* Previene que la pantalla haga scroll por detrás en móviles */
-        `;
-        
-        // La imagen que se verá grande
-        const img = document.createElement('img');
-        img.id = 'viewer-img';
-        img.style.cssText = `
-            max-width: 95vw; /* Usa 'vw' y 'vh' para adaptarse perfecto a pantallas de celulares */
-            max-height: 85vh;
-            border-radius: 12px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            object-fit: contain;
-            transition: transform 0.3s ease;
-            pointer-events: none; /* CLAVE: Hace que el toque pase a través de la imagen hacia el overlay para cerrarse siempre */
-        `;
-        
-        // Botón de cerrar adaptado para dedos (más área de toque)
-        const btnCerrar = document.createElement('div');
-        btnCerrar.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-        btnCerrar.style.cssText = `
-            position: absolute; 
-            top: 20px; 
-            right: 20px; 
-            color: white; 
-            font-size: 28px; 
-            padding: 10px; /* Área más grande para tocar en el celular */
-        `;
-        
-        overlay.appendChild(img);
-        overlay.appendChild(btnCerrar);
-        document.body.appendChild(overlay);
-
-        // Al hacer click o tocar cualquier parte del fondo, se cierra
-        overlay.onclick = (e) => {
-            e.preventDefault();
-            overlay.style.display = 'none';
-        };
-    }
-    
-    // Asignamos la URL y mostramos
-    const viewerImg = document.getElementById('viewer-img');
-    viewerImg.src = url;
-    overlay.style.display = 'flex';
-}
-
-// =========================
-// Propiedades Dinámicas
-// =========================
+// =========================================
+// 12. PROPIEDADES DINÁMICAS (EXTRAS)
+// =========================================
 function agregarPropiedadUI(key = '', value = '') {
     const container = document.getElementById('extra-props-container');
     if (!container) return;
@@ -1360,7 +883,7 @@ function agregarPropiedadUI(key = '', value = '') {
     row.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
 
     row.innerHTML = `
-        <input type="text" class="prop-key" placeholder="Ej: Editor, Duración" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
+        <input type="text" class="prop-key" placeholder="Ej: Editor" value="${key}" style="flex: 0 0 40%; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
         <input type="text" class="prop-value" placeholder="Ej: MAPPA" value="${value}" style="flex:1; padding:8px; border-radius:6px; border:1px solid #27272a; background:#0f0f11; color:white;">
         <button type="button" title="Eliminar" style="background:transparent; color:#ef4444; border:none; cursor:pointer; font-size:18px;" onclick="this.closest('.prop-row').remove()"><i class="fa-solid fa-trash"></i></button>
     `;
@@ -1378,99 +901,50 @@ function recolectarCamposExtras() {
         const v = (r.querySelector('.prop-value')?.value || '').trim();
         if (k) datos[k] = v;
     });
-
     return Object.keys(datos).length ? datos : {};
 }
 
 function cargarInfoAdicional(obj) {
     const container = document.getElementById('extra-props-container');
     if (!container) return;
-    
-    // Limpiamos el contenedor para que no se dupliquen campos
     container.innerHTML = '';
 
-    // Si no hay datos, ponemos una fila vacía para que el usuario pueda escribir
     if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
         agregarPropiedadUI(); 
         return;
     }
-
-    // Si HAY datos, recorremos el objeto y creamos una fila por cada propiedad
-    Object.entries(obj).forEach(([k, v]) => {
-        agregarPropiedadUI(k, v);
-    });
+    Object.entries(obj).forEach(([k, v]) => agregarPropiedadUI(k, v));
 }
 
-// Función global que llama el widget de Telegram al autenticarse
+// =========================================
+// 13. WIDGET TELEGRAM & MODAL
+// =========================================
+function abrirModalAuth() {
+    const modal = document.getElementById('modal-auth');
+    if (modal) modal.classList.remove('modal-oculto');
+}
+
+function cerrarModalAuth() {
+    const modal = document.getElementById('modal-auth');
+    if (modal) modal.classList.add('modal-oculto');
+}
+
 window.onTelegramAuth = function(user) {
-    console.log("Datos recibidos de Telegram:", user);
-    
-    // 1. Guardar el ID y persistir la sesión en el navegador
-    userIdActual = user.id.toString(); 
-    localStorage.setItem('tg_user', JSON.stringify(user)); 
-
-    // 2. Activar funciones de administrador si el ID coincide
-    if (userIdActual === "1310733615") {
-        // Mostrar botón de "Añadir" en la navbar
-        const btnAdmin = document.getElementById('btn-admin-view');
-        if (btnAdmin) btnAdmin.style.display = 'flex';
-
-        // Mostrar el botón del lápiz si ya estás dentro de un detalle
-        const btnEditar = document.getElementById('btn-edit-serie');
-        if (btnEditar) btnEditar.style.display = 'flex';
-    }
-
-    // 3. Mostrar mensaje de éxito en el modal
+    loguearUsuario(user);
     const mensaje = document.getElementById('auth-mensaje');
     if (mensaje) {
         mensaje.style.color = "#4ade80";
         mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
     }
-
-    // 4. Cerrar el modal después de un momento
-    setTimeout(() => {
-        cerrarModalAuth();
-        actualizarInterfazUsuario(user); 
-    }, 1500);
+    setTimeout(() => { cerrarModalAuth(); }, 1500);
 };
 
-// Función opcional para actualizar elementos visuales con la info de Telegram
-function actualizarInterfazUsuario(user) {
-    // Si tienes un elemento para mostrar el nombre del usuario, úsalo aquí
-    console.log("Sesión iniciada para el ID:", userIdActual);
-}
-
-window.addEventListener('popstate', (event) => {
-    // Si hay un estado guardado en el historial, vamos a esa vista
-    if (event.state && event.state.vista) {
-        // Usamos false para no crear un bucle infinito de historial
-        cambiarVista(event.state.vista, false);
-    } else {
-        // Si no hay estado (llegamos al inicio), volvemos al catálogo
-        cambiarVista('catalogo', false);
-    }
-});
-
 function cerrarSesion() {
-    // 1. Resetear el ID a anónimo
     userIdActual = "anonimo";
-    
-    // 2. Borrar los datos guardados en el navegador
     localStorage.removeItem('tg_user');
-    
-    // 3. Limpiar la lista de favoritos localmente
     listaFavoritos = [];
-
     document.body.classList.remove('usuario-identificado');
 
-    // 4. Ocultar funciones de administrador
-    const btnAdmin = document.getElementById('btn-admin-view');
-    if (btnAdmin) btnAdmin.style.display = 'none';
-    
-    const btnEditar = document.getElementById('btn-edit-serie');
-    if (btnEditar) btnEditar.style.display = 'none';
-
-    // 5. Restaurar el botón de Login en la navbar
     const authContainer = document.getElementById('auth-container');
     if (authContainer) {
         authContainer.innerHTML = `
@@ -1479,14 +953,39 @@ function cerrarSesion() {
             </button>
         `;
     }
-
-    // 6. Actualizar la vista (por si hay corazones pintados)
     aplicarTodosLosFiltros();
-    
-    console.log("Sesión cerrada.");
     alert("Has cerrado sesión correctamente.");
 }
 
+// =========================================
+// 14. UTILIDADES (Visor de imagen)
+// =========================================
+function verImagenGrande(url) {
+    if (!url || url === "") return;
+    let overlay = document.getElementById('viewer-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'viewer-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.9); display: none; justify-content: center; align-items: center;
+            z-index: 999999; cursor: pointer; backdrop-filter: blur(5px); touch-action: none;
+        `;
+        const img = document.createElement('img');
+        img.id = 'viewer-img';
+        img.style.cssText = `max-width: 95vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; pointer-events: none;`;
+        const btnCerrar = document.createElement('div');
+        btnCerrar.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        btnCerrar.style.cssText = `position: absolute; top: 20px; right: 20px; color: white; font-size: 28px; padding: 10px;`;
+        
+        overlay.appendChild(img); overlay.appendChild(btnCerrar); document.body.appendChild(overlay);
+        overlay.onclick = (e) => { e.preventDefault(); overlay.style.display = 'none'; };
+    }
+    document.getElementById('viewer-img').src = url;
+    overlay.style.display = 'flex';
+}
 
-// INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
-window.onload = inicializarApp;
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.vista) cambiarVista(event.state.vista, false);
+    else cambiarVista('catalogo', false);
+});
