@@ -1179,7 +1179,8 @@ body {
     height: 35px;
     border-radius: 50%;
     border: 2px solid #3ba4fa;
-    object-fit: cover;
+    object-fit: cover; /* Añade esto */
+    cursor: pointer;
 }
 
 .nav-username {

@@ -15,7 +15,17 @@ function sanitizar(texto) {
 // =========================================
 // Al inicio de tu script.js o donde inicializas 'tg'
 const tg = window.Telegram.WebApp;
+
+const userGuardado = localStorage.getItem('tg_user');
+if (userGuardado) {
+    const user = JSON.parse(userGuardado);
+    userIdActual = user.id.toString();
+    renderUsuarioLogueado(user);
+}
+
 tg.ready();
+
+
 
 // Función para actualizar la UI con la foto del usuario
 function renderUsuarioLogueado(user) {
@@ -51,10 +61,10 @@ if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
 
 // LOGIN MANUAL (Navegador - Widget)
 window.onTelegramAuth = function(user) {
+    localStorage.setItem('tg_user', JSON.stringify(user)); // Guarda la sesión
     userIdActual = user.id.toString();
     renderUsuarioLogueado(user);
     cerrarModalAuth();
-    if (typeof cargarFavoritosUsuario === 'function') cargarFavoritosUsuario();
 };
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
