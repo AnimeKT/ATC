@@ -1199,28 +1199,50 @@ body {
 
  /* Boton para desloguear */
 
-.btn-logout {
-    background: transparent;
-    border: none;
-    color: #ef4444; /* Rojo para indicar salida */
-    margin-left: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 5px;
-    transition: transform 0.2s;
+/* Asegurar que el contenedor principal no aplaste los botones */
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: nowrap; /* Obliga a que todos los botones se queden en la misma línea */
 }
 
-.btn-logout:hover {
-    transform: scale(1.2);
-    color: #f87171;
-}
-
-/* Ajuste para el contenedor de perfil */
+/* Contenedor del perfil de usuario en el nav */
 .user-profile-nav {
     display: flex;
     align-items: center;
+    gap: 10px;
     background: #27272a;
-    padding: 5px 10px;
+    padding: 5px 12px;
     border-radius: 20px;
+    height: 45px; /* Altura controlada para que no se deforme */
+}
+
+/* Controles estrictos para el botón de logout */
+.btn-logout {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    /* Candado de tamaño para que no explote */
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px; /* Evita que flexbox lo encoja o lo estire */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+/* Forzar el tamaño exacto del icono interior */
+.btn-logout i {
+    font-size: 16px !important; 
+    margin: 0;
+    padding: 0;
+}
+
+.btn-logout:hover {
+    transform: scale(1.1);
+    color: #f87171;
 }
 
