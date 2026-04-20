@@ -41,26 +41,28 @@ function loguearUsuario(user) {
 }
 
 function verificarPermisosAdmin() {
-    const btnAdmin = document.getElementById('btn-admin-view');
-    if (!btnAdmin) return;
-
+    const ADMIN_ID = "1310733615";
+    
     if (userIdActual === ADMIN_ID) {
-        // Usamos flex para que respete el alineamiento de la navbar
-        btnAdmin.style.setProperty('display', 'flex', 'important');
+        // Esto le pone una "marca" a toda la página
+        document.body.classList.add('es-admin');
+        console.log("Admin detectado: Botón anclado.");
     } else {
-        btnAdmin.style.setProperty('display', 'none', 'important');
+        document.body.classList.remove('es-admin');
     }
 }
 
 // ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Verificar identidad inmediatamente
+    verificarPermisosAdmin();
+
     tg.ready();
     tg.expand();
 
-    // 1. Cargar las obras de la base de datos primero
+    // 2. Luego el resto de la lógica...
     await cargarObras();
-
-    // 2. Intentar recuperar usuario (Telegram > LocalStorage)
+    
     let userToLog = null;
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         userToLog = tg.initDataUnsafe.user;
@@ -69,15 +71,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (saved) userToLog = JSON.parse(saved);
     }
 
-    // 3. Si hay usuario, loguear y verificar admin inmediatamente
-    if (userToLog) {
-        loguearUsuario(userToLog);
-    } else {
-        verificarPermisosAdmin(); // Para asegurar que esté oculto si no hay nadie
-    }
-
-    // 4. Mostrar la vista inicial
-    history.replaceState({ vista: 'catalogo' }, "", "");
+    if (userToLog) loguearUsuario(userToLog);
+    
     mostrarCatalogo();
 });
 
@@ -1359,6 +1354,8 @@ function cerrarSesion() {
     
     // 3. Limpiar la lista de favoritos localmente
     listaFavoritos = [];
+
+    document.body.classList.remove('es-admin');
 
     // 4. Ocultar funciones de administrador
     const btnAdmin = document.getElementById('btn-admin-view');

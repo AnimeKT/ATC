@@ -71,23 +71,27 @@ body {
 
 .user-actions {
     display: flex !important;
-    flex-direction: row !important; /* Fuerza orden horizontal */
     align-items: center !important;
     gap: 15px !important;
 }
 
 #btn-admin-view {
-    order: -1 !important; /* Esto lo mueve al primer lugar (izquierda) */
-    display: none; /* Se controla por JS */
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
+    display: none !important;
+}
+
+body.es-admin #btn-admin-view {
+    display: flex !important;
+    order: -1 !important; /* Lo pega a la izquierda de la foto */
+    background-color: #3ba4fa;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
 }
 
 #auth-container {
-    order: 0 !important;
-    display: flex;
-    align-items: center;
+    order: 1 !important;
 }
 
 /* =========================================
