@@ -24,29 +24,31 @@ function loguearUsuario(user) {
     if (!user) return;
     
     userIdActual = user.id.toString();
-    localStorage.setItem('tg_user', JSON.stringify(user)); // Persistencia en PC
+    localStorage.setItem('tg_user', JSON.stringify(user)); 
     
-    // Esperamos un milisegundo para asegurar que el HTML cargó
     setTimeout(() => {
         const authContainer = document.getElementById('auth-container');
         if (authContainer) {
             const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
+            
+            // Aquí añadimos el botón de cerrar sesión al lado del nombre
             authContainer.innerHTML = `
-                <div class="user-profile-nav" onclick="abrirPerfil()">
-                    <img src="${fotoUrl}" alt="${user.first_name}" class="nav-avatar">
-                    <span class="nav-username hide-mobile">${user.first_name}</span>
+                <div class="user-profile-nav">
+                    <img src="${fotoUrl}" alt="User" class="nav-avatar">
+                    <span class="user-name">${user.first_name}</span>
+                    <button class="btn-logout" onclick="cerrarSesion()">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
                 </div>
             `;
         }
-
-        // Si es el admin (tu ID), mostrar botón añadir
+        
+        // Activar botones si es admin
         if (userIdActual === "1310733615") {
             const btnAdmin = document.getElementById('btn-admin-view');
             if (btnAdmin) btnAdmin.style.display = 'flex';
         }
-        
-        cargarFavoritosUsuario();
-    }, 100);
+    }, 10);
 }
 
 // ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
@@ -1342,6 +1344,39 @@ window.addEventListener('popstate', (event) => {
     }
 });
 
+function cerrarSesion() {
+    // 1. Resetear el ID a anónimo
+    userIdActual = "anonimo";
+    
+    // 2. Borrar los datos guardados en el navegador
+    localStorage.removeItem('tg_user');
+    
+    // 3. Limpiar la lista de favoritos localmente
+    listaFavoritos = [];
+
+    // 4. Ocultar funciones de administrador
+    const btnAdmin = document.getElementById('btn-admin-view');
+    if (btnAdmin) btnAdmin.style.display = 'none';
+    
+    const btnEditar = document.getElementById('btn-edit-serie');
+    if (btnEditar) btnEditar.style.display = 'none';
+
+    // 5. Restaurar el botón de Login en la navbar
+    const authContainer = document.getElementById('auth-container');
+    if (authContainer) {
+        authContainer.innerHTML = `
+            <button class="btn-login" onclick="abrirModalAuth()">
+                <i class="fa-solid fa-user"></i> <span>Login</span>
+            </button>
+        `;
+    }
+
+    // 6. Actualizar la vista (por si hay corazones pintados)
+    aplicarTodosLosFiltros();
+    
+    console.log("Sesión cerrada.");
+    alert("Has cerrado sesión correctamente.");
+}
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
 window.onload = inicializarApp;
