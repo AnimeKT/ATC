@@ -67,9 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
             loguearUsuario(JSON.parse(userGuardado));
         }
     }
+    history.replaceState({ vista: 'catalogo' }, "", "");
 
     // Siempre cargar el catálogo al iniciar
     mostrarCatalogo();
+    
 });
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
@@ -90,12 +92,20 @@ tg.BackButton.onClick(() => {
     }
 });
 
-function cambiarVista(vista) {
+function cambiarVista(vista, saveHistory = true) {
+    // Si saveHistory es true, guardamos el estado en el navegador
+    if (saveHistory) {
+        history.pushState({ vista: vista }, "", "");
+    }
+
+    // Tu lógica original de historial para Telegram
     if (vista === 'catalogo') {
         historialNavegacion = ['catalogo'];
     } else if (historialNavegacion[historialNavegacion.length - 1] !== vista) {
         historialNavegacion.push(vista);
     }
+    
+    // Ejecutamos el cambio visual que ya tienes
     ejecutarCambioVista(vista);
 }
 
@@ -1320,6 +1330,18 @@ function actualizarInterfazUsuario(user) {
     // Si tienes un elemento para mostrar el nombre del usuario, úsalo aquí
     console.log("Sesión iniciada para el ID:", userIdActual);
 }
+
+window.addEventListener('popstate', (event) => {
+    // Si hay un estado guardado en el historial, vamos a esa vista
+    if (event.state && event.state.vista) {
+        // Usamos false para no crear un bucle infinito de historial
+        cambiarVista(event.state.vista, false);
+    } else {
+        // Si no hay estado (llegamos al inicio), volvemos al catálogo
+        cambiarVista('catalogo', false);
+    }
+});
+
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
 window.onload = inicializarApp;
