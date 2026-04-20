@@ -323,19 +323,75 @@ function abrirDetalle(tituloObra) {
 
     const btnEditar = document.getElementById('btn-edit-serie');
     if (btnEditar) {
-        // Si hay un usuario logueado, mostramos el botón editar
-        if (userIdActual !== "anonimo") {
-            btnEditar.style.setProperty('display', 'block', 'important');
-            btnEditar.onclick = () => prepararEdicion(obra);
-        } else {
-            btnEditar.style.setProperty('display', 'none', 'important');
-        }
+    // Si hay un usuario logueado, mostramos el botón editar
+    if (userIdActual !== "anonimo") {
+        btnEditar.style.setProperty('display', 'block', 'important');
+        btnEditar.onclick = () => prepararEdicion(obra);
+    } else {
+        btnEditar.style.setProperty('display', 'none', 'important');
     }
+}
 
     // --- NAVEGACIÓN Y VISTA ---
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
     cambiarVista('detalle');
+}
+
+function prepararEdicion(obra) {
+    // 1. Definir quién tiene poder total
+    const esAdmin = userIdActual === "1310733615";
+    const esDuenio = userIdActual === obra.user_id; // Suponiendo que guardas user_id en la DB
+    
+    const tienePermisoTotal = esAdmin || esDuenio;
+
+    // 2. Cambiar a la vista de registro/edición
+    cambiarVista('registro');
+    
+    // 3. Llenar los campos básicos
+    document.getElementById('reg-id').value = obra.id;
+    document.getElementById('reg-titulo').value = obra.titulo;
+    document.getElementById('reg-descripcion').value = obra.descripcion;
+    document.getElementById('reg-portada').value = obra.portada;
+    document.getElementById('reg-banner').value = obra.banner || "";
+    document.getElementById('reg-tipo').value = obra.tipo;
+    document.getElementById('reg-estado').value = obra.estado;
+
+    // --- EL BLOQUEO ---
+    const inputsPrincipales = [
+        'reg-titulo', 'reg-descripcion', 'reg-portada', 
+        'reg-banner', 'reg-tipo', 'reg-estado'
+    ];
+
+    if (!tienePermisoTotal) {
+        // MODO COLABORADOR: Bloqueamos los inputs principales
+        inputsPrincipales.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.disabled = true;
+                el.style.opacity = "0.5";
+                el.style.cursor = "not-allowed";
+            }
+        });
+        console.log("Modo Colaborador: Solo puedes añadir secciones.");
+    } else {
+        // MODO DUEÑO: Desbloqueamos todo por si acaso
+        inputsPrincipales.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.disabled = false;
+                el.style.opacity = "1";
+                el.style.cursor = "text";
+            }
+        });
+    }
+
+    // 4. Limpiar y cargar temporadas (esto siempre lo puede hacer el colaborador)
+    const container = document.getElementById('builder-temporadas');
+    container.innerHTML = "";
+    if (obra.temporadas && obra.temporadas.length > 0) {
+        obra.temporadas.forEach(temp => agregarTemporadaAlDOM(temp));
+    }
 }
 
 // =========================================
@@ -776,21 +832,73 @@ function prepararEdicionDesdeDetalle() {
                 });
             }
         });
+        btnEditar.onclick = () => prepararEdicion(obra);
     } else {
-        // Desbloqueo total para el dueño
-        if (btnAddProp) {
-            btnAddProp.disabled = false;
-            btnAddProp.setAttribute('onclick', 'agregarPropiedadUI()');
-            btnAddProp.style.opacity = "1";
-            btnAddProp.style.pointerEvents = "auto";
-        }
-        if (extraPropsContainer) {
-            extraPropsContainer.style.pointerEvents = "auto";
-            extraPropsContainer.style.opacity = "1";
-        }
+        btnEditar.style.display = 'none';
+    
     }
 
     cambiarVista('registro');
+
+    document.getElementById('form-registro').reset();
+    document.getElementById('reg-id').value = "";
+    document.getElementById('builder-temporadas').innerHTML = "";
+
+    // Desbloquear todo para nuevos registros
+    const campos = ['reg-titulo', 'reg-descripcion', 'reg-portada', 'reg-banner', 'reg-tipo', 'reg-estado'];
+    campos.forEach(id => {
+        const input = document.getElementById(id);
+        if(input) {
+            input.disabled = false;
+            input.classList.remove('campo-bloqueado');
+        }
+    });
+}
+
+// NUEVA FUNCIÓN: Pégala después de mostrarDetalle
+function prepararEdicion(obra) {
+    // 1. Definir permisos (Admin o creador de la obra)
+    const esAdmin = userIdActual === ADMIN_ID; 
+    const esDuenio = userIdActual === obra.user_id; 
+    const tienePermisoTotal = esAdmin || esDuenio;
+
+    // 2. Cambiar a la vista de registro
+    cambiarVista('registro');
+
+    // 3. Llenar los campos (usando los IDs que tienes en tu index.html)
+    document.getElementById('reg-id').value = obra.id || "";
+    document.getElementById('reg-titulo').value = obra.titulo || "";
+    document.getElementById('reg-descripcion').value = obra.descripcion || "";
+    document.getElementById('reg-portada').value = obra.portada || "";
+    document.getElementById('reg-banner').value = obra.banner || "";
+    document.getElementById('reg-tipo').value = obra.tipo || "Anime";
+    document.getElementById('reg-estado').value = obra.estado || "En Emisión";
+
+    // 4. Lógica de bloqueo para Colaboradores
+    const camposPrincipales = [
+        'reg-titulo', 'reg-descripcion', 'reg-portada', 
+        'reg-banner', 'reg-tipo', 'reg-estado'
+    ];
+
+    camposPrincipales.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            if (tienePermisoTotal) {
+                input.classList.remove('campo-bloqueado');
+                input.disabled = false;
+            } else {
+                input.classList.add('campo-bloqueado');
+                input.disabled = true;
+            }
+        }
+    });
+
+    // 5. Cargar las temporadas (Esto el colaborador SÍ puede editarlo)
+    const container = document.getElementById('builder-temporadas');
+    container.innerHTML = "";
+    if (obra.temporadas && Array.isArray(obra.temporadas)) {
+        obra.temporadas.forEach(temp => agregarTemporadaAlDOM(temp));
+    }
 }
 
 async function ejecutarRegistro() {

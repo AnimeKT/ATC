@@ -1272,3 +1272,11 @@ body.usuario-identificado #btn-admin-view {
 body.usuario-identificado #btn-edit-serie {
     display: block !important;
 }
+
+.campo-bloqueado {
+    background-color: #1c1c1f !important;
+    color: #71717a !important;
+    cursor: not-allowed !important;
+    border-color: #27272a !important;
+    pointer-events: none; /* Evita cualquier interacción */
+}
