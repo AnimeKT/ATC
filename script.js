@@ -41,14 +41,11 @@ function loguearUsuario(user) {
 }
 
 function verificarPermisosAdmin() {
-    const ADMIN_ID = "1310733615";
-    
-    if (userIdActual === ADMIN_ID) {
-        // Esto le pone una "marca" a toda la página
-        document.body.classList.add('es-admin');
-        console.log("Admin detectado: Botón anclado.");
+    // Si el ID es distinto a "anonimo", significa que hay alguien logueado
+    if (userIdActual !== "anonimo") {
+        document.body.classList.add('usuario-identificado');
     } else {
-        document.body.classList.remove('es-admin');
+        document.body.classList.remove('usuario-identificado');
     }
 }
 
@@ -326,11 +323,12 @@ function abrirDetalle(tituloObra) {
 
     const btnEditar = document.getElementById('btn-edit-serie');
     if (btnEditar) {
-        // Verificamos si el ID actual es el tuyo
-        if (userIdActual === "1310733615") {
-            btnEditar.style.display = 'flex'; // Mostrar si eres tú
+        // Si hay un usuario logueado, mostramos el botón editar
+        if (userIdActual !== "anonimo") {
+            btnEditar.style.setProperty('display', 'block', 'important');
+            btnEditar.onclick = () => prepararEdicion(obra);
         } else {
-            btnEditar.style.display = 'none'; // Ocultar para otros
+            btnEditar.style.setProperty('display', 'none', 'important');
         }
     }
 
@@ -1355,7 +1353,7 @@ function cerrarSesion() {
     // 3. Limpiar la lista de favoritos localmente
     listaFavoritos = [];
 
-    document.body.classList.remove('es-admin');
+    document.body.classList.remove('usuario-identificado');
 
     // 4. Ocultar funciones de administrador
     const btnAdmin = document.getElementById('btn-admin-view');

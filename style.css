@@ -1256,3 +1256,19 @@ body.es-admin #btn-admin-view {
     align-items: center;
     gap: 8px;
 }
+
+/* 1. Oculto por defecto */
+#btn-admin-view, #btn-edit-serie {
+    display: none !important;
+}
+
+/* 2. Se muestra para CUALQUIER usuario que haya iniciado sesión */
+body.usuario-identificado #btn-admin-view {
+    display: flex !important;
+    order: -1 !important;
+}
+
+/* 3. El botón de editar dentro de la ficha del anime */
+body.usuario-identificado #btn-edit-serie {
+    display: block !important;
+}
