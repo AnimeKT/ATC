@@ -23,10 +23,10 @@ const tg = window.Telegram.WebApp;
 function loguearUsuario(user) {
     if (!user) return;
 
-    localStorage.removeItem('sesion_desactivada');
+    localStorage.removeItem('borrar_sesion');
     
     userIdActual = user.id.toString();
-    localStorage.setItem('tg_user', JSON.stringify(user)); 
+    localStorage.setItem('tg_user', JSON.stringify(user));
     
     setTimeout(() => {
         const authContainer = document.getElementById('auth-container');
@@ -1390,7 +1390,7 @@ window.addEventListener('popstate', (event) => {
 
 function cerrarSesion() {
    
-    localStorage.setItem('sesion_desactivada', 'true');
+    localStorage.setItem('borrar_sesion', 'true');
     localStorage.removeItem('tg_user');
     
     userIdActual = "anonimo";
