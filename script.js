@@ -1404,6 +1404,8 @@ function cerrarSesion() {
     
     console.log("Sesión cerrada.");
     alert("Has cerrado sesión correctamente.");
+
+    window.location.reload();
 }
 
 
