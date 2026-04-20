@@ -90,13 +90,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- REEMPLAZA DESDE AQUÍ ---
     // --- DETECTOR MULTIPLATAFORMA (Web + Telegram) ---
     const urlParams = new URLSearchParams(window.location.search);
-    const webId = urlParams.get('id'); // Detecta si es link de navegador (?id=...)
-    const tgId = tg.initDataUnsafe?.start_param; // Detecta si es link de Telegram (startapp)
+    const webId = urlParams.get('id'); // Para links abiertos en navegador normal
+    const tgId = tg.initDataUnsafe?.start_param; // Para links abiertos DIRECTO en Telegram
 
+    // Priorizamos el ID de Telegram si existe
     const animeIdParaAbrir = tgId || webId;
 
     if (animeIdParaAbrir) {
-        // Buscamos el anime con un pequeño delay para asegurar que Supabase terminó
+        // Usamos un pequeño delay (500ms) para asegurar que Supabase terminó de cargar 'todasLasObras'
         setTimeout(() => {
             const obraDirecta = todasLasObras.find(o => String(o.id) === String(animeIdParaAbrir));
             if (obraDirecta) {
@@ -1027,20 +1028,20 @@ function verImagenGrande(url) {
 }
 
 function copiarEnlaceAnime(id) {
-    // 1. CONFIGURACIÓN: Reemplaza con tus datos reales de BotFather
+    // IMPORTANTE: Cambia 'AnimeKaergstyBot' por el username de tu bot 
+    // y 'app' por el nombre corto de tu Mini App en BotFather
     const botUsername = "AnimeKaergstyBot"; 
-    const appNickname = "app"; // El "Direct Link" que te dio BotFather
+    const appNickname = "app"; 
     
-    // 2. Creamos el link oficial de Telegram con el parámetro startapp
-    // Este link abre la app de Telegram automáticamente
+    // Este formato es el que hace que Telegram muestre la ventana de "Abrir Mini App"
     const enlaceCopiado = `https://t.me/${botUsername}/${appNickname}?startapp=${id}`;
 
     navigator.clipboard.writeText(enlaceCopiado).then(() => {
         if (tg && tg.HapticFeedback) {
             tg.HapticFeedback.notificationOccurred('success');
             tg.showPopup({
-                title: '¡Enlace de Telegram!',
-                message: 'Se ha copiado el link directo para abrir este anime dentro de Telegram.',
+                title: 'Enlace de Telegram',
+                message: 'Se ha copiado el link directo',
                 buttons: [{type: 'ok'}]
             });
         } else {
