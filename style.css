@@ -70,10 +70,15 @@ body {
 }
 
 .user-actions {
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important; /* Mantiene el orden: Botón -> AuthContainer */
     align-items: center;
-    gap: 15px;
-    flex-wrap: nowrap; /* Obliga a que todos los botones se queden en la misma línea */
+    gap: 12px;
+}
+
+#btn-admin-view {
+    order: -1; /* Esto lo fuerza a estar siempre a la izquierda del resto de elementos */
+    white-space: nowrap;
 }
 
 /* =========================================
@@ -1236,7 +1241,5 @@ body {
 .user-profile-nav {
     display: flex;
     align-items: center;
-    background: #27272a;
-    padding: 5px 10px;
-    border-radius: 20px;
+    gap: 8px;
 }

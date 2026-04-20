@@ -10,14 +10,10 @@ function sanitizar(texto) {
     return div.innerHTML;
 }
 
-// =========================================
-// 2. INICIALIZAR TELEGRAM WEB APP
-// =========================================
-// Al inicio de tu script.js o donde inicializas 'tg'
-// =========================================
-// 2. INICIALIZAR Y LOGUEAR
-// =========================================
+const userGuardado = localStorage.getItem('tg_user');
+let userIdActual = userGuardado ? JSON.parse(userGuardado).id.toString() : "anonimo";
 const tg = window.Telegram.WebApp;
+const ADMIN_ID = "1310733615"; // Tu ID definido
 
 // Esta función centraliza todo el login
 function loguearUsuario(user) {
@@ -48,11 +44,11 @@ function verificarPermisosAdmin() {
     const btnAdmin = document.getElementById('btn-admin-view');
     if (!btnAdmin) return;
 
-    // Tu ID de administrador
-    if (userIdActual === "1310733615") {
+    if (userIdActual === ADMIN_ID) {
+        // Usamos flex para que respete el alineamiento de la navbar
         btnAdmin.style.setProperty('display', 'flex', 'important');
     } else {
-        btnAdmin.style.display = 'none';
+        btnAdmin.style.setProperty('display', 'none', 'important');
     }
 }
 
@@ -61,27 +57,22 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // 1. Intentar recuperar usuario (Prioridad: Telegram > LocalStorage)
-    let userToLog = null;
+    // 1. Si ya tenemos el ID desde el inicio (paso 1), verificamos permisos ya mismo
+    verificarPermisosAdmin();
+
+    // 2. Si venimos de la App de Telegram, actualizamos por si acaso
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        userToLog = tg.initDataUnsafe.user;
+        loguearUsuario(tg.initDataUnsafe.user);
     } else {
         const saved = localStorage.getItem('tg_user');
-        if (saved) userToLog = JSON.parse(saved);
+        if (saved) loguearUsuario(JSON.parse(saved));
     }
 
-    // 2. Si hay usuario, loguear y verificar admin
-    if (userToLog) {
-        loguearUsuario(userToLog);
-    }
-
-    // 3. Configuración de navegación
     history.replaceState({ vista: 'catalogo' }, "", "");
     mostrarCatalogo();
 });
 
-// Identificador del usuario actual para permisos (Dueño vs Colaborador)
-let userIdActual = "anonimo";
+
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
