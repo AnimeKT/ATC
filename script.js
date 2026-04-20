@@ -10,70 +10,72 @@ function sanitizar(texto) {
     return div.innerHTML;
 }
 
-const userGuardado = localStorage.getItem('tg_user');
-let userIdActual = userGuardado ? JSON.parse(userGuardado).id.toString() : "anonimo";
+// =========================================
+// 2. INICIALIZAR TELEGRAM WEB APP
+// =========================================
+// Al inicio de tu script.js o donde inicializas 'tg'
+// =========================================
+// 2. INICIALIZAR Y LOGUEAR
+// =========================================
 const tg = window.Telegram.WebApp;
-const ADMIN_ID = "1310733615"; // Tu ID definido
 
 // Esta función centraliza todo el login
 function loguearUsuario(user) {
     if (!user) return;
     
     userIdActual = user.id.toString();
-    localStorage.setItem('tg_user', JSON.stringify(user)); 
+    localStorage.setItem('tg_user', JSON.stringify(user)); // Persistencia en PC
     
-    const authContainer = document.getElementById('auth-container');
-    if (authContainer) {
-        const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
-        authContainer.innerHTML = `
-            <div class="user-profile-nav">
-                <img src="${fotoUrl}" alt="User" class="nav-avatar">
-                <span class="user-name">${user.first_name}</span>
-                <button class="btn-logout" onclick="cerrarSesion()">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </div>
-        `;
-    }
+    // Esperamos un milisegundo para asegurar que el HTML cargó
+    setTimeout(() => {
+        const authContainer = document.getElementById('auth-container');
+        if (authContainer) {
+            const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
+            authContainer.innerHTML = `
+                <div class="user-profile-nav" onclick="abrirPerfil()">
+                    <img src="${fotoUrl}" alt="${user.first_name}" class="nav-avatar">
+                    <span class="nav-username hide-mobile">${user.first_name}</span>
+                </div>
+            `;
+        }
 
-    // Sin esperas, verificamos permisos ya mismo
-    verificarPermisosAdmin();
-}
-
-function verificarPermisosAdmin() {
-    // Si el ID es distinto a "anonimo", significa que hay alguien logueado
-    if (userIdActual !== "anonimo") {
-        document.body.classList.add('usuario-identificado');
-    } else {
-        document.body.classList.remove('usuario-identificado');
-    }
+        // Si es el admin (tu ID), mostrar botón añadir
+        if (userIdActual === "1310733615") {
+            const btnAdmin = document.getElementById('btn-admin-view');
+            if (btnAdmin) btnAdmin.style.display = 'flex';
+        }
+        
+        cargarFavoritosUsuario();
+    }, 100);
 }
 
 // ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Verificar identidad inmediatamente
-    verificarPermisosAdmin();
-
+document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // 2. Luego el resto de la lógica...
-    await cargarObras();
-    
-    let userToLog = null;
+    // CASO A: Estamos en Telegram Mini App (Login Automático)
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        userToLog = tg.initDataUnsafe.user;
-    } else {
-        const saved = localStorage.getItem('tg_user');
-        if (saved) userToLog = JSON.parse(saved);
+        console.log("Login automático por Mini App");
+        loguearUsuario(tg.initDataUnsafe.user);
+    } 
+    // CASO B: Estamos en PC/Navegador (Login Persistente)
+    else {
+        const userGuardado = localStorage.getItem('tg_user');
+        if (userGuardado) {
+            console.log("Sesión recuperada del navegador");
+            loguearUsuario(JSON.parse(userGuardado));
+        }
     }
+    history.replaceState({ vista: 'catalogo' }, "", "");
 
-    if (userToLog) loguearUsuario(userToLog);
-    
+    // Siempre cargar el catálogo al iniciar
     mostrarCatalogo();
+    
 });
 
-
+// Identificador del usuario actual para permisos (Dueño vs Colaborador)
+let userIdActual = "anonimo";
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
@@ -133,8 +135,6 @@ function ejecutarCambioVista(vista) {
         tg.BackButton.show();
         window.scrollTo(0, 0);
     }
-    
-    verificarPermisosAdmin();
 }
 
 // =========================================
@@ -323,75 +323,18 @@ function abrirDetalle(tituloObra) {
 
     const btnEditar = document.getElementById('btn-edit-serie');
     if (btnEditar) {
-    // Si hay un usuario logueado, mostramos el botón editar
-    if (userIdActual !== "anonimo") {
-        btnEditar.style.setProperty('display', 'block', 'important');
-        btnEditar.onclick = () => prepararEdicion(obra);
-    } else {
-        btnEditar.style.setProperty('display', 'none', 'important');
+        // Verificamos si el ID actual es el tuyo
+        if (userIdActual === "1310733615") {
+            btnEditar.style.display = 'flex'; // Mostrar si eres tú
+        } else {
+            btnEditar.style.display = 'none'; // Ocultar para otros
+        }
     }
-}
 
     // --- NAVEGACIÓN Y VISTA ---
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
     cambiarVista('detalle');
-}
-
-function prepararEdicion(obra) {
-    // 1. Definir quién tiene poder total
-    const esAdmin = userIdActual === "1310733615";
-    const esDuenio = userIdActual === obra.user_id; // Suponiendo que guardas user_id en la DB
-    
-    const tienePermisoTotal = esAdmin || esDuenio;
-
-    // 2. Cambiar a la vista de registro/edición
-    cambiarVista('registro');
-    
-    // 3. Llenar los campos básicos
-    document.getElementById('reg-id').value = obra.id;
-    document.getElementById('reg-titulo').value = obra.titulo;
-    document.getElementById('reg-descripcion').value = obra.descripcion;
-    document.getElementById('reg-portada').value = obra.portada;
-    document.getElementById('reg-banner').value = obra.banner || "";
-    document.getElementById('reg-tipo').value = obra.tipo;
-    document.getElementById('reg-estado').value = obra.estado;
-
-    // --- EL BLOQUEO ---
-    const inputsPrincipales = [
-        'reg-titulo', 'reg-descripcion', 'reg-portada', 
-        'reg-banner', 'reg-tipo', 'reg-estado'
-    ];
-
-    if (!tienePermisoTotal) {
-        // MODO COLABORADOR: Bloqueamos los inputs principales
-        inputsPrincipales.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.disabled = true;
-                el.style.opacity = "0.5";
-                el.style.cursor = "not-allowed";
-            }
-        });
-        console.log("Modo Colaborador: Solo puedes añadir secciones.");
-    } else {
-        // MODO DUEÑO: Desbloqueamos todo por si acaso
-        inputsPrincipales.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.disabled = false;
-                el.style.opacity = "1";
-                el.style.cursor = "text";
-            }
-        });
-    }
-
-    // 4. Limpiar y cargar temporadas (esto siempre lo puede hacer el colaborador)
-    const container = document.getElementById('builder-temporadas');
-    container.innerHTML = "";
-    if (obra.temporadas && obra.temporadas.length > 0) {
-        obra.temporadas.forEach(temp => agregarTemporadaAlDOM(temp));
-    }
 }
 
 // =========================================
@@ -832,73 +775,21 @@ function prepararEdicionDesdeDetalle() {
                 });
             }
         });
-        btnEditar.onclick = () => prepararEdicion(obra);
     } else {
-        btnEditar.style.display = 'none';
-    
+        // Desbloqueo total para el dueño
+        if (btnAddProp) {
+            btnAddProp.disabled = false;
+            btnAddProp.setAttribute('onclick', 'agregarPropiedadUI()');
+            btnAddProp.style.opacity = "1";
+            btnAddProp.style.pointerEvents = "auto";
+        }
+        if (extraPropsContainer) {
+            extraPropsContainer.style.pointerEvents = "auto";
+            extraPropsContainer.style.opacity = "1";
+        }
     }
 
     cambiarVista('registro');
-
-    document.getElementById('form-registro').reset();
-    document.getElementById('reg-id').value = "";
-    document.getElementById('builder-temporadas').innerHTML = "";
-
-    // Desbloquear todo para nuevos registros
-    const campos = ['reg-titulo', 'reg-descripcion', 'reg-portada', 'reg-banner', 'reg-tipo', 'reg-estado'];
-    campos.forEach(id => {
-        const input = document.getElementById(id);
-        if(input) {
-            input.disabled = false;
-            input.classList.remove('campo-bloqueado');
-        }
-    });
-}
-
-// NUEVA FUNCIÓN: Pégala después de mostrarDetalle
-function prepararEdicion(obra) {
-    // 1. Definir permisos (Admin o creador de la obra)
-    const esAdmin = userIdActual === ADMIN_ID; 
-    const esDuenio = userIdActual === obra.user_id; 
-    const tienePermisoTotal = esAdmin || esDuenio;
-
-    // 2. Cambiar a la vista de registro
-    cambiarVista('registro');
-
-    // 3. Llenar los campos (usando los IDs que tienes en tu index.html)
-    document.getElementById('reg-id').value = obra.id || "";
-    document.getElementById('reg-titulo').value = obra.titulo || "";
-    document.getElementById('reg-descripcion').value = obra.descripcion || "";
-    document.getElementById('reg-portada').value = obra.portada || "";
-    document.getElementById('reg-banner').value = obra.banner || "";
-    document.getElementById('reg-tipo').value = obra.tipo || "Anime";
-    document.getElementById('reg-estado').value = obra.estado || "En Emisión";
-
-    // 4. Lógica de bloqueo para Colaboradores
-    const camposPrincipales = [
-        'reg-titulo', 'reg-descripcion', 'reg-portada', 
-        'reg-banner', 'reg-tipo', 'reg-estado'
-    ];
-
-    camposPrincipales.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            if (tienePermisoTotal) {
-                input.classList.remove('campo-bloqueado');
-                input.disabled = false;
-            } else {
-                input.classList.add('campo-bloqueado');
-                input.disabled = true;
-            }
-        }
-    });
-
-    // 5. Cargar las temporadas (Esto el colaborador SÍ puede editarlo)
-    const container = document.getElementById('builder-temporadas');
-    container.innerHTML = "";
-    if (obra.temporadas && Array.isArray(obra.temporadas)) {
-        obra.temporadas.forEach(temp => agregarTemporadaAlDOM(temp));
-    }
 }
 
 async function ejecutarRegistro() {
@@ -1048,6 +939,34 @@ async function ejecutarRegistro() {
 const btnAdminView = document.getElementById('btn-admin-view');
 const btnAuth = document.getElementById('btn-auth');
 const authMensaje = document.getElementById('auth-mensaje');
+
+_supabase.auth.onAuthStateChange((event, session) => {
+    const isAdmin = !!session; 
+    const btnAdminView = document.getElementById('btn-admin-view');
+    const btnEdit = document.getElementById('btn-edit-serie'); 
+    const btnAuth = document.getElementById('btn-auth');
+
+    if(btnAdminView) btnAdminView.style.display = isAdmin ? 'flex' : 'none';
+    if(btnEdit) btnEdit.style.display = isAdmin ? 'flex' : 'none';
+
+    if (session) {
+        if(btnAuth) {
+            btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> <span class="hide-mobile">Salir</span>';
+            btnAuth.onclick = cerrarSesion;
+        }
+        cerrarModalAuth();
+    } else {
+        if(btnAuth) {
+            btnAuth.innerHTML = '<i class="fa-solid fa-user"></i> <span class="hide-mobile">Ingresar</span>';
+            btnAuth.onclick = abrirModalAuth;
+        }
+        if(todasLasObras.length > 0) cambiarVista('catalogo');
+    }
+});
+
+_supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session && btnAdminView) btnAdminView.style.display = 'flex';
+});
 
 function abrirModalAuth() {
     const modal = document.getElementById('modal-auth');
@@ -1450,42 +1369,6 @@ window.addEventListener('popstate', (event) => {
         cambiarVista('catalogo', false);
     }
 });
-
-function cerrarSesion() {
-    // 1. Resetear el ID a anónimo
-    userIdActual = "anonimo";
-    
-    // 2. Borrar los datos guardados en el navegador
-    localStorage.removeItem('tg_user');
-    
-    // 3. Limpiar la lista de favoritos localmente
-    listaFavoritos = [];
-
-    document.body.classList.remove('usuario-identificado');
-
-    // 4. Ocultar funciones de administrador
-    const btnAdmin = document.getElementById('btn-admin-view');
-    if (btnAdmin) btnAdmin.style.display = 'none';
-    
-    const btnEditar = document.getElementById('btn-edit-serie');
-    if (btnEditar) btnEditar.style.display = 'none';
-
-    // 5. Restaurar el botón de Login en la navbar
-    const authContainer = document.getElementById('auth-container');
-    if (authContainer) {
-        authContainer.innerHTML = `
-            <button class="btn-login" onclick="abrirModalAuth()">
-                <i class="fa-solid fa-user"></i> <span>Login</span>
-            </button>
-        `;
-    }
-
-    // 6. Actualizar la vista (por si hay corazones pintados)
-    aplicarTodosLosFiltros();
-    
-    console.log("Sesión cerrada.");
-    alert("Has cerrado sesión correctamente.");
-}
 
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA

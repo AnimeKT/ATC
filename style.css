@@ -69,29 +69,10 @@ body {
     border-color: #3ba4fa; 
 }
 
-.user-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 15px !important;
-}
-
-#btn-admin-view {
-    display: none !important;
-}
-
-body.es-admin #btn-admin-view {
-    display: flex !important;
-    order: -1 !important; /* Lo pega a la izquierda de la foto */
-    background-color: #3ba4fa;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-}
-
-#auth-container {
-    order: 1 !important;
+.user-actions { 
+    display: flex; 
+    gap: 10px; 
+    margin-left: auto;
 }
 
 /* =========================================
@@ -1186,28 +1167,20 @@ body.es-admin #btn-admin-view {
     padding: 6px 12px;
 }
 
-.user-profile-nav img {
-    width: 35px; /* Un poco menos que la altura del contenedor (45px) para dejar margen */
-    height: 35px;
-    border-radius: 50%; /* Hace que la imagen sea perfectamente circular */
-    object-fit: cover; /* Evita que la imagen se estire, recortándola si es necesario */
-    border: 2px solid #3ba4fa; /* Un pequeño borde azul que resalte con tu diseño */
+.user-profile-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
 }
 
 .nav-avatar {
-    width: 35px !important; /* Forzamos el tamaño para que no lo ignore */
-    height: 35px !important;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
-    object-fit: cover;
     border: 2px solid #3ba4fa;
-    flex-shrink: 0; /* Evita que la imagen se aplaste si el nombre es largo */
-}
-
-.user-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: #fff;
-    white-space: nowrap; /* Evita que el nombre salte de línea */
+    object-fit: cover; /* Añade esto */
+    cursor: pointer;
 }
 
 .nav-username {
@@ -1224,59 +1197,3 @@ body.es-admin #btn-admin-view {
     }
 }
 
-.btn-logout {
-    background: transparent;
-    border: none;
-    color: #ef4444;
-    cursor: pointer;
-    /* Candado de tamaño para que no explote */
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px; /* Evita que flexbox lo encoja o lo estire */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s;
-}
-
-.btn-logout i {
-    font-size: 16px !important; 
-    margin: 0;
-    padding: 0;
-}
-
-.btn-logout:hover {
-    transform: scale(1.2);
-    color: #f87171;
-}
-
-/* Ajuste para el contenedor de perfil */
-.user-profile-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* 1. Oculto por defecto */
-#btn-admin-view, #btn-edit-serie {
-    display: none !important;
-}
-
-/* 2. Se muestra para CUALQUIER usuario que haya iniciado sesión */
-body.usuario-identificado #btn-admin-view {
-    display: flex !important;
-    order: -1 !important;
-}
-
-/* 3. El botón de editar dentro de la ficha del anime */
-body.usuario-identificado #btn-edit-serie {
-    display: block !important;
-}
-
-.campo-bloqueado {
-    background-color: #1c1c1f !important;
-    color: #71717a !important;
-    cursor: not-allowed !important;
-    border-color: #27272a !important;
-    pointer-events: none; /* Evita cualquier interacción */
-}
