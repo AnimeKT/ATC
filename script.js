@@ -14,6 +14,7 @@ function sanitizar(texto) {
 // 2. INICIALIZAR TELEGRAM WEB APP
 // =========================================
 const tg = window.Telegram.WebApp;
+
 tg.ready();
 tg.expand();
 
@@ -458,6 +459,12 @@ async function cargarFavoritosUsuario() {
     }
 
     listaFavoritos = Array.isArray(data) ? data.map(item => String(item.nombre_item)) : [];
+}
+
+function esAdmin() {
+    // Reemplaza "tu_id_de_telegram" por tu número de ID real
+    // Ejemplo: return userIdActual === "123456789";
+    return userIdActual === "1310733615"; // ID de Telegram de Kaergsty
 }
 
 async function toggleFavorito(event, animeId) {
@@ -905,35 +912,6 @@ function obtenerEmailVirtual() {
     return `${user.id}@kaergsty.hub`;
 }
 
-async function registrarUsuario() {
-    const virtualEmail = obtenerEmailVirtual();
-    const passInput = document.getElementById('auth-password');
-    const password = passInput ? passInput.value : '';
-
-    if (password.length < 6) return mostrarErrorAuth('La clave debe tener al menos 6 caracteres.');
-
-    mostrarMensajeAuth('Procesando...', '#e0e0e0');
-    const { error } = await _supabase.auth.signUp({ email: virtualEmail, password: password });
-    
-    if (error) mostrarErrorAuth(error.message);
-    else mostrarMensajeAuth('¡Clave vinculada exitosamente!', '#10b981');
-}
-
-async function iniciarSesion() {
-    const virtualEmail = obtenerEmailVirtual();
-    const passInput = document.getElementById('auth-password');
-    const password = passInput ? passInput.value : '';
-
-    mostrarMensajeAuth('Iniciando...', '#e0e0e0');
-    const { error } = await _supabase.auth.signInWithPassword({ email: virtualEmail, password: password });
-
-    if (error) mostrarErrorAuth('Error: Contraseña incorrecta.');
-}
-
-async function cerrarSesion() {
-    await _supabase.auth.signOut();
-}
-
 function mostrarErrorAuth(msg) {
     const authMensaje = document.getElementById('auth-mensaje');
     if(authMensaje) {
@@ -1261,6 +1239,32 @@ function cargarInfoAdicional(obj) {
     Object.entries(obj).forEach(([k, v]) => {
         agregarPropiedadUI(k, v);
     });
+}
+
+// Función global que llama el widget de Telegram al autenticarse
+window.onTelegramAuth = function(user) {
+    console.log("Datos recibidos de Telegram:", user);
+    
+    // 1. Guardamos el ID del usuario de Telegram
+    userIdActual = user.id.toString(); 
+
+    // 2. Mostramos un mensaje de éxito
+    const mensaje = document.getElementById('auth-mensaje');
+    mensaje.style.color = "#4ade80";
+    mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
+
+    // 3. Cerramos el modal después de un breve momento
+    setTimeout(() => {
+        cerrarModalAuth();
+        // Aquí puedes añadir lógica para guardar al usuario en tu base de datos Supabase si lo deseas
+        actualizarInterfazUsuario(user); 
+    }, 1500);
+};
+
+// Función opcional para actualizar elementos visuales con la info de Telegram
+function actualizarInterfazUsuario(user) {
+    // Si tienes un elemento para mostrar el nombre del usuario, úsalo aquí
+    console.log("Sesión iniciada para el ID:", userIdActual);
 }
 
 // INICIALIZACIÓN EN CUANTO CARGUE LA PÁGINA
