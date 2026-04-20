@@ -17,14 +17,8 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// Obtenemos los datos del usuario desde el SDK de Telegram
-const user = tg.initDataUnsafe?.user;
-
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
-let userIdActual = user ? user.id.toString() : "anonimo";
-let nombreUsuario = user ? user.first_name : "Invitado";
-
-console.log("Conectado como:", nombreUsuario, "ID:", userIdActual);
+let userIdActual = "anonimo";
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
@@ -157,16 +151,6 @@ function filtrarPorGenero(genero, event) {
 // 4. INICIALIZACIÓN
 // =========================================
 async function inicializarApp() {
-
-    verificarPermisos();
-    
-    const btnAuth = document.getElementById('btn-auth');
-    if (user && btnAuth) {
-        // Mostramos el nombre del usuario de Telegram en la navbar
-        btnAuth.innerHTML = `<i class="fa-solid fa-user"></i> <span class="hide-mobile">${user.first_name}</span>`;
-        btnAuth.onclick = null; // Desactivamos el modal de login manual si ya está en TWA
-    }
-
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         // Guardamos el ID del usuario actual para validar permisos después
         userIdActual = String(tg.initDataUnsafe.user.id);
@@ -181,21 +165,6 @@ async function inicializarApp() {
     }
 
     await cargarObras(); 
-}
-
-function verificarPermisos() {
-    // Reemplaza estos IDs por los IDs reales de los administradores
-    const ADMIN_IDS = ['1310733615']; 
-
-    const btnAdmin = document.getElementById('btn-admin-view');
-    if (ADMIN_IDS.includes(userIdActual)) {
-        console.log("¡Bienvenido, Administrador!");
-        if (btnAdmin) btnAdmin.style.display = 'flex';
-        localStorage.setItem('sesion_admin', 'true');
-    } else {
-        if (btnAdmin) btnAdmin.style.display = 'none';
-        localStorage.removeItem('sesion_admin');
-    }
 }
 
 function volverAlCatalogo() {
@@ -493,22 +462,18 @@ async function cargarFavoritosUsuario() {
 
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation(); 
-
-    // 1. Verificación de seguridad
-    if (userIdActual === "anonimo") {
-        tg.showAlert("Por favor, abre la app desde el bot para guardar favoritos.");
-        return;
-    }
-
+    
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return alert('Favoritos solo están disponibles en Telegram.');
     if (!animeId) return;
 
-    const userIdStr = userIdActual; // Ya lo tenemos definido globalmente
+    const userIdStr = String(userId);
     const nombreItem = String(animeId);
-    const yaEsFav = esFavorito(nombreItem);
+    const yaEsFavorito = esFavorito(nombreItem);
 
     try {
         let resultado;
-        if (yaEsFav) {
+        if (yaEsFavorito) {
             resultado = await _supabase
                 .from('favoritos')
                 .delete()
@@ -527,7 +492,7 @@ async function toggleFavorito(event, animeId) {
         actualizarEstadoFavoritoDetalle(); 
     } catch (error) {
         console.error('Error:', error);
-        tg.showAlert('No se pudo actualizar el favorito.');
+        alert('No se pudo actualizar el favorito.');
     }
 }
 
