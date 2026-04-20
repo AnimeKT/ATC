@@ -33,9 +33,9 @@ function loguearUsuario(user) {
             const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
             authContainer.innerHTML = `
                 <div class="user-profile-nav">
-                    <img src="${fotoUrl}" alt="User">
-                    <span class="user-name hide-mobile">${user.first_name}</span>
-                    <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
+                    <img src="${fotoUrl}" alt="User" class="nav-avatar">
+                    <span class="user-name">${user.first_name}</span>
+                    <button class="btn-logout" onclick="cerrarSesion()">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
