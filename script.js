@@ -321,6 +321,16 @@ function abrirDetalle(tituloObra) {
         }
     }
 
+    const btnEditar = document.getElementById('btn-edit-serie');
+    if (btnEditar) {
+        // Verificamos si el ID actual es el tuyo
+        if (userIdActual === "1310733615") {
+            btnEditar.style.display = 'flex'; // Mostrar si eres tú
+        } else {
+            btnEditar.style.display = 'none'; // Ocultar para otros
+        }
+    }
+
     // --- NAVEGACIÓN Y VISTA ---
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
@@ -1309,18 +1319,31 @@ function cargarInfoAdicional(obj) {
 window.onTelegramAuth = function(user) {
     console.log("Datos recibidos de Telegram:", user);
     
-    // 1. Guardamos el ID del usuario de Telegram
+    // 1. Guardar el ID y persistir la sesión en el navegador
     userIdActual = user.id.toString(); 
+    localStorage.setItem('tg_user', JSON.stringify(user)); 
 
-    // 2. Mostramos un mensaje de éxito
+    // 2. Activar funciones de administrador si el ID coincide
+    if (userIdActual === "1310733615") {
+        // Mostrar botón de "Añadir" en la navbar
+        const btnAdmin = document.getElementById('btn-admin-view');
+        if (btnAdmin) btnAdmin.style.display = 'flex';
+
+        // Mostrar el botón del lápiz si ya estás dentro de un detalle
+        const btnEditar = document.getElementById('btn-edit-serie');
+        if (btnEditar) btnEditar.style.display = 'flex';
+    }
+
+    // 3. Mostrar mensaje de éxito en el modal
     const mensaje = document.getElementById('auth-mensaje');
-    mensaje.style.color = "#4ade80";
-    mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
+    if (mensaje) {
+        mensaje.style.color = "#4ade80";
+        mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
+    }
 
-    // 3. Cerramos el modal después de un breve momento
+    // 4. Cerrar el modal después de un momento
     setTimeout(() => {
         cerrarModalAuth();
-        // Aquí puedes añadir lógica para guardar al usuario en tu base de datos Supabase si lo deseas
         actualizarInterfazUsuario(user); 
     }, 1500);
 };
