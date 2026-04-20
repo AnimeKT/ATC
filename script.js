@@ -22,6 +22,8 @@ const tg = window.Telegram.WebApp;
 // Esta función centraliza todo el login
 function loguearUsuario(user) {
     if (!user) return;
+
+    localStorage.removeItem('sesion_cerrada');
     
     userIdActual = user.id.toString();
     localStorage.setItem('tg_user', JSON.stringify(user)); 
@@ -56,24 +58,28 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // CASO A: Estamos en Telegram Mini App (Login Automático)
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    // Comprobamos si el usuario cerró sesión manualmente en esta sesión
+    const sesionCerradaManualmente = localStorage.getItem('sesion_cerrada');
+
+    // CASO A: Estamos en Telegram Mini App
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user && !sesionCerradaManualmente) {
         console.log("Login automático por Mini App");
         loguearUsuario(tg.initDataUnsafe.user);
     } 
-    // CASO B: Estamos en PC/Navegador (Login Persistente)
+    // CASO B: Estamos en PC/Navegador o se cerró sesión en Mini App
     else {
         const userGuardado = localStorage.getItem('tg_user');
-        if (userGuardado) {
+        if (userGuardado && !sesionCerradaManualmente) {
             console.log("Sesión recuperada del navegador");
             loguearUsuario(JSON.parse(userGuardado));
+        } else {
+            // Si no hay usuario o cerró sesión, nos aseguramos de mostrar el botón de login
+            mostrarBotonLoginEnNav();
         }
     }
-    history.replaceState({ vista: 'catalogo' }, "", "");
 
-    // Siempre cargar el catálogo al iniciar
+    history.replaceState({ vista: 'catalogo' }, "", "");
     mostrarCatalogo();
-    
 });
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
