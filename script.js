@@ -23,7 +23,7 @@ const tg = window.Telegram.WebApp;
 function loguearUsuario(user) {
     if (!user) return;
 
-    localStorage.removeItem('sesion_cerrada');
+    localStorage.removeItem('sesion_desactivada');
     
     userIdActual = user.id.toString();
     localStorage.setItem('tg_user', JSON.stringify(user)); 
@@ -58,23 +58,26 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // LEER LA BANDERA: ¿El usuario cerró sesión a mano?
-    const logoutManual = localStorage.getItem('manual_logout') === 'true';
+    // 1. Miramos si el usuario cerró sesión voluntariamente
+    const logoutManual = localStorage.getItem('sesion_desactivada') === 'true';
 
-    // CASO A: Mini App (Solo si NO cerró sesión manualmente)
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user && !logoutManual) {
-        loguearUsuario(tg.initDataUnsafe.user);
-    } 
-    // CASO B: Navegador (Solo si NO cerró sesión manualmente)
-    else if (!logoutManual) {
-        const userGuardado = localStorage.getItem('tg_user');
-        if (userGuardado) {
-            loguearUsuario(JSON.parse(userGuardado));
+    // 2. Lógica de Login Automático
+    // Solo logueamos si NO hay una marca de logout manual
+    if (!logoutManual) {
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            console.log("Login automático por Mini App");
+            loguearUsuario(tg.initDataUnsafe.user);
+        } else {
+            const userGuardado = localStorage.getItem('tg_user');
+            if (userGuardado) {
+                console.log("Sesión recuperada del navegador");
+                loguearUsuario(JSON.parse(userGuardado));
+            }
         }
+    } else {
+        console.log("Sesión desactivada manualmente. Esperando login del usuario.");
     }
 
-    // Si la bandera existe, NO logueamos a nadie automáticamente
-    // La UI mostrará el botón de "Login" por defecto
     history.replaceState({ vista: 'catalogo' }, "", "");
     mostrarCatalogo();
 });
@@ -1387,8 +1390,8 @@ window.addEventListener('popstate', (event) => {
 
 function cerrarSesion() {
    
+    localStorage.setItem('sesion_desactivada', 'true');
     localStorage.removeItem('tg_user');
-    localStorage.setItem('manual_logout', 'true');
     
     userIdActual = "anonimo";
     listaFavoritos = [];
