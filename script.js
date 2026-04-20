@@ -90,14 +90,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- REEMPLAZA DESDE AQUÍ ---
     // --- DETECTOR MULTIPLATAFORMA (Web + Telegram) ---
     const urlParams = new URLSearchParams(window.location.search);
-    const webId = urlParams.get('id'); // Para links abiertos en navegador normal
-    const tgId = tg.initDataUnsafe?.start_param; // Para links abiertos DIRECTO en Telegram
+    const webId = urlParams.get('id'); 
+    
+    // Leemos el parámetro de Telegram y arreglamos los guiones por si acaso
+    let tgId = tg.initDataUnsafe?.start_param;
+    if (tgId) tgId = tgId.replace(/_/g, '-'); // Restauramos los guiones originales
 
-    // Priorizamos el ID de Telegram si existe
     const animeIdParaAbrir = tgId || webId;
 
     if (animeIdParaAbrir) {
-        // Usamos un pequeño delay (500ms) para asegurar que Supabase terminó de cargar 'todasLasObras'
         setTimeout(() => {
             const obraDirecta = todasLasObras.find(o => String(o.id) === String(animeIdParaAbrir));
             if (obraDirecta) {
@@ -105,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 mostrarCatalogo();
             }
-        }, 500); 
+        }, 600); // Un pelín más de tiempo para que Supabase no falle en móviles lentos
     } else {
         mostrarCatalogo();
     }
@@ -1028,26 +1029,31 @@ function verImagenGrande(url) {
 }
 
 function copiarEnlaceAnime(id) {
-    // IMPORTANTE: Cambia 'AnimeKaergstyBot' por el username de tu bot 
-    // y 'app' por el nombre corto de tu Mini App en BotFather
+    // ⚠️ CRÍTICO: Reemplaza "app" por el "Short Name" exacto que le diste a BotFather.
+    // Si BotFather te dio t.me/AnimeKaergstyBot/catalogo -> pon "catalogo"
     const botUsername = "AnimeKaergstyBot"; 
     const appNickname = "app"; 
     
-    // Este formato es el que hace que Telegram muestre la ventana de "Abrir Mini App"
-    const enlaceCopiado = `https://t.me/${botUsername}/${appNickname}?startapp=${id}`;
+    // Telegram prefiere guiones bajos en lugar de guiones normales para el startapp
+    const idSeguro = String(id).replace(/-/g, '_'); 
 
-    navigator.clipboard.writeText(enlaceCopiado).then(() => {
-        if (tg && tg.HapticFeedback) {
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.showPopup({
-                title: 'Enlace de Telegram',
-                message: 'Se ha copiado el link directo',
-                buttons: [{type: 'ok'}]
-            });
-        } else {
-            alert("Enlace copiado: " + enlaceCopiado);
-        }
-    });
+    // Este es el enlace que abre la app directo en el anime
+    const linkDirecto = `https://t.me/${botUsername}/${appNickname}?startapp=${idSeguro}`;
+    const textoMensaje = `¡Mira este anime en el catálogo! 🍿`;
+
+    // Si el usuario está usando Telegram (Celular o Desktop)
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        tg.HapticFeedback.impactOccurred('light');
+        
+        // Abre el selector de chats de Telegram para enviarlo a un amigo
+        const urlCompartir = `https://t.me/share/url?url=${encodeURIComponent(linkDirecto)}&text=${encodeURIComponent(textoMensaje)}`;
+        tg.openTelegramLink(urlCompartir);
+    } else {
+        // Si alguien lo abre desde un navegador web normal (Chrome/Edge en PC)
+        navigator.clipboard.writeText(linkDirecto).then(() => {
+            alert("Enlace copiado al portapapeles:\n" + linkDirecto);
+        });
+    }
 }
 
 window.addEventListener('popstate', (event) => {
