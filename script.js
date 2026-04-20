@@ -67,20 +67,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (userToLog) loguearUsuario(userToLog);
 
     // --- NUEVO: Detectar si entran por un link directo ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const animeId = urlParams.get('id');
+    // =========================================
+// 2. INICIO DE LA APLICACIÓN
+// =========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    verificarPermisosAdmin();
+    tg.ready();
+    tg.expand();
 
-    if (animeId) {
-        // Buscamos el anime en la lista cargada
-        const obraDirecta = todasLasObras.find(o => String(o.id) === String(animeId));
-        if (obraDirecta) {
-            abrirDetalle(obraDirecta.titulo);
-        } else {
-            mostrarCatalogo();
-        }
+    await cargarObras();
+    
+    let userToLog = null;
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userToLog = tg.initDataUnsafe.user;
+    } else {
+        const saved = localStorage.getItem('tg_user');
+        if (saved) userToLog = JSON.parse(saved);
+    }
+
+    if (userToLog) loguearUsuario(userToLog);
+
+    // --- REEMPLAZA DESDE AQUÍ ---
+    // --- DETECTOR MULTIPLATAFORMA (Web + Telegram) ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const webId = urlParams.get('id'); // Detecta si es link de navegador (?id=...)
+    const tgId = tg.initDataUnsafe?.start_param; // Detecta si es link de Telegram (startapp)
+
+    const animeIdParaAbrir = tgId || webId;
+
+    if (animeIdParaAbrir) {
+        // Buscamos el anime con un pequeño delay para asegurar que Supabase terminó
+        setTimeout(() => {
+            const obraDirecta = todasLasObras.find(o => String(o.id) === String(animeIdParaAbrir));
+            if (obraDirecta) {
+                abrirDetalle(obraDirecta.titulo);
+            } else {
+                mostrarCatalogo();
+            }
+        }, 500); 
     } else {
         mostrarCatalogo();
     }
+    // --- HASTA AQUÍ ---
+});
     // -----------------------------------------------------
 });
 
@@ -998,16 +1027,22 @@ function verImagenGrande(url) {
 }
 
 function copiarEnlaceAnime(id) {
-    // Si quieres que abra el Bot de Telegram directo, usa esta línea:
-    // const enlaceCopiado = `https://t.me/TuBotName/app_name?startapp=${id}`;
+    // 1. CONFIGURACIÓN: Reemplaza con tus datos reales de BotFather
+    const botUsername = "AnimeKaergstyBot"; 
+    const appNickname = "app"; // El "Direct Link" que te dio BotFather
     
-    // Si prefieres enlace web normal, usa esta:
-    const enlaceCopiado = `${window.location.origin}${window.location.pathname}?id=${id}`;
+    // 2. Creamos el link oficial de Telegram con el parámetro startapp
+    // Este link abre la app de Telegram automáticamente
+    const enlaceCopiado = `https://t.me/${botUsername}/${appNickname}?startapp=${id}`;
 
     navigator.clipboard.writeText(enlaceCopiado).then(() => {
         if (tg && tg.HapticFeedback) {
             tg.HapticFeedback.notificationOccurred('success');
-            tg.showAlert("¡Enlace copiado al portapapeles!");
+            tg.showPopup({
+                title: '¡Enlace de Telegram!',
+                message: 'Se ha copiado el link directo para abrir este anime dentro de Telegram.',
+                buttons: [{type: 'ok'}]
+            });
         } else {
             alert("Enlace copiado: " + enlaceCopiado);
         }
