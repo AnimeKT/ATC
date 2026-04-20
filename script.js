@@ -13,10 +13,49 @@ function sanitizar(texto) {
 // =========================================
 // 2. INICIALIZAR TELEGRAM WEB APP
 // =========================================
+// Al inicio de tu script.js o donde inicializas 'tg'
 const tg = window.Telegram.WebApp;
-
 tg.ready();
-tg.expand();
+
+// Función para actualizar la UI con la foto del usuario
+function renderUsuarioLogueado(user) {
+    const authContainer = document.getElementById('auth-container');
+    if (!authContainer) return;
+
+    // Si el usuario no tiene foto, usamos una por defecto
+    const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
+
+    authContainer.innerHTML = `
+        <div class="user-profile-nav">
+            <img src="${fotoUrl}" alt="${user.first_name}" class="nav-avatar" onclick="abrirPerfil()">
+            <span class="nav-username hide-mobile">${user.first_name}</span>
+        </div>
+    `;
+
+    // Lógica de administrador (usando tu ID que vi en el archivo)
+    if (user.id.toString() === "1310733615") {
+        const btnAdmin = document.getElementById('btn-admin-view');
+        if (btnAdmin) btnAdmin.style.display = 'flex';
+    }
+}
+
+// DETECCIÓN AUTOMÁTICA (Mini App)
+if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    console.log("Detectado en Mini App - Login Automático");
+    const user = tg.initDataUnsafe.user;
+    userIdActual = user.id.toString();
+    renderUsuarioLogueado(user);
+    // Opcional: cargar favoritos automáticamente aquí
+    if (typeof cargarFavoritosUsuario === 'function') cargarFavoritosUsuario();
+}
+
+// LOGIN MANUAL (Navegador - Widget)
+window.onTelegramAuth = function(user) {
+    userIdActual = user.id.toString();
+    renderUsuarioLogueado(user);
+    cerrarModalAuth();
+    if (typeof cargarFavoritosUsuario === 'function') cargarFavoritosUsuario();
+};
 
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
 let userIdActual = "anonimo";
