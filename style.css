@@ -72,8 +72,20 @@ body {
 .user-actions {
     display: flex;
     align-items: center;
-    gap: 15px;
-    flex-wrap: nowrap; /* Obliga a que todos los botones se queden en la misma línea */
+    gap: 15px; /* Espacio entre el botón Añadir y el Perfil */
+}
+
+#btn-admin-view {
+    background-color: #3ba4fa;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
 }
 
 /* =========================================

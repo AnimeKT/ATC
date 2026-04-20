@@ -26,28 +26,32 @@ function loguearUsuario(user) {
     userIdActual = user.id.toString();
     localStorage.setItem('tg_user', JSON.stringify(user)); // Persistencia en PC
     
-    // Esperamos un milisegundo para asegurar que el HTML cargó
+    // === NUEVO: LÓGICA PARA MOSTRAR EL BOTÓN "AÑADIR" ===
+    const ADMIN_ID = "6006497258"; // Tu ID real
+    const btnAdmin = document.getElementById('btn-admin-view');
+    
+    if (userIdActual === ADMIN_ID) {
+        if (btnAdmin) btnAdmin.style.display = 'flex'; // Lo mostramos solo si eres tú
+    } else {
+        if (btnAdmin) btnAdmin.style.display = 'none'; // Lo ocultamos para los demás
+    }
+    // ==================================================
+
     setTimeout(() => {
         const authContainer = document.getElementById('auth-container');
         if (authContainer) {
             const fotoUrl = user.photo_url || 'https://via.placeholder.com/40';
             authContainer.innerHTML = `
                 <div class="user-profile-nav">
-                    <img src="${fotoUrl}" alt="User" class="nav-avatar">
-                    <span class="user-name">${user.first_name}</span>
-                    <button class="btn-logout" onclick="cerrarSesion()">
+                    <img src="${fotoUrl}" alt="Perfil" class="nav-avatar">
+                    <span class="user-name hide-mobile">${user.first_name}</span>
+                    <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
             `;
         }
-
-        // Si es el admin (tu ID), mostrar botón añadir
-        if (userIdActual === "1310733615") {
-            const btnAdmin = document.getElementById('btn-admin-view');
-            if (btnAdmin) btnAdmin.style.display = 'flex';
-        }
-    }, 10);
+    }, 100);
 }
 
 // ESTO SE EJECUTA CUANDO LA PÁGINA TERMINA DE CARGAR
@@ -1403,6 +1407,8 @@ function cerrarSesion() {
     
     console.log("Sesión cerrada.");
     alert("Has cerrado sesión correctamente.");
+
+    window.location.reload();
 }
 
 
