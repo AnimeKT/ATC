@@ -519,13 +519,13 @@ function esFavorito(animeId) {
 }
 
 async function cargarFavoritosUsuario() {
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return;
+    // Usamos el ID que ya tenemos guardado (funciona en PC y Móvil)
+    if (!userIdActual || userIdActual === "anonimo") return;
 
     const { data, error } = await _supabase
         .from('favoritos')
         .select('nombre_item')
-        .eq('user_id_telegram', String(userId));
+        .eq('user_id_telegram', userIdActual);
 
     if (error) {
         console.error('Error cargando favoritos:', error);
@@ -544,11 +544,16 @@ function esAdmin() {
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation(); 
     
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return alert('Favoritos solo están disponibles en Telegram.');
+    // Si no está logueado, le pedimos que inicie sesión
+    if (!userIdActual || userIdActual === "anonimo") {
+        alert('Inicia sesión con Telegram para guardar tus favoritos.');
+        if (typeof abrirModalAuth === 'function') abrirModalAuth();
+        return;
+    }
+    
     if (!animeId) return;
 
-    const userIdStr = String(userId);
+    const userIdStr = String(userIdActual);
     const nombreItem = String(animeId);
     const yaEsFavorito = esFavorito(nombreItem);
 
