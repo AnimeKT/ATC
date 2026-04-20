@@ -24,18 +24,9 @@ function loguearUsuario(user) {
     if (!user) return;
     
     userIdActual = user.id.toString();
-    localStorage.setItem('tg_user', JSON.stringify(user)); 
+    localStorage.setItem('tg_user', JSON.stringify(user)); // Persistencia en PC
     
-    // 1. Mostrar botón "Añadir" en el header si eres admin
-    const btnAdmin = document.getElementById('btn-admin-view');
-    if (btnAdmin) {
-        btnAdmin.style.display = (userIdActual === "1310733615") ? 'flex' : 'none';
-    }
-
-    // 2. IMPORTANTE: Refrescar el catálogo para que aparezcan los botones "Editar" en las tarjetas
-    mostrarCatalogo();
-
-    // 3. Actualizar la foto de perfil
+    // Esperamos un milisegundo para asegurar que el HTML cargó
     setTimeout(() => {
         const authContainer = document.getElementById('auth-container');
         if (authContainer) {
@@ -47,6 +38,13 @@ function loguearUsuario(user) {
                 </div>
             `;
         }
+
+        // Si es el admin (tu ID), mostrar botón añadir
+        if (userIdActual === "1310733615") {
+            const btnAdmin = document.getElementById('btn-admin-view');
+            if (btnAdmin) btnAdmin.style.display = 'flex';
+        }
+        
         cargarFavoritosUsuario();
     }, 100);
 }
@@ -102,42 +100,32 @@ function cambiarVista(vista) {
 }
 
 function ejecutarCambioVista(vista) {
-    // Ocultar todas y mostrar la actual (tu lógica existente)
-    const vistas = ['catalogo', 'detalle', 'admin', 'favoritos', 'perfil'];
-    vistas.forEach(v => {
-        const el = document.getElementById(`vista-${v}`);
-        if(el) el.style.display = 'none';
-    });
-    
-    const vistaActiva = document.getElementById(`vista-${vista}`);
-    if(vistaActiva) vistaActiva.style.display = 'block';
+    const vistaCatalogo = document.getElementById('vista-catalogo');
+    const vistaRegistro = document.getElementById('vista-registro');
+    const vistaDetalle = document.getElementById('vista-detalle');
+    const barraBusqueda = document.getElementById('barra-busqueda');
 
-    // Lógica del botón de atrás
-    const btnBack = document.getElementById('btn-back-browser');
+    if (vistaCatalogo && vistaCatalogo.style.display !== 'none') {
+        posicionScrollGuardada = window.scrollY;
+    }
+
+    if(vistaCatalogo) vistaCatalogo.style.display = 'none';
+    if(vistaRegistro) vistaRegistro.style.display = 'none';
+    if(vistaDetalle) vistaDetalle.style.display = 'none';
+    if(barraBusqueda) barraBusqueda.style.display = 'none';
+
     if (vista === 'catalogo') {
+        if(vistaCatalogo) vistaCatalogo.style.display = 'block';
+        if(barraBusqueda) barraBusqueda.style.display = 'block';
         tg.BackButton.hide();
-        if(btnBack) btnBack.style.display = 'none';
+        setTimeout(() => window.scrollTo(0, posicionScrollGuardada), 10);
     } else {
+        if (vista === 'registro' && vistaRegistro) vistaRegistro.style.display = 'block';
+        if (vista === 'detalle' && vistaDetalle) vistaDetalle.style.display = 'block';
         tg.BackButton.show();
-        // Si no detecta la Mini App de Telegram, muestra el botón manual
-        if (!tg.initDataUnsafe?.user && btnBack) {
-            btnBack.style.display = 'flex';
-        }
+        window.scrollTo(0, 0);
     }
 }
-
-// Función para retroceder
-window.retrocederVista = function() {
-    if (historialNavegacion.length > 1) {
-        historialNavegacion.pop();
-        ejecutarCambioVista(historialNavegacion[historialNavegacion.length - 1]);
-    } else {
-        cambiarVista('catalogo');
-    }
-};
-
-// Conectar botón de Telegram
-tg.BackButton.onClick(() => window.retrocederVista());
 
 // =========================================
 // 3. ESTADO GLOBAL DE LA APP
@@ -510,43 +498,22 @@ function esFavorito(animeId) {
     return listaFavoritos.map(String).includes(String(animeId));
 }
 
-window.cargarFavoritosUsuario = async function() {
-    // 1. Validación de usuario (Combinando Telegram ID y estado anónimo)
-    const userId = window.userIdActual || tg.initDataUnsafe?.user?.id;
-    
-    if (!userId || userId === "anonimo") {
-        console.log("Usuario no identificado o anónimo. Saltando carga de favoritos.");
-        return;
-    }
+async function cargarFavoritosUsuario() {
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return;
 
-    // 2. Consulta a Supabase
-    // Nota: He usado 'usuarios_favoritos' y 'anime_id' que parece ser tu estructura más reciente
     const { data, error } = await _supabase
-        .from('usuarios_favoritos')
-        .select('anime_id')
-        .eq('user_id', userId);
+        .from('favoritos')
+        .select('nombre_item')
+        .eq('user_id_telegram', String(userId));
 
-    // 3. Manejo de errores
     if (error) {
-        console.error('Error al cargar favoritos desde Supabase:', error);
+        console.error('Error cargando favoritos:', error);
         return;
     }
 
-    // 4. Procesamiento de datos y actualización de UI
-    if (data) {
-        // Guardamos en un Set para búsquedas instantáneas (O(1))
-        window.favoritosUsuario = new Set(data.map(f => String(f.anime_id)));
-        
-        // Sincronizamos con listaFavoritos si aún la usas en otras partes del código
-        window.listaFavoritos = Array.from(window.favoritosUsuario);
-
-        // 5. Disparar actualizaciones de la Interfaz
-        if (typeof actualizarCorazonesUI === "function") actualizarCorazonesUI();
-        if (typeof renderizarFavoritos === "function") renderizarFavoritos();
-        
-        console.log("Favoritos cargados con éxito:", window.favoritosUsuario.size);
-    }
-};
+    listaFavoritos = Array.isArray(data) ? data.map(item => String(item.nombre_item)) : [];
+}
 
 function esAdmin() {
     // Reemplaza "tu_id_de_telegram" por tu número de ID real
@@ -554,61 +521,41 @@ function esAdmin() {
     return userIdActual === "1310733615"; // ID de Telegram de Kaergsty
 }
 
-window.toggleFavorito = async function(event, animeId) {
-    // 1. Evitar que el click dispare otros eventos (como abrir detalles)
-    if (event && event.stopPropagation) event.stopPropagation();
-
-    // 2. Validación de Autenticación
-    if (typeof userIdActual === 'undefined' || userIdActual === "anonimo") {
-        alert("Debes iniciar sesión para usar favoritos.");
-        if (typeof abrirModalAuth === "function") abrirModalAuth();
-        return;
-    }
-
+async function toggleFavorito(event, animeId) {
+    if (event) event.stopPropagation(); 
+    
+    const userId = tg.initDataUnsafe?.user?.id;
+    if (!userId) return alert('Favoritos solo están disponibles en Telegram.');
     if (!animeId) return;
 
-    const userId = userIdActual;
-    const idItem = String(animeId);
-    
-    // 3. Determinar el estado actual usando el Set (más rápido)
-    // Si no usas Set, puedes usar: const yaEsFavorito = listaFavoritos.includes(idItem);
-    const yaEsFavorito = window.favoritosUsuario && window.favoritosUsuario.has(idItem);
+    const userIdStr = String(userId);
+    const nombreItem = String(animeId);
+    const yaEsFavorito = esFavorito(nombreItem);
 
     try {
-        let error;
-
+        let resultado;
         if (yaEsFavorito) {
-            // ELIMINAR de favoritos
-            const res = await _supabase
-                .from('usuarios_favoritos') // Ajusta al nombre de tu tabla
+            resultado = await _supabase
+                .from('favoritos')
                 .delete()
-                .eq('user_id', userId)
-                .eq('anime_id', idItem);
-            error = res.error;
+                .eq('user_id_telegram', userIdStr)
+                .eq('nombre_item', nombreItem);
         } else {
-            // INSERTAR en favoritos
-            const res = await _supabase
-                .from('usuarios_favoritos') // Ajusta al nombre de tu tabla
-                .insert([{ user_id: userId, anime_id: idItem }]);
-            error = res.error;
+            resultado = await _supabase
+                .from('favoritos')
+                .insert([{ user_id_telegram: userIdStr, nombre_item: nombreItem }]);
         }
 
-        if (error) throw error;
+        if (resultado.error) throw resultado.error;
 
-        // 4. Sincronizar datos y actualizar Interfaz
-        // Volvemos a cargar los datos para que todo esté sincronizado
         await cargarFavoritosUsuario();
-
-        // 5. Actualizar componentes visuales
-        if (typeof actualizarCorazonesUI === "function") actualizarCorazonesUI();
-        if (typeof aplicarTodosLosFiltros === "function") aplicarTodosLosFiltros();
-        if (typeof actualizarEstadoFavoritoDetalle === "function") actualizarEstadoFavoritoDetalle();
-
+        aplicarTodosLosFiltros(); 
+        actualizarEstadoFavoritoDetalle(); 
     } catch (error) {
-        console.error('Error al procesar favorito:', error);
-        alert('No se pudo actualizar el favorito. Intenta de nuevo.');
+        console.error('Error:', error);
+        alert('No se pudo actualizar el favorito.');
     }
-};
+}
 
 function toggleFavoritoDetalle(event) {
     if (event) event.stopPropagation();
