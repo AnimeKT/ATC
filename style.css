@@ -1208,14 +1208,12 @@ body {
 }
 
 /* Contenedor del perfil de usuario en el nav */
-.user-profile-nav {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #27272a;
-    padding: 5px 12px;
-    border-radius: 20px;
-    height: 45px; /* Altura controlada para que no se deforme */
+.user-profile-nav img {
+    width: 35px; /* Un poco menos que la altura del contenedor (45px) para dejar margen */
+    height: 35px;
+    border-radius: 50%; /* Hace que la imagen sea perfectamente circular */
+    object-fit: cover; /* Evita que la imagen se estire, recortándola si es necesario */
+    border: 2px solid #3ba4fa; /* Un pequeño borde azul que resalte con tu diseño */
 }
 
 /* Controles estrictos para el botón de logout */
