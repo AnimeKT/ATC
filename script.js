@@ -34,9 +34,11 @@ function loguearUsuario(user) {
             // Aquí añadimos el botón de cerrar sesión al lado del nombre
             authContainer.innerHTML = `
                 <div class="user-profile-nav">
-                    <img src="${fotoUrl}" alt="User"> <-- Esta imagen no tiene clase CSS
-                    <span class="user-name hide-mobile">${user.first_name}</span>
-                    ...
+                    <img src="${fotoUrl}" alt="User" class="nav-avatar">
+                    <span class="user-name">${user.first_name}</span>
+                    <button class="btn-logout" onclick="cerrarSesion()">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
                 </div>
             `;
         }

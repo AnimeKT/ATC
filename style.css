@@ -1171,22 +1171,22 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    cursor: pointer;
 }
 
 .nav-avatar {
-    width: 35px;
-    height: 35px;
+    width: 35px !important; /* Forzamos el tamaño para que no lo ignore */
+    height: 35px !important;
     border-radius: 50%;
+    object-fit: cover;
     border: 2px solid #3ba4fa;
-    object-fit: cover; /* Añade esto */
-    cursor: pointer;
+    flex-shrink: 0; /* Evita que la imagen se aplaste si el nombre es largo */
 }
 
-.nav-username {
+.user-name {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     color: #fff;
+    white-space: nowrap; /* Evita que el nombre salte de línea */
 }
 
 /* Ajuste para móviles */
