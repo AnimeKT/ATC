@@ -185,7 +185,7 @@ async function inicializarApp() {
 
 function verificarPermisos() {
     // Reemplaza estos IDs por los IDs reales de los administradores
-    const ADMIN_IDS = ['123456789', '987654321']; 
+    const ADMIN_IDS = ['1310733615']; 
 
     const btnAdmin = document.getElementById('btn-admin-view');
     if (ADMIN_IDS.includes(userIdActual)) {
@@ -494,6 +494,7 @@ async function cargarFavoritosUsuario() {
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation(); 
 
+    // 1. Verificación de seguridad
     if (userIdActual === "anonimo") {
         tg.showAlert("Por favor, abre la app desde el bot para guardar favoritos.");
         return;
@@ -501,21 +502,13 @@ async function toggleFavorito(event, animeId) {
 
     if (!animeId) return;
 
-    // IMPORTANTE: Asegúrate de que los nombres de las columnas coincidan con tu tabla
-    // En tu script original usas 'user_id_telegram' y 'nombre_item'
-    const yaEsFavorito = esFavorito(String(animeId));
-    
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) return alert('Favoritos solo están disponibles en Telegram.');
-    if (!animeId) return;
-
-    const userIdStr = String(userId);
+    const userIdStr = userIdActual; // Ya lo tenemos definido globalmente
     const nombreItem = String(animeId);
-    const yaEsFavorito = esFavorito(nombreItem);
+    const yaEsFav = esFavorito(nombreItem);
 
     try {
         let resultado;
-        if (yaEsFavorito) {
+        if (yaEsFav) {
             resultado = await _supabase
                 .from('favoritos')
                 .delete()
@@ -534,7 +527,7 @@ async function toggleFavorito(event, animeId) {
         actualizarEstadoFavoritoDetalle(); 
     } catch (error) {
         console.error('Error:', error);
-        alert('No se pudo actualizar el favorito.');
+        tg.showAlert('No se pudo actualizar el favorito.');
     }
 }
 
