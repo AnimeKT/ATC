@@ -59,23 +59,19 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.expand();
 
     // 1. Miramos si el usuario cerró sesión voluntariamente
-    const logoutManual = localStorage.getItem('sesion_desactivada') === 'true';
+    const sesionDesactivada = localStorage.getItem('borrar_sesion') === 'true';
 
     // 2. Lógica de Login Automático
     // Solo logueamos si NO hay una marca de logout manual
-    if (!logoutManual) {
+    if (!sesionDesactivada) {
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            console.log("Login automático por Mini App");
             loguearUsuario(tg.initDataUnsafe.user);
         } else {
             const userGuardado = localStorage.getItem('tg_user');
             if (userGuardado) {
-                console.log("Sesión recuperada del navegador");
                 loguearUsuario(JSON.parse(userGuardado));
             }
         }
-    } else {
-        console.log("Sesión desactivada manualmente. Esperando login del usuario.");
     }
 
     history.replaceState({ vista: 'catalogo' }, "", "");
