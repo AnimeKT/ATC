@@ -1384,53 +1384,54 @@ body.usuario-identificado #btn-edit-serie {
 }
 
 @media (max-width: 480px) {
-    /* 1. Configuramos la Navbar para que permita varias filas */
+    /* 1. Navbar en dos filas */
     .navbar {
         display: flex;
         flex-wrap: wrap; 
         padding: 10px 15px;
-        justify-content: space-between;
+        justify-content: space-between; /* Empuja logo a izq y perfil a der */
         align-items: center;
-        gap: 10px 0; /* Espacio vertical entre filas */
+        gap: 10px 0;
     }
 
-    /* 2. Movemos el perfil y el botón + al inicio (Izquierda) */
+    /* 2. El Logo ahora es lo primero (Izquierda) */
+    .logo {
+        order: 1; 
+        flex: 1;
+        text-align: left;
+        margin: 0;
+    }
+
+    /* 3. El perfil y botón + pasan a la derecha */
     .user-actions {
-        order: 1; /* Posición 1 */
+        order: 2; 
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: flex-end; /* Alinea contenido a la derecha */
+        gap: 12px;
         flex: 0 1 auto;
     }
 
-    /* 3. El Logo se queda en la misma fila (Derecha del perfil) */
-    .logo {
-        order: 2; /* Posición 2 */
-        flex: 1;
-        text-align: left;
-        margin-left: 10px;
-    }
-
-    /* 4. La barra de búsqueda baja a la siguiente fila */
+    /* 4. La barra de búsqueda se queda abajo abarcando todo */
     .search-bar {
-        order: 3; /* Posición 3 (Abajo) */
-        width: 100% !important; /* Ocupa todo el ancho */
-        flex: 0 0 100%; /* Fuerza el salto de línea */
+        order: 3; 
+        width: 100% !important;
+        flex: 0 0 100%;
         margin-top: 5px;
     }
 
-    /* Ajustes visuales para el perfil en el lado izquierdo */
+    /* Ajustes del perfil para que se vea limpio a la derecha */
     .user-profile-nav {
         flex-direction: row;
         gap: 8px;
     }
 
     .nav-avatar {
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
     }
 
-    /* Ocultamos el nombre si el espacio es crítico, dejando solo el avatar */
+    /* Mantenemos el nombre oculto en móviles para no apretar el + */
     .user-name {
         display: none; 
     }
