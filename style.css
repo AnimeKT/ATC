@@ -1382,3 +1382,56 @@ body.usuario-identificado #btn-edit-serie {
         padding: 10px !important;
     }
 }
+
+@media (max-width: 480px) {
+    /* 1. Configuramos la Navbar para que permita varias filas */
+    .navbar {
+        display: flex;
+        flex-wrap: wrap; 
+        padding: 10px 15px;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px 0; /* Espacio vertical entre filas */
+    }
+
+    /* 2. Movemos el perfil y el botón + al inicio (Izquierda) */
+    .user-actions {
+        order: 1; /* Posición 1 */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 0 1 auto;
+    }
+
+    /* 3. El Logo se queda en la misma fila (Derecha del perfil) */
+    .logo {
+        order: 2; /* Posición 2 */
+        flex: 1;
+        text-align: left;
+        margin-left: 10px;
+    }
+
+    /* 4. La barra de búsqueda baja a la siguiente fila */
+    .search-bar {
+        order: 3; /* Posición 3 (Abajo) */
+        width: 100% !important; /* Ocupa todo el ancho */
+        flex: 0 0 100%; /* Fuerza el salto de línea */
+        margin-top: 5px;
+    }
+
+    /* Ajustes visuales para el perfil en el lado izquierdo */
+    .user-profile-nav {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .nav-avatar {
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Ocultamos el nombre si el espacio es crítico, dejando solo el avatar */
+    .user-name {
+        display: none; 
+    }
+}
