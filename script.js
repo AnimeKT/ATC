@@ -23,10 +23,10 @@ const tg = window.Telegram.WebApp;
 function loguearUsuario(user) {
     if (!user) return;
 
-    localStorage.removeItem('bloquear_login');
+    localStorage.removeItem('sesion_cerrada');
     
     userIdActual = user.id.toString();
-    localStorage.setItem('tg_user', JSON.stringify(user));
+    localStorage.setItem('tg_user', JSON.stringify(user)); 
     
     setTimeout(() => {
         const authContainer = document.getElementById('auth-container');
@@ -58,23 +58,24 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // 1. Miramos si el usuario cerró sesión voluntariamente
-    const loginBloqueado = localStorage.getItem('bloquear_login') === 'true';
+    // Comprobamos si el usuario cerró sesión manualmente en esta sesión
+    const sesionCerradaManualmente = localStorage.getItem('sesion_cerrada');
 
-    // 2. Lógica de Login Automático
-    // Solo logueamos si NO hay una marca de logout manual
-    if (!loginBloqueado) {
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            console.log("Login automático por Mini App");
-            loguearUsuario(tg.initDataUnsafe.user);
+    // CASO A: Estamos en Telegram Mini App
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user && !sesionCerradaManualmente) {
+        console.log("Login automático por Mini App");
+        loguearUsuario(tg.initDataUnsafe.user);
+    } 
+    // CASO B: Estamos en PC/Navegador o se cerró sesión en Mini App
+    else {
+        const userGuardado = localStorage.getItem('tg_user');
+        if (userGuardado && !sesionCerradaManualmente) {
+            console.log("Sesión recuperada del navegador");
+            loguearUsuario(JSON.parse(userGuardado));
         } else {
-            const userGuardado = localStorage.getItem('tg_user');
-            if (userGuardado) {
-                loguearUsuario(JSON.parse(userGuardado));
-            }
+            // Si no hay usuario o cerró sesión, nos aseguramos de mostrar el botón de login
+            mostrarBotonLoginEnNav();
         }
-    } else {
-        console.log("El usuario cerró sesión. No se logueará hasta que pulse Login.");
     }
 
     history.replaceState({ vista: 'catalogo' }, "", "");
@@ -976,21 +977,11 @@ _supabase.auth.getSession().then(({ data: { session } }) => {
 });
 
 function abrirModalAuth() {
-
-    localStorage.removeItem('manual_logout');
-
     const modal = document.getElementById('modal-auth');
     if (modal) {
         modal.classList.remove('modal-oculto');
         if(document.getElementById('auth-password')) document.getElementById('auth-password').value = "";
         if(document.getElementById('auth-mensaje')) document.getElementById('auth-mensaje').innerText = "";
-        
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                loguearUsuario(tg.initDataUnsafe.user);
-            } else {
-                // Si es PC, abrimos el modal donde está el widget de Telegram
-                document.getElementById('modal-auth').classList.remove('modal-oculto');
-    }
     }
 }
 
@@ -1388,11 +1379,13 @@ window.addEventListener('popstate', (event) => {
 });
 
 function cerrarSesion() {
-   
-    localStorage.setItem('bloquear_login', 'true');
+    // 1. Resetear el ID a anónimo
+    userIdActual = "anonimo";
+    
+    // 2. Borrar los datos guardados en el navegador
     localStorage.removeItem('tg_user');
     
-    userIdActual = "anonimo";
+    // 3. Limpiar la lista de favoritos localmente
     listaFavoritos = [];
 
     // 4. Ocultar funciones de administrador
