@@ -69,10 +69,11 @@ body {
     border-color: #3ba4fa; 
 }
 
-.user-actions { 
-    display: flex; 
-    gap: 10px; 
-    margin-left: auto;
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: nowrap; /* Obliga a que todos los botones se queden en la misma línea */
 }
 
 /* =========================================
@@ -1208,12 +1209,22 @@ body {
 .btn-logout {
     background: transparent;
     border: none;
-    color: #ef4444; /* Rojo para indicar salida */
-    margin-left: 10px;
+    color: #ef4444;
     cursor: pointer;
-    font-size: 16px;
-    padding: 5px;
+    /* Candado de tamaño para que no explote */
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px; /* Evita que flexbox lo encoja o lo estire */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: transform 0.2s;
+}
+
+.btn-logout i {
+    font-size: 16px !important; 
+    margin: 0;
+    padding: 0;
 }
 
 .btn-logout:hover {
