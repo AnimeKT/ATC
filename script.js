@@ -58,26 +58,23 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // Comprobamos si el usuario cerró sesión manualmente en esta sesión
-    const sesionCerradaManualmente = localStorage.getItem('sesion_cerrada');
+    // LEER LA BANDERA: ¿El usuario cerró sesión a mano?
+    const logoutManual = localStorage.getItem('manual_logout') === 'true';
 
-    // CASO A: Estamos en Telegram Mini App
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user && !sesionCerradaManualmente) {
-        console.log("Login automático por Mini App");
+    // CASO A: Mini App (Solo si NO cerró sesión manualmente)
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user && !logoutManual) {
         loguearUsuario(tg.initDataUnsafe.user);
     } 
-    // CASO B: Estamos en PC/Navegador o se cerró sesión en Mini App
-    else {
+    // CASO B: Navegador (Solo si NO cerró sesión manualmente)
+    else if (!logoutManual) {
         const userGuardado = localStorage.getItem('tg_user');
-        if (userGuardado && !sesionCerradaManualmente) {
-            console.log("Sesión recuperada del navegador");
+        if (userGuardado) {
             loguearUsuario(JSON.parse(userGuardado));
-        } else {
-            // Si no hay usuario o cerró sesión, nos aseguramos de mostrar el botón de login
-            mostrarBotonLoginEnNav();
         }
     }
 
+    // Si la bandera existe, NO logueamos a nadie automáticamente
+    // La UI mostrará el botón de "Login" por defecto
     history.replaceState({ vista: 'catalogo' }, "", "");
     mostrarCatalogo();
 });
@@ -977,11 +974,21 @@ _supabase.auth.getSession().then(({ data: { session } }) => {
 });
 
 function abrirModalAuth() {
+
+    localStorage.removeItem('manual_logout');
+
     const modal = document.getElementById('modal-auth');
     if (modal) {
         modal.classList.remove('modal-oculto');
         if(document.getElementById('auth-password')) document.getElementById('auth-password').value = "";
         if(document.getElementById('auth-mensaje')) document.getElementById('auth-mensaje').innerText = "";
+        
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                loguearUsuario(tg.initDataUnsafe.user);
+            } else {
+                // Si es PC, abrimos el modal donde está el widget de Telegram
+                document.getElementById('modal-auth').classList.remove('modal-oculto');
+    }
     }
 }
 
@@ -1379,13 +1386,11 @@ window.addEventListener('popstate', (event) => {
 });
 
 function cerrarSesion() {
-    // 1. Resetear el ID a anónimo
-    userIdActual = "anonimo";
-    
-    // 2. Borrar los datos guardados en el navegador
+   
     localStorage.removeItem('tg_user');
+    localStorage.setItem('manual_logout', 'true');
     
-    // 3. Limpiar la lista de favoritos localmente
+    userIdActual = "anonimo";
     listaFavoritos = [];
 
     // 4. Ocultar funciones de administrador
