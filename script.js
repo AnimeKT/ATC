@@ -1297,16 +1297,22 @@ function cargarInfoAdicional(obj) {
 
 // Función global que llama el widget de Telegram al autenticarse
 window.onTelegramAuth = function(user) {
-    const mensaje = document.getElementById('auth-mensaje');
-    if (mensaje) {
-        mensaje.style.color = "#4ade80";
-        mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
-    }
+    console.log("Datos recibidos de Telegram:", user);
+    
+    // 1. Guardamos el ID del usuario de Telegram
+    userIdActual = user.id.toString(); 
 
+    // 2. Mostramos un mensaje de éxito
+    const mensaje = document.getElementById('auth-mensaje');
+    mensaje.style.color = "#4ade80";
+    mensaje.innerText = `¡Bienvenido, ${user.first_name}!`;
+
+    // 3. Cerramos el modal después de un breve momento
     setTimeout(() => {
         cerrarModalAuth();
-        loguearUsuario(user); // Usamos la misma función de arriba
-    }, 1000);
+        // Aquí puedes añadir lógica para guardar al usuario en tu base de datos Supabase si lo deseas
+        actualizarInterfazUsuario(user); 
+    }, 1500);
 };
 
 // Función opcional para actualizar elementos visuales con la info de Telegram
