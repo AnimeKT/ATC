@@ -616,16 +616,6 @@ body.es-admin #btn-admin-view {
     inset: 0;
     background: linear-gradient(to top, #050505 5%, transparent 50%);
 }
-
-
-
-
-
-
-
-
-
-
 .contenedor-detalle {
     position: relative;
     margin-top: -70px;
@@ -1434,5 +1424,33 @@ body.usuario-identificado #btn-edit-serie {
     /* Mantenemos el nombre oculto en móviles para no apretar el + */
     .user-name {
         display: none; 
+    }
+}
+
+/* Botón de compartir "invisible" */
+.btn-share-hidden {
+    position: absolute; /* Relativo al contenedor detalle-titulos */
+    bottom: -10px; /* Pegado abajo */
+    right: 0;      /* Pegado a la derecha */
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.10); /* 10% de opacidad (casi invisible) */
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 10px;
+    z-index: 100;
+}
+
+/* Solo se ve cuando lo tocas o pasas el mouse */
+.btn-share-hidden:hover, .btn-share-hidden:active {
+    color: #3ba4fa;
+    transform: scale(1.15);
+}
+
+@media (max-width: 768px) {
+    .btn-share-hidden {
+        bottom: -5px;
+        color: rgba(255, 255, 255, 0.15); /* Un poquito más visible en celular para que no se pierda del todo */
     }
 }

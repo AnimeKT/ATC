@@ -65,16 +65,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (userToLog) loguearUsuario(userToLog);
-    mostrarCatalogo();
-});
 
-async function inicializarApp() {
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        userIdActual = String(tg.initDataUnsafe.user.id);
-        await cargarFavoritosUsuario();
+    // --- NUEVO: Detectar si entran por un link directo ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const animeId = urlParams.get('id');
+
+    if (animeId) {
+        // Buscamos el anime en la lista cargada
+        const obraDirecta = todasLasObras.find(o => String(o.id) === String(animeId));
+        if (obraDirecta) {
+            abrirDetalle(obraDirecta.titulo);
+        } else {
+            mostrarCatalogo();
+        }
+    } else {
+        mostrarCatalogo();
     }
-    await cargarObras(); 
-}
+    // -----------------------------------------------------
+});
 
 // =========================================
 // 3. NAVEGACIÓN Y VISTAS
@@ -406,6 +414,10 @@ function abrirDetalle(tituloObra) {
 
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
+    const btnShare = document.getElementById('det-share-btn');
+    if (btnShare) {
+        btnShare.onclick = () => copiarEnlaceAnime(obraActual.id);
+    }
     cambiarVista('detalle');
 }
 
@@ -983,6 +995,23 @@ function verImagenGrande(url) {
     }
     document.getElementById('viewer-img').src = url;
     overlay.style.display = 'flex';
+}
+
+function copiarEnlaceAnime(id) {
+    // Si quieres que abra el Bot de Telegram directo, usa esta línea:
+    // const enlaceCopiado = `https://t.me/TuBotName/app_name?startapp=${id}`;
+    
+    // Si prefieres enlace web normal, usa esta:
+    const enlaceCopiado = `${window.location.origin}${window.location.pathname}?id=${id}`;
+
+    navigator.clipboard.writeText(enlaceCopiado).then(() => {
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert("¡Enlace copiado al portapapeles!");
+        } else {
+            alert("Enlace copiado: " + enlaceCopiado);
+        }
+    });
 }
 
 window.addEventListener('popstate', (event) => {
