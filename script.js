@@ -17,8 +17,14 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+// Obtenemos los datos del usuario desde el SDK de Telegram
+const user = tg.initDataUnsafe?.user;
+
 // Identificador del usuario actual para permisos (Dueño vs Colaborador)
-let userIdActual = "anonimo";
+let userIdActual = user ? user.id.toString() : "anonimo";
+let nombreUsuario = user ? user.first_name : "Invitado";
+
+console.log("Conectado como:", nombreUsuario, "ID:", userIdActual);
 
 // =========================================
 // SISTEMA DE HISTORIAL DE NAVEGACIÓN
@@ -151,6 +157,16 @@ function filtrarPorGenero(genero, event) {
 // 4. INICIALIZACIÓN
 // =========================================
 async function inicializarApp() {
+
+    verificarPermisos();
+    
+    const btnAuth = document.getElementById('btn-auth');
+    if (user && btnAuth) {
+        // Mostramos el nombre del usuario de Telegram en la navbar
+        btnAuth.innerHTML = `<i class="fa-solid fa-user"></i> <span class="hide-mobile">${user.first_name}</span>`;
+        btnAuth.onclick = null; // Desactivamos el modal de login manual si ya está en TWA
+    }
+
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         // Guardamos el ID del usuario actual para validar permisos después
         userIdActual = String(tg.initDataUnsafe.user.id);
@@ -165,6 +181,21 @@ async function inicializarApp() {
     }
 
     await cargarObras(); 
+}
+
+function verificarPermisos() {
+    // Reemplaza estos IDs por los IDs reales de los administradores
+    const ADMIN_IDS = ['123456789', '987654321']; 
+
+    const btnAdmin = document.getElementById('btn-admin-view');
+    if (ADMIN_IDS.includes(userIdActual)) {
+        console.log("¡Bienvenido, Administrador!");
+        if (btnAdmin) btnAdmin.style.display = 'flex';
+        localStorage.setItem('sesion_admin', 'true');
+    } else {
+        if (btnAdmin) btnAdmin.style.display = 'none';
+        localStorage.removeItem('sesion_admin');
+    }
 }
 
 function volverAlCatalogo() {
@@ -462,6 +493,17 @@ async function cargarFavoritosUsuario() {
 
 async function toggleFavorito(event, animeId) {
     if (event) event.stopPropagation(); 
+
+    if (userIdActual === "anonimo") {
+        tg.showAlert("Por favor, abre la app desde el bot para guardar favoritos.");
+        return;
+    }
+
+    if (!animeId) return;
+
+    // IMPORTANTE: Asegúrate de que los nombres de las columnas coincidan con tu tabla
+    // En tu script original usas 'user_id_telegram' y 'nombre_item'
+    const yaEsFavorito = esFavorito(String(animeId));
     
     const userId = tg.initDataUnsafe?.user?.id;
     if (!userId) return alert('Favoritos solo están disponibles en Telegram.');
