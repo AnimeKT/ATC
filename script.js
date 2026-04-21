@@ -355,7 +355,7 @@ function actualizarEstadoFavoritoDetalle() {
 
     if (esFavorito(String(obraActual.id))) {
         btn.classList.add('favorito-activo');
-        btn.innerHTML = '<i class="fa-solid fa-heart" style="color:#ff4757;"></i> Quitar de favoritos';
+        btn.innerHTML = '<i class="fa-solid fa-heart" style="color:#ff4757;"></i>';
     } else {
         btn.classList.remove('favorito-activo');
         btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
