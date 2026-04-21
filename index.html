@@ -60,22 +60,27 @@
         <div class="detalle-banner">
             <img id="det-banner" src="" alt="Banner">
             <div class="detalle-banner-overlay"></div>
+                <button id="det-favorito-btn" type="button" class="btn-favorito" onclick="toggleFavoritoDetalle(event)">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+            
         </div>
         
         <main class="contenedor contenedor-detalle">
             <div class="detalle-header">
-                <img id="det-portada" class="detalle-portada" src="" alt="Portada">
+                <div class="portada-container" style="position: relative; width: fit-content;">
+                    <img id="det-portada" class="detalle-portada" src="" alt="Portada">
+                    
+                    
+                </div>
+
                 <div class="detalle-titulos">
                     <h2 id="det-titulo"></h2>
                     <p id="det-nombres-alt" class="text-muted"></p>
-                    <button id="det-favorito-btn" type="button" class="btn-fav-detalle" onclick="toggleFavoritoDetalle(event)">
-                        <i class="fa-regular fa-heart"></i> Favoritos
-                    </button>
-
+                    
                     <button id="det-share-btn" class="btn-share-hidden" title="Copiar enlace directo">
                         <i class="fa-solid fa-link"></i>
                     </button>
-                    
                 </div>
             </div>
             

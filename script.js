@@ -358,7 +358,7 @@ function actualizarEstadoFavoritoDetalle() {
         btn.innerHTML = '<i class="fa-solid fa-heart" style="color:#ff4757;"></i> Quitar de favoritos';
     } else {
         btn.classList.remove('favorito-activo');
-        btn.innerHTML = '<i class="fa-regular fa-heart"></i> Agregar a favoritos';
+        btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
     }
 }
 

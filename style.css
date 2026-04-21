@@ -320,50 +320,36 @@ body.es-admin #btn-admin-view {
     backdrop-filter: blur(2px); /* Efecto cristal para más nivel */
 }
 
-.btn-fav-detalle {
-    margin-top: 15px;
-    margin-bottom: 18px;
-    background: transparent;
-    border: 1px solid #27272a;
-    color: #e0e0e0;
-    padding: 8px 16px;
-    border-radius: 999px;
-    display: inline-flex;
+
+.btn-favorito {
+    position: absolute;
+    top: 12px;     /* Espacio desde arriba */
+    left: 12px;    /* Espacio desde la izquierda */
+    z-index: 10;   /* Asegura que esté por encima de la imagen */
+    
+    background-color: #3ba4fa; /* El azul que usas en tu tema */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Lo hace circular */
+    
+    width: 42px;
+    height: 42px;
+    display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
-    align-self: flex-start;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); /* Sombra para que resalte */
+    transition: transform 0.2s ease, background-color 0.2s;
 }
 
-.btn-fav-detalle:hover {
-    border-color: #3ba4fa;
-    background: rgba(59, 164, 250, 0.12);
+.btn-favorito:active {
+    transform: scale(0.9); /* Efecto de pulsación */
 }
 
-.btn-fav-detalle.favorito-activo {
-    color: #f87171;
-    border-color: #f87171;
-    background: rgba(248, 113, 113, 0.12);
-}
-
-.btn-fav-detalle i {
-    font-size: 16px;
-}
-
-.btn-fav-detalle:hover {
-    border-color: #3ba4fa;
-    background: rgba(59, 164, 250, 0.12);
-}
-
-.btn-fav-detalle.favorito-activo {
-    color: #f87171;
-    border-color: #f87171;
-    background: rgba(248, 113, 113, 0.12);
-}
-
-.btn-fav-detalle i {
-    font-size: 16px;
+/* Ajuste del icono dentro del botón */
+.btn-favorito i {
+    font-size: 10px;
 }
 
 .tarjeta-anime:hover {
@@ -647,11 +633,25 @@ body.es-admin #btn-admin-view {
 }
 
 #det-titulo {
-    font-size: 24px;
+    font-size: 28px; /* En PC lo dejamos grande y legible */
     font-weight: 600;
     color: #ffffff;
     margin-bottom: 4px;
     line-height: 1.2;
+}
+
+/* Solo para CELULARES (Pantallas menores a 480px) */
+@media (max-width: 480px) {
+    #det-titulo {
+        font-size: 15px; /* Aquí se reduce automáticamente */
+    }
+    .btn-favorito {
+        width: 24px;
+        height: 24px;
+        top: 10px;
+        left: 10px;
+    }
+    
 }
 
 #det-nombres-alt {
@@ -694,7 +694,7 @@ body.es-admin #btn-admin-view {
 }
 
 #det-sinopsis {
-    font-size: 14px;
+    font-size: 10px;
     line-height: 1.7;
     color: #a1a1aa;
     margin-bottom: 16px;
@@ -1518,3 +1518,4 @@ body.usuario-identificado #btn-edit-serie {
         padding: 2px 6px !important;
     }
 }
+
