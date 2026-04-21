@@ -574,44 +574,49 @@ body.es-admin #btn-admin-view {
    ========================================= */
 #vista-detalle {
     background-color: #050505;
-    display: flex;
-    flex-direction: column; /* Alinea todo hacia abajo */
-}
-
-.detalle-banner {
-    display: block;
-    width: 100%;
-    height: auto !important; /* Forzamos a que no tenga altura fija */
-    max-height: none !important; 
-    overflow: visible; /* Para que nada se corte */
+    min-height: 100vh;
+    animation: fadeIn 0.4s ease-out;
     position: relative;
+    padding-bottom: 40px;
 }
 
+/* 1. EL CONTENEDOR DEL BANNER */
+.detalle-banner {
+    position: relative;
+    width: 100%;
+    height: auto; /* Deja que crezca según la imagen */
+    background-color: #050505;
+    display: flex;
+    justify-content: center; /* Centra la imagen si es más angosta que la pantalla */
+}
+
+/* 2. LA IMAGEN (AQUÍ ESTÁ EL TRUCO) */
 .detalle-banner img {
     width: 100%;
-    height: auto !important; /* La imagen dicta su propia altura */
-    max-height: none !important; /* Eliminamos cualquier recorte previo */
-    object-fit: initial !important; /* Evita el zoom/recorte */
+    max-width: 1200px; /* Opcional: para que no se desparrame en pantallas gigantes */
+    height: auto;      /* Mantiene la proporción real */
+    max-height: none;  /* ¡ELIMINA EL LÍMITE! Así no se recorta nada */
+    object-fit: contain; /* Garantiza que se vea CADA PÍXEL de la imagen */
     display: block;
 }
 
+/* 3. EL DEGRADADO (SUAVIZA LA UNIÓN) */
 .detalle-banner-overlay {
     position: absolute;
-    bottom: 0;
+    bottom: 0;         /* Solo se pega abajo */
     left: 0;
-    width: 100%;
-    height: 100px; /* Solo un pequeño degradado al final */
+    right: 0;
+    height: 100px;     /* Solo una franja abajo para el efecto visual */
     background: linear-gradient(to top, #050505, transparent);
     pointer-events: none;
 }
 
-/* EL CONTENEDOR DE TEXTO */
+/* 4. EL CONTENIDO (EL QUE EMPUJA) */
 .contenedor-detalle {
     position: relative;
-    z-index: 20;
-    margin-top: 0 !important; /* ¡CERO MARGEN NEGATIVO! */
-    padding: 20px;
-    background-color: #050505; /* Asegura que el fondo tape si hay algo atrás */
+    z-index: 10;
+    margin-top: 0px;  /* CAMBIO CLAVE: Valor positivo para EMPUJAR el texto hacia abajo */
+    padding: 0 20px;   /* Margen interno para que no toque los bordes */
 }
 
 .detalle-header {
