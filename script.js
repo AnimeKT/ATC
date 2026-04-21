@@ -49,7 +49,9 @@ function verificarPermisosAdmin() {
 // Función para convertir "Solo Leveling!" a "solo_leveling"
 function crearSlug(texto) {
     if (!texto) return "";
-    return String(texto).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    return texto.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_') // Cambia todo lo que no sea letra o número por _
+        .replace(/^_+|_+$/g, '');    // Quita guiones bajos del inicio o final
 }
 
 // =========================================
@@ -75,18 +77,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- DETECTOR MULTIPLATAFORMA (Slugs / Nombres) ---
     const urlParams = new URLSearchParams(window.location.search);
     const webId = urlParams.get('id'); 
-    
-    // Ahora el parámetro de Telegram será el nombre del anime limpio
     const tgId = tg.initDataUnsafe?.start_param; 
 
-    const animeIdParaAbrir = tgId || webId;
+    const loQueBuscamos = tgId || webId;
 
-    if (animeIdParaAbrir) {
+    if (loQueBuscamos) {
         setTimeout(() => {
-            // Buscamos si coincide con el ID viejo (por si hay links antiguos) o con el nuevo nombre limpio
+            // Buscamos en la lista si coincide el ID o el nombre limpio (slug)
             const obraDirecta = todasLasObras.find(o => 
-                String(o.id) === String(animeIdParaAbrir) || 
-                crearSlug(o.titulo) === String(animeIdParaAbrir)
+                String(o.id) === String(loQueBuscamos) || 
+                crearSlug(o.titulo) === String(loQueBuscamos)
             );
             
             if (obraDirecta) {
@@ -1015,22 +1015,24 @@ function verImagenGrande(url) {
 
 function copiarEnlaceAnime(tituloAnime) {
     const botUsername = "AnimeKaergstyBot"; 
-    const appNickname = "app"; 
+    const appNickname = "ahub"; // <--- ACTUALIZADO CON TU LINK REAL
     
-    // Usamos la función para crear el nombre seguro (ej: naruto_shippuden)
-    const nombreSeguro = crearSlug(tituloAnime); 
+    // Creamos el nombre limpio para el link (ej: mashle_magic_and_muscles)
+    const slug = crearSlug(tituloAnime); 
 
-    // Enlace directo perfecto para Telegram
-    const linkDirecto = `https://t.me/${botUsername}/${appNickname}?startapp=${nombreSeguro}`;
-    const textoMensaje = `¡Mira este anime en el catálogo! 🍿`;
+    // Este es el link que Telegram sí reconoce
+    const linkDirecto = `https://t.me/${botUsername}/${appNickname}?startapp=${slug}`;
+    const textoMensaje = `¡Mira este anime en AnimeHub! 🍿`;
 
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        tg.HapticFeedback.impactOccurred('light');
+        tg.HapticFeedback.impactOccurred('medium');
+        // Abre el menú de compartir de Telegram
         const urlCompartir = `https://t.me/share/url?url=${encodeURIComponent(linkDirecto)}&text=${encodeURIComponent(textoMensaje)}`;
         tg.openTelegramLink(urlCompartir);
     } else {
+        // Para PC/Navegador normal
         navigator.clipboard.writeText(linkDirecto).then(() => {
-            alert("Enlace copiado al portapapeles:\n" + linkDirecto);
+            alert("Enlace copiado: " + linkDirecto);
         });
     }
 }
