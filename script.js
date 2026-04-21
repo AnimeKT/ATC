@@ -46,6 +46,12 @@ function verificarPermisosAdmin() {
     }
 }
 
+// Función para convertir "Solo Leveling!" a "solo_leveling"
+function crearSlug(texto) {
+    if (!texto) return "";
+    return String(texto).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
 // =========================================
 // 2. INICIO DE LA APLICACIÓN
 // =========================================
@@ -66,53 +72,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (userToLog) loguearUsuario(userToLog);
 
-    // --- NUEVO: Detectar si entran por un link directo ---
-    // =========================================
-// 2. INICIO DE LA APLICACIÓN
-// =========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    verificarPermisosAdmin();
-    tg.ready();
-    tg.expand();
-
-    await cargarObras();
-    
-    let userToLog = null;
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        userToLog = tg.initDataUnsafe.user;
-    } else {
-        const saved = localStorage.getItem('tg_user');
-        if (saved) userToLog = JSON.parse(saved);
-    }
-
-    if (userToLog) loguearUsuario(userToLog);
-
-    // --- REEMPLAZA DESDE AQUÍ ---
-    // --- DETECTOR MULTIPLATAFORMA (Web + Telegram) ---
+    // --- DETECTOR MULTIPLATAFORMA (Slugs / Nombres) ---
     const urlParams = new URLSearchParams(window.location.search);
     const webId = urlParams.get('id'); 
     
-    // Leemos el parámetro de Telegram y arreglamos los guiones por si acaso
-    let tgId = tg.initDataUnsafe?.start_param;
-    if (tgId) tgId = tgId.replace(/_/g, '-'); // Restauramos los guiones originales
+    // Ahora el parámetro de Telegram será el nombre del anime limpio
+    const tgId = tg.initDataUnsafe?.start_param; 
 
     const animeIdParaAbrir = tgId || webId;
 
     if (animeIdParaAbrir) {
         setTimeout(() => {
-            const obraDirecta = todasLasObras.find(o => String(o.id) === String(animeIdParaAbrir));
+            // Buscamos si coincide con el ID viejo (por si hay links antiguos) o con el nuevo nombre limpio
+            const obraDirecta = todasLasObras.find(o => 
+                String(o.id) === String(animeIdParaAbrir) || 
+                crearSlug(o.titulo) === String(animeIdParaAbrir)
+            );
+            
             if (obraDirecta) {
                 abrirDetalle(obraDirecta.titulo);
             } else {
                 mostrarCatalogo();
             }
-        }, 600); // Un pelín más de tiempo para que Supabase no falle en móviles lentos
+        }, 600); 
     } else {
         mostrarCatalogo();
     }
-    // --- HASTA AQUÍ ---
-});
-    // -----------------------------------------------------
 });
 
 // =========================================
@@ -447,7 +432,7 @@ function abrirDetalle(tituloObra) {
     actualizarEstadoFavoritoDetalle();
     const btnShare = document.getElementById('det-share-btn');
     if (btnShare) {
-        btnShare.onclick = () => copiarEnlaceAnime(obraActual.id);
+        btnShare.onclick = () => copiarEnlaceAnime(obraActual.titulo);
     }
     cambiarVista('detalle');
 }
@@ -1028,28 +1013,22 @@ function verImagenGrande(url) {
     overlay.style.display = 'flex';
 }
 
-function copiarEnlaceAnime(id) {
-    // ⚠️ CRÍTICO: Reemplaza "app" por el "Short Name" exacto que le diste a BotFather.
-    // Si BotFather te dio t.me/AnimeKaergstyBot/catalogo -> pon "catalogo"
+function copiarEnlaceAnime(tituloAnime) {
     const botUsername = "AnimeKaergstyBot"; 
     const appNickname = "app"; 
     
-    // Telegram prefiere guiones bajos en lugar de guiones normales para el startapp
-    const idSeguro = String(id).replace(/-/g, '_'); 
+    // Usamos la función para crear el nombre seguro (ej: naruto_shippuden)
+    const nombreSeguro = crearSlug(tituloAnime); 
 
-    // Este es el enlace que abre la app directo en el anime
-    const linkDirecto = `https://t.me/${botUsername}/${appNickname}?startapp=${idSeguro}`;
+    // Enlace directo perfecto para Telegram
+    const linkDirecto = `https://t.me/${botUsername}/${appNickname}?startapp=${nombreSeguro}`;
     const textoMensaje = `¡Mira este anime en el catálogo! 🍿`;
 
-    // Si el usuario está usando Telegram (Celular o Desktop)
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tg.HapticFeedback.impactOccurred('light');
-        
-        // Abre el selector de chats de Telegram para enviarlo a un amigo
         const urlCompartir = `https://t.me/share/url?url=${encodeURIComponent(linkDirecto)}&text=${encodeURIComponent(textoMensaje)}`;
         tg.openTelegramLink(urlCompartir);
     } else {
-        // Si alguien lo abre desde un navegador web normal (Chrome/Edge en PC)
         navigator.clipboard.writeText(linkDirecto).then(() => {
             alert("Enlace copiado al portapapeles:\n" + linkDirecto);
         });
