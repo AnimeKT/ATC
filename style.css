@@ -349,7 +349,7 @@ body.es-admin #btn-admin-view {
 
 /* Ajuste del icono dentro del botón */
 .btn-favorito i {
-    font-size: 10px;
+    font-size: 14px;
 }
 
 .tarjeta-anime:hover {
