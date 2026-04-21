@@ -652,6 +652,7 @@ body.es-admin #btn-admin-view {
         left: 10px;
     }
     
+    
 }
 
 #det-nombres-alt {
@@ -694,11 +695,20 @@ body.es-admin #btn-admin-view {
 }
 
 #det-sinopsis {
-    font-size: 10px;
+    font-size: 16px;
     line-height: 1.7;
     color: #a1a1aa;
     margin-bottom: 16px;
 }
+@media (max-width: 480px) {
+    #det-sinopsis {
+    font-size: 10px;
+    line-height: 1.7;
+    color: #a1a1aa;
+    margin-bottom: 16px;
+    }
+}
+
 
 .detalle-sidebar {
     background: #0a0a0c;
