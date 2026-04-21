@@ -1458,43 +1458,81 @@ body.usuario-identificado #btn-edit-serie {
 /* =========================================
    MODO COMPACTO MANUAL PARA EL EDITOR
    ========================================= */
+/* =========================================
+   MODO MÓVIL ULTRA COMPACTO (Sin !important)
+   ========================================= */
 @media (max-width: 480px) {
-    /* Cajas más pequeñas y con menos espacio entre ellas */
-    .seccion-block, .temporada-block {
-        padding: 8px !important;
-        margin-bottom: 8px !important;
+    /* 1. Reducción de los espacios del contenedor principal */
+    #vista-registro .contenedor-formulario {
+        padding: 10px 10px 20px 10px;
     }
 
-    /* Reduce los títulos (Temporadas y Enlaces) */
-    .seccion-header h2 {
-        font-size: 14px !important;
+    #vista-registro .form-seccion {
+        margin-bottom: 10px;
     }
 
-    /* Reduce TODOS los botones (+ Añadir Sección, + Añadir Propiedad, Basurero) */
-    .btn-add-section, .btn-add, .btn-action, .btn-remove {
-        padding: 6px 10px !important;
-        font-size: 11px !important;
-        gap: 4px !important;
+    /* 2. Textos y etiquetas al mínimo legible */
+    #vista-registro .form-seccion h3 {
+        font-size: 11px;
+        margin-bottom: 6px;
     }
 
-    /* Reduce los campos para escribir y seleccionar */
-    .form-group input, 
-    .form-group textarea, 
-    .form-group select {
-        padding: 6px 8px !important;
-        font-size: 12px !important;
-        border-radius: 6px !important;
+    #vista-registro .input-group label {
+        font-size: 9px;
+        margin-bottom: 2px;
     }
 
-    /* Hace los subtítulos (Etiquetas) más chiquitos */
-    .form-group label {
-        font-size: 11px !important;
-        margin-bottom: 2px !important;
+    /* 3. Campos de texto más delgados y con texto pequeño */
+    #vista-registro .input-group input, 
+    #vista-registro .input-group select, 
+    #vista-registro .input-group textarea,
+    #vista-registro .seccion-block input,
+    #vista-registro .temporada-block input,
+    #vista-registro .idioma-bloque input {
+        padding: 5px 8px;
+        font-size: 10px;
+        border-radius: 4px;
+        margin-bottom: 4px;
     }
 
-    /* Hace que la fila donde sale "Nombre", "Valor" y el basurero esté bien apretada */
-    .propiedad-row {
-        gap: 4px !important;
-        margin-bottom: 4px !important;
+    #vista-registro .input-group textarea {
+        min-height: 50px; /* Evita que la sinopsis ocupe media pantalla */
+    }
+
+    /* 4. TUS BOTONES: Añadir Propiedad, Secciones, Idiomas, etc. */
+    #vista-registro #btn-add-prop,
+    #vista-registro #btn-add-seccion-gral,
+    #vista-registro .btn-add-sub,
+    #vista-registro .btn-add-idioma,
+    #vista-registro .btn-add-cap {
+        padding: 5px 10px;
+        font-size: 9px; /* Tres veces más pequeño visualmente */
+        border-radius: 4px;
+        margin-top: 4px;
+        line-height: 1;
+    }
+
+    /* Botones de eliminar (Basureros rojos) */
+    #vista-registro .btn-delete-sec,
+    #vista-registro .btn-del-sub,
+    #vista-registro .btn-del-id,
+    #vista-registro .btn-del-cap {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    /* 5. Cajas del constructor (Hacemos que casi no tengan relleno) */
+    #vista-registro .seccion-block,
+    #vista-registro .temporada-block,
+    #vista-registro .idioma-bloque {
+        padding: 6px;
+        margin-bottom: 8px;
+        border-width: 1px;
+    }
+
+    /* Reducir el margen izquierdo de la cascada de idiomas/capítulos */
+    #vista-registro .lista-capitulos {
+        margin-left: 5px;
+        padding-left: 5px;
     }
 }
