@@ -574,40 +574,44 @@ body.es-admin #btn-admin-view {
    ========================================= */
 #vista-detalle {
     background-color: #050505;
-    min-height: 100vh;
-    animation: fadeIn 0.4s ease-out;
-    position: relative;
-    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column; /* Alinea todo hacia abajo */
 }
 
 .detalle-banner {
-    position: relative;
+    display: block;
     width: 100%;
-    height: auto; /* El contenedor se adapta a la imagen */
-    display: block; /* Flujo natural */
-    overflow: hidden;
+    height: auto !important; /* Forzamos a que no tenga altura fija */
+    max-height: none !important; 
+    overflow: visible; /* Para que nada se corte */
+    position: relative;
 }
 
 .detalle-banner img {
     width: 100%;
-    height: auto; /* Mantiene la proporción de la imagen */
-    max-height: 400px; /* ¡CLAVE! Evita que la imagen sea gigante en monitores de PC */
-    object-fit: cover; /* Rellena el espacio sin deformarse */
-    display: block; /* Elimina un pequeño margen fantasma abajo */
+    height: auto !important; /* La imagen dicta su propia altura */
+    max-height: none !important; /* Eliminamos cualquier recorte previo */
+    object-fit: initial !important; /* Evita el zoom/recorte */
+    display: block;
 }
 
 .detalle-banner-overlay {
     position: absolute;
-    inset: 0;
-    /* Un gradiente que empieza desde abajo para suavizar la transición al contenido */
-    background: linear-gradient(to top, #050505 5%, transparent 50%);
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px; /* Solo un pequeño degradado al final */
+    background: linear-gradient(to top, #050505, transparent);
     pointer-events: none;
 }
+
+/* EL CONTENEDOR DE TEXTO */
 .contenedor-detalle {
-    position: relative; /* ¡Importante que sea relative o que no tenga nada! */
-    z-index: 10;
-    /* Si quieres que la portada suba un poco por encima del banner, usa margen negativo aquí: */
-    margin-top: -50px; 
+    position: relative;
+    z-index: 20;
+    margin-top: 0 !important; /* ¡CERO MARGEN NEGATIVO! */
+    padding: 20px;
+    background-color: #050505; /* Asegura que el fondo tape si hay algo atrás */
 }
 
 .detalle-header {
