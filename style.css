@@ -1454,85 +1454,67 @@ body.usuario-identificado #btn-edit-serie {
         color: rgba(255, 255, 255, 0.15); /* Un poquito más visible en celular para que no se pierda del todo */
     }
 }
-
-/* ========================================================
-   REDUCCIÓN EXTREMA DEL EDITOR (ESTILO DP CELULAR)
-   Ajuste para botones y bloques de edición
-   ======================================================== */
+/* =========================================
+   REDUCCIÓN DE TAMAÑO: SECCIÓN TEMPORADAS
+   ========================================= */
 @media (max-width: 480px) {
-    /* 1. Contenedor General del Registro (Menos margen) */
-    #vista-registro .contenedor-formulario {
-        padding: 5px !important;
+    /* 1. Título principal "Contenido Disponible" o "Temporadas" */
+    .titulo-temporadas {
+        font-size: 12px !important; 
+        margin-top: 12px !important;
+        margin-bottom: 6px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #a1a1aa;
     }
 
-    /* 2. Reducción de Bloques (Secciones y Temporadas) */
-    #vista-registro .seccion-block, 
-    #vista-registro .temporada-block,
-    #vista-registro .idioma-bloque {
-        padding: 4px !important;
+    /* 2. Los contenedores de cada temporada */
+    .temporada-block {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+        border-radius: 8px !important;
+        background-color: #1c1c1f !important; /* Un tono un poco más claro para separar */
+    }
+
+    .temporada-block h4 {
+        font-size: 11px !important;
         margin-bottom: 5px !important;
-        border-radius: 4px !important;
+        font-weight: 600;
     }
 
-    /* 3. Títulos de los bloques (Casi etiquetas) */
-    #vista-registro .seccion-header h2,
-    #vista-registro .temporada-header h3 {
-        font-size: 10px !important;
-        margin: 0 !important;
-    }
-
-    /* 4. BOTONES (Aquí está el cambio de "3 veces más pequeño") */
-    /* Añadir Propiedad, Añadir Sección, Añadir Temporada, etc. */
-    #vista-registro .btn-add,
-    #vista-registro .btn-add-section,
-    #vista-registro #btn-add-seccion-gral,
-    #vista-registro .btn-add-sub,
-    #vista-registro .btn-add-idioma,
-    #vista-registro .btn-add-cap {
-        padding: 3px 8px !important; /* Relleno mínimo */
-        font-size: 9px !important;   /* Texto súper pequeño */
-        min-height: auto !important;
-        height: 22px !important;      /* Altura fija muy delgada */
-        border-radius: 3px !important;
-        margin: 2px 0 !important;
+    /* 3. LOS BOTONES DE CAPÍTULOS/ENLACES (El cambio más grande) */
+    .btn-dinamico {
+        padding: 5px 10px !important; /* Reducido a la mitad */
+        font-size: 10px !important;    /* Texto pequeño estilo sistema */
+        margin-bottom: 3px !important;
+        gap: 6px !important;
+        border-radius: 5px !important;
+        min-height: 30px !important;   /* Evita que sean demasiado altos */
+        border: 1px solid rgba(255,255,255,0.05) !important;
     }
 
     /* Iconos dentro de los botones */
-    #vista-registro .btn-add i,
-    #vista-registro .btn-add-section i {
-        font-size: 8px !important;
+    .btn-dinamico i {
+        font-size: 11px !important;
+        width: 14px;
+        text-align: center;
     }
 
-    /* 5. Inputs y Textareas (Para que quepan más en pantalla) */
-    #vista-registro .form-group input,
-    #vista-registro .form-group select,
-    #vista-registro .form-group textarea,
-    #vista-registro .propiedad-row input {
-        padding: 4px 6px !important;
-        font-size: 10px !important;
-        height: 28px !important;
-        margin-bottom: 3px !important;
+    /* 4. Lista de botones (el espacio entre ellos) */
+    .seccion-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 3px !important; /* Los pegamos más entre sí */
     }
 
-    /* 6. Botones de Acción (Eliminar/Basurero) */
-    #vista-registro .btn-action,
-    #vista-registro .btn-remove,
-    #vista-registro .btn-delete-sec {
-        width: 22px !important;
-        height: 22px !important;
+    /* 5. Ajuste para los "Géneros" que ahora están ahí abajo */
+    .detalle-tags {
+        gap: 4px !important;
+        margin-top: 5px !important;
+    }
+
+    .tag {
         font-size: 9px !important;
-        padding: 0 !important;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* Reducir el espacio entre filas */
-    #vista-registro .form-group {
-        margin-bottom: 5px !important;
-    }
-    
-    #vista-registro .propiedad-row {
-        gap: 3px !important;
+        padding: 2px 6px !important;
     }
 }
