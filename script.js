@@ -1015,26 +1015,21 @@ function verImagenGrande(url) {
 
 function copiarEnlaceAnime(tituloAnime) {
     const botUsername = "AnimeKaergstyBot"; 
-    const appNickname = "ahub"; // <--- ACTUALIZADO CON TU LINK REAL
+    const appNickname = "ahub"; 
     
-    // Creamos el nombre limpio para el link (ej: mashle_magic_and_muscles)
+    // Generamos el slug (nombre_limpio)
     const slug = crearSlug(tituloAnime); 
-
-    // Este es el link que Telegram sí reconoce
     const linkDirecto = `https://t.me/${botUsername}/${appNickname}?startapp=${slug}`;
-    const textoMensaje = `¡Mira este anime en AnimeHub! 🍿`;
 
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        tg.HapticFeedback.impactOccurred('medium');
-        // Abre el menú de compartir de Telegram
-        const urlCompartir = `https://t.me/share/url?url=${encodeURIComponent(linkDirecto)}&text=${encodeURIComponent(textoMensaje)}`;
-        tg.openTelegramLink(urlCompartir);
-    } else {
-        // Para PC/Navegador normal
-        navigator.clipboard.writeText(linkDirecto).then(() => {
-            alert("Enlace copiado: " + linkDirecto);
-        });
-    }
+    // Copiar directamente al portapapeles sin avisos
+    navigator.clipboard.writeText(linkDirecto).then(() => {
+        // Solo una vibración sutil para confirmar que se hizo clic
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    }).catch(err => {
+        console.error('Error al copiar:', err);
+    });
 }
 
 window.addEventListener('popstate', (event) => {
