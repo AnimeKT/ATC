@@ -1455,84 +1455,84 @@ body.usuario-identificado #btn-edit-serie {
     }
 }
 
-/* =========================================
-   MODO COMPACTO MANUAL PARA EL EDITOR
-   ========================================= */
-/* =========================================
-   MODO MÓVIL ULTRA COMPACTO (Sin !important)
-   ========================================= */
+/* ========================================================
+   REDUCCIÓN EXTREMA DEL EDITOR (ESTILO DP CELULAR)
+   Ajuste para botones y bloques de edición
+   ======================================================== */
 @media (max-width: 480px) {
-    /* 1. Reducción de los espacios del contenedor principal */
+    /* 1. Contenedor General del Registro (Menos margen) */
     #vista-registro .contenedor-formulario {
-        padding: 10px 10px 20px 10px;
+        padding: 5px !important;
     }
 
-    #vista-registro .form-seccion {
-        margin-bottom: 10px;
+    /* 2. Reducción de Bloques (Secciones y Temporadas) */
+    #vista-registro .seccion-block, 
+    #vista-registro .temporada-block,
+    #vista-registro .idioma-bloque {
+        padding: 4px !important;
+        margin-bottom: 5px !important;
+        border-radius: 4px !important;
     }
 
-    /* 2. Textos y etiquetas al mínimo legible */
-    #vista-registro .form-seccion h3 {
-        font-size: 11px;
-        margin-bottom: 6px;
+    /* 3. Títulos de los bloques (Casi etiquetas) */
+    #vista-registro .seccion-header h2,
+    #vista-registro .temporada-header h3 {
+        font-size: 10px !important;
+        margin: 0 !important;
     }
 
-    #vista-registro .input-group label {
-        font-size: 9px;
-        margin-bottom: 2px;
-    }
-
-    /* 3. Campos de texto más delgados y con texto pequeño */
-    #vista-registro .input-group input, 
-    #vista-registro .input-group select, 
-    #vista-registro .input-group textarea,
-    #vista-registro .seccion-block input,
-    #vista-registro .temporada-block input,
-    #vista-registro .idioma-bloque input {
-        padding: 5px 8px;
-        font-size: 10px;
-        border-radius: 4px;
-        margin-bottom: 4px;
-    }
-
-    #vista-registro .input-group textarea {
-        min-height: 50px; /* Evita que la sinopsis ocupe media pantalla */
-    }
-
-    /* 4. TUS BOTONES: Añadir Propiedad, Secciones, Idiomas, etc. */
-    #vista-registro #btn-add-prop,
+    /* 4. BOTONES (Aquí está el cambio de "3 veces más pequeño") */
+    /* Añadir Propiedad, Añadir Sección, Añadir Temporada, etc. */
+    #vista-registro .btn-add,
+    #vista-registro .btn-add-section,
     #vista-registro #btn-add-seccion-gral,
     #vista-registro .btn-add-sub,
     #vista-registro .btn-add-idioma,
     #vista-registro .btn-add-cap {
-        padding: 5px 10px;
-        font-size: 9px; /* Tres veces más pequeño visualmente */
-        border-radius: 4px;
-        margin-top: 4px;
-        line-height: 1;
+        padding: 3px 8px !important; /* Relleno mínimo */
+        font-size: 9px !important;   /* Texto súper pequeño */
+        min-height: auto !important;
+        height: 22px !important;      /* Altura fija muy delgada */
+        border-radius: 3px !important;
+        margin: 2px 0 !important;
     }
 
-    /* Botones de eliminar (Basureros rojos) */
-    #vista-registro .btn-delete-sec,
-    #vista-registro .btn-del-sub,
-    #vista-registro .btn-del-id,
-    #vista-registro .btn-del-cap {
-        padding: 4px 8px;
-        font-size: 10px;
+    /* Iconos dentro de los botones */
+    #vista-registro .btn-add i,
+    #vista-registro .btn-add-section i {
+        font-size: 8px !important;
     }
 
-    /* 5. Cajas del constructor (Hacemos que casi no tengan relleno) */
-    #vista-registro .seccion-block,
-    #vista-registro .temporada-block,
-    #vista-registro .idioma-bloque {
-        padding: 6px;
-        margin-bottom: 8px;
-        border-width: 1px;
+    /* 5. Inputs y Textareas (Para que quepan más en pantalla) */
+    #vista-registro .form-group input,
+    #vista-registro .form-group select,
+    #vista-registro .form-group textarea,
+    #vista-registro .propiedad-row input {
+        padding: 4px 6px !important;
+        font-size: 10px !important;
+        height: 28px !important;
+        margin-bottom: 3px !important;
     }
 
-    /* Reducir el margen izquierdo de la cascada de idiomas/capítulos */
-    #vista-registro .lista-capitulos {
-        margin-left: 5px;
-        padding-left: 5px;
+    /* 6. Botones de Acción (Eliminar/Basurero) */
+    #vista-registro .btn-action,
+    #vista-registro .btn-remove,
+    #vista-registro .btn-delete-sec {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 9px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Reducir el espacio entre filas */
+    #vista-registro .form-group {
+        margin-bottom: 5px !important;
+    }
+    
+    #vista-registro .propiedad-row {
+        gap: 3px !important;
     }
 }
