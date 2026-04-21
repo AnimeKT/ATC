@@ -1454,3 +1454,47 @@ body.usuario-identificado #btn-edit-serie {
         color: rgba(255, 255, 255, 0.15); /* Un poquito más visible en celular para que no se pierda del todo */
     }
 }
+
+/* =========================================
+   MODO COMPACTO MANUAL PARA EL EDITOR
+   ========================================= */
+@media (max-width: 480px) {
+    /* Cajas más pequeñas y con menos espacio entre ellas */
+    .seccion-block, .temporada-block {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* Reduce los títulos (Temporadas y Enlaces) */
+    .seccion-header h2 {
+        font-size: 14px !important;
+    }
+
+    /* Reduce TODOS los botones (+ Añadir Sección, + Añadir Propiedad, Basurero) */
+    .btn-add-section, .btn-add, .btn-action, .btn-remove {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        gap: 4px !important;
+    }
+
+    /* Reduce los campos para escribir y seleccionar */
+    .form-group input, 
+    .form-group textarea, 
+    .form-group select {
+        padding: 6px 8px !important;
+        font-size: 12px !important;
+        border-radius: 6px !important;
+    }
+
+    /* Hace los subtítulos (Etiquetas) más chiquitos */
+    .form-group label {
+        font-size: 11px !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Hace que la fila donde sale "Nombre", "Valor" y el basurero esté bien apretada */
+    .propiedad-row {
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+}
