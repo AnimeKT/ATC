@@ -760,37 +760,38 @@ async function ejecutarRegistro() {
 // Agregamos creadorNombre y creadorUsername como parámetros
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null, creadorNombre = null, creadorUsername = null) {
     const container = document.getElementById('builder-temporadas');
-    if(!container) return;
+    if (!container) return;
     
     const secBlock = document.createElement('div');
     secBlock.className = 'seccion-block';
     
-    // 1. Identificamos quién es el dueño de esta sección específica
-    const resolvedCreador = (creadorId !== null && creadorId !== undefined && creadorId !== '') 
-        ? String(creadorId) 
-        : String(userIdActual); 
+    // 1. Determinar si es una sección nueva o una existente
+    // Si temporadasArray es null, significa que el usuario presionó el botón "Añadir Sección"
+    const esNuevaSeccion = (temporadasArray === null);
+    
+    // 2. Asignación de identidad inteligente (Aquí está la magia que soluciona el bug)
+    if (esNuevaSeccion) {
+        // ES NUEVA: Le asignamos la autoría al usuario que está editando ahora mismo
+        const tgUser = JSON.parse(localStorage.getItem('tg_user'));
+        
+        secBlock.dataset.creador = String(userIdActual);
+        secBlock.dataset.creadorNombre = userIdActual === ADMIN_ID ? "Admin" : (tgUser?.first_name || "Colaborador");
+        secBlock.dataset.creadorUsername = userIdActual === ADMIN_ID ? "@Admin" : (tgUser?.username ? `@${tgUser.username}` : "Sin @usuario");
+    } else {
+        // YA EXISTE: Respetamos los datos que vienen de la base de datos o usamos los del dueño original
+        secBlock.dataset.creador = creadorId ? String(creadorId) : (obraActual?.creador_id ? String(obraActual.creador_id) : '');
+        secBlock.dataset.creadorNombre = creadorNombre || (obraActual?.creador_nombre || "Autor");
+        secBlock.dataset.creadorUsername = creadorUsername || (obraActual?.creador_username || "Sin @usuario");
+    }
 
-    // --- CAMBIO CLAVE: Lógica de Permisos Ampliada ---
-    // Un usuario puede editar/eliminar si:
-    // a) Es el autor de la sección específica.
-    // b) Es el ADMIN del sistema.
-    // c) ES EL DUEÑO DE LA TARJETA (obraActual.creador_id).
+    // 3. Lógica de Permisos Ampliada
     const esDueñoDeLaObra = (obraActual && String(obraActual.creador_id) === String(userIdActual));
-    const esAutorDeLaSeccion = (resolvedCreador === String(userIdActual));
+    const esAutorDeLaSeccion = (String(secBlock.dataset.creador) === String(userIdActual));
     const esAdmin = (String(userIdActual) === ADMIN_ID);
 
     const puedeEditarEstaSeccion = esAutorDeLaSeccion || esAdmin || esDueñoDeLaObra;
-    // ------------------------------------------------
 
-    // El resto de la identidad para el dataset
-    const tgUser = JSON.parse(localStorage.getItem('tg_user'));
-    const defaultNombre = userIdActual === ADMIN_ID ? "Admin" : (tgUser ? tgUser.first_name : "Colaborador");
-    const defaultUsername = userIdActual === ADMIN_ID ? "@Admin" : (tgUser && tgUser.username ? `@${tgUser.username}` : "Sin @usuario");
-
-    secBlock.dataset.creador = resolvedCreador;
-    secBlock.dataset.creadorNombre = creadorNombre || defaultNombre;
-    secBlock.dataset.creadorUsername = creadorUsername || defaultUsername;
-
+    // 4. Renderizado de la Interfaz
     secBlock.innerHTML = `
         <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
             <input type="text" class="sec-nombre" placeholder="Nombre de tu Página o Grupo" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
@@ -801,21 +802,22 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
         <div class="lista-temporadas"></div>
         <button type="button" class="btn-add-sub" onclick="agregarSubTemporadaUI(this.previousElementSibling)" 
         style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px; margin-bottom: 20px;">
-    <i class="fa-solid fa-plus"></i> Añadir Nueva Temporada
-</button>
+            <i class="fa-solid fa-plus"></i> Añadir Nueva Temporada
+        </button>
     `;
 
     container.appendChild(secBlock);
 
-    // Si no tiene permisos, bloqueamos los inputs y ocultamos botones
+    // 5. Aplicar bloqueos si no tiene permisos
     if (!puedeEditarEstaSeccion) {
         secBlock.classList.add('campo-bloqueado');
         secBlock.querySelectorAll('input').forEach(inp => inp.disabled = true);
         secBlock.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
     }
 
+    // 6. Cargar sub-temporadas o crear una vacía
     const listaTemps = secBlock.querySelector('.lista-temporadas');
-    if (temporadasArray && Array.isArray(temporadasArray)) {
+    if (!esNuevaSeccion && Array.isArray(temporadasArray)) {
         temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos, puedeEditarEstaSeccion));
     } else {
         agregarSubTemporadaUI(listaTemps, null, puedeEditarEstaSeccion);
