@@ -389,6 +389,27 @@ function abrirDetalle(tituloObra) {
     if(obraActual.nombres_alternativos?.Ingles) nombresAlt.push(obraActual.nombres_alternativos.Ingles);
     setContent('det-nombres-alt', nombresAlt.join(' • '));
 
+    const badge = document.getElementById('det-creador-badge');
+    const txtCreador = document.getElementById('txt-creador');
+
+    if (obraActual.creador_nombre) {
+        badge.style.display = 'inline-flex';
+        txtCreador.textContent = obraActual.creador_nombre;
+        
+        // Guardamos los datos en el elemento para que la función toggle pueda leerlos
+        badge.dataset.nombre = obraActual.creador_nombre;
+        badge.dataset.username = obraActual.creador_username || "Sin @usuario";
+        badge.dataset.estado = "nombre"; 
+
+        if (obraActual.creador_id === ADMIN_ID || obraActual.creador_nombre === "Admin") {
+            badge.classList.add('admin');
+        } else {
+            badge.classList.remove('admin');
+        }
+    } else {
+        badge.style.display = 'none';
+    }
+
     const tagsContainer = document.getElementById('det-tags');
     if(tagsContainer) {
         tagsContainer.innerHTML = '';
@@ -669,7 +690,18 @@ async function ejecutarRegistro() {
             };
 
             if (!idAnimeEnEdicion) {
-                datosObra.creador_id = userIdActual; // Al crear, se registra como dueño
+                datosObra.creador_id = userIdActual;
+                
+                // Si eres tú, guardamos Admin. Si es otro, su nombre de Telegram.
+                if (userIdActual === ADMIN_ID) {
+                    datosObra.creador_nombre = "Admin";
+                    datosObra.creador_username = "@Admin";
+                } else {
+                    const tgUser = JSON.parse(localStorage.getItem('tg_user'));
+                    datosObra.creador_nombre = tgUser ? tgUser.first_name : "Usuario";
+                    // Guardamos el username si lo tiene, si no, un aviso
+                    datosObra.creador_username = (tgUser && tgUser.username) ? `@${tgUser.username}` : "Sin @usuario";
+                }
             }
         } else {
             // SI ERES COLABORADOR: SOLO se actualiza el array de temporadas.
@@ -1030,6 +1062,24 @@ function copiarEnlaceAnime(tituloAnime) {
     }).catch(err => {
         console.error('Error al copiar:', err);
     });
+}
+
+function toggleNombreCreador() {
+    const badge = document.getElementById('det-creador-badge');
+    const txt = document.getElementById('txt-creador');
+    
+    if (badge.dataset.estado === "nombre") {
+        txt.textContent = badge.dataset.username;
+        badge.dataset.estado = "username";
+    } else {
+        txt.textContent = badge.dataset.nombre;
+        badge.dataset.estado = "nombre";
+    }
+    
+    // Si estamos en Telegram, damos una pequeña vibración
+    if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
 }
 
 window.addEventListener('popstate', (event) => {

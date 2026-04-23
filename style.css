@@ -1540,3 +1540,31 @@ body.usuario-identificado #btn-edit-serie {
     }
 }
 
+/* --- BADGE DEL CREADOR INTERACTIVO --- */
+.creador-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(59, 164, 250, 0.1);
+    color: #3ba4fa;
+    border: 1px solid rgba(59, 164, 250, 0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none; /* Evita que se seleccione el texto al dar clicks rápidos */
+}
+
+.creador-badge:active {
+    transform: scale(0.95);
+    background: rgba(59, 164, 250, 0.2);
+}
+
+.creador-badge.admin {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
