@@ -1398,11 +1398,6 @@ body.usuario-identificado #btn-edit-serie {
         font-size: 12px;
     }
 
-    /* Bloques de temporadas en el editor */
-    .seccion-block {
-        padding: 8px !important;
-        margin-bottom: 10px !important;
-    }
     
     .temporada-block {
         padding: 10px !important;
@@ -1587,4 +1582,23 @@ body.usuario-identificado #btn-edit-serie {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.2);
+}
+.seccion-block {
+    display: block !important; 
+    margin-bottom: 35px !important; 
+    padding: 20px !important; 
+    border: 1px solid #3ba4fa !important;
+    border-radius: 8px !important;
+    background-color: #0f0f11 !important;
+    width: 100% !important; /* Añadimos esto para que en PC ocupe todo el ancho */
+}
+
+.seccion-header {
+    margin-bottom: 20px !important; 
+}
+
+.btn-add-sub {
+    margin-top: 20px !important; 
+    display: block !important;
+    width: 100% !important;
 }
