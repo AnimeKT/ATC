@@ -485,10 +485,29 @@ function iniciarNavegacionContenido(temporadasData) {
     });
 
     for (const [secName, temps] of Object.entries(seccionesObj)) {
+        // Creamos un contenedor para el título y el badge
+        const header = document.createElement('div');
+        header.className = 'temporada-header'; // Asegúrate de tener este estilo en CSS
+        
         const titulo = document.createElement('h4');
-        titulo.style.cssText = "margin-top: 15px; margin-bottom: 10px; color: #3ba4fa; font-size: 14px;";
+        titulo.style.cssText = "margin: 0; color: #3ba4fa; font-size: 14px;";
         titulo.textContent = secName;
-        contenedor.appendChild(titulo);
+        header.appendChild(titulo);
+
+        // Verificamos si esta sección fue creada por alguien diferente al dueño del anime
+        const primerItem = temps[0];
+        if (primerItem.creador_nombre && primerItem.creador_nombre !== obraActual.creador_nombre) {
+            const badge = document.createElement('div');
+            badge.className = `creador-badge ${primerItem.creador_nombre === 'Admin' ? 'admin' : ''}`;
+            badge.onclick = (e) => { e.stopPropagation(); toggleNombreCreador(badge); };
+            badge.dataset.nombre = primerItem.creador_nombre;
+            badge.dataset.username = primerItem.creador_username;
+            badge.dataset.estado = "nombre";
+            badge.innerHTML = `<i class="fa-solid fa-user-pen"></i> <span>${primerItem.creador_nombre}</span>`;
+            header.appendChild(badge);
+        }
+
+        contenedor.appendChild(header);
         
         temps.forEach(temp => {
             const btn = document.createElement('button');
@@ -685,7 +704,7 @@ async function ejecutarRegistro() {
                     Ingles: sanitizar(getVal('in-ingles'))
                 },
                 generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
-                temporadas: recolectarDatosTemporadas(), // Recoge todo
+                temporadas: recolectarDatosTemporadas(), // Recoge to   do
                 propiedades_extra: recolectarCamposExtras()
             };
 
@@ -878,10 +897,16 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '', puedeEdit
 
 function recolectarDatosTemporadas() {
     const datos = [];
+    const tgUser = JSON.parse(localStorage.getItem('tg_user'));
+    
     document.querySelectorAll('.seccion-block').forEach(secBlock => {
         const inputSec = secBlock.querySelector('.sec-nombre');
         const nombreSeccion = inputSec ? inputSec.value.trim() : 'Principal';
-        const creadorId = secBlock.dataset.creador || ''; // Toma el creador guardado en el DOM
+        const creadorId = secBlock.dataset.creador || ''; 
+
+        // Obtenemos los nombres del usuario que está guardando ahora mismo
+        const nombreActual = userIdActual === ADMIN_ID ? "Admin" : (tgUser ? tgUser.first_name : "Colaborador");
+        const userActual = userIdActual === ADMIN_ID ? "@Admin" : (tgUser && tgUser.username ? `@${tgUser.username}` : "Sin @usuario");
 
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
             const nombre = tempBlock.querySelector('.temp-nombre')?.value.trim() || '';
@@ -901,7 +926,16 @@ function recolectarDatosTemporadas() {
             });
 
             if(nombre) {
-                datos.push({ seccion: nombreSeccion, nombre, imagen, enlaces, creador_id: creadorId });
+                datos.push({ 
+                    seccion: nombreSeccion, 
+                    nombre, 
+                    imagen, 
+                    enlaces, 
+                    creador_id: creadorId,
+                    // ESTO ES LO NUEVO: Guardamos quién guardó esta sección
+                    creador_nombre: nombreActual,
+                    creador_username: userActual
+                });
             }
         });
     });
@@ -1064,19 +1098,18 @@ function copiarEnlaceAnime(tituloAnime) {
     });
 }
 
-function toggleNombreCreador() {
-    const badge = document.getElementById('det-creador-badge');
-    const txt = document.getElementById('txt-creador');
+function toggleNombreCreador(elemento) {
+    // Usamos 'elemento' para referirnos exactamente al botón que se tocó
+    const txt = elemento.querySelector('span');
     
-    if (badge.dataset.estado === "nombre") {
-        txt.textContent = badge.dataset.username;
-        badge.dataset.estado = "username";
+    if (elemento.dataset.estado === "nombre") {
+        txt.textContent = elemento.dataset.username;
+        elemento.dataset.estado = "username";
     } else {
-        txt.textContent = badge.dataset.nombre;
-        badge.dataset.estado = "nombre";
+        txt.textContent = elemento.dataset.nombre;
+        elemento.dataset.estado = "nombre";
     }
     
-    // Si estamos en Telegram, damos una pequeña vibración
     if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }

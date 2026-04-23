@@ -264,6 +264,20 @@ body.es-admin #btn-admin-view {
     border-color: #27272a; 
 }
 
+.temporada-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.temporada-header .creador-badge {
+    margin-top: 0; /* Alineación perfecta */
+    transform: scale(0.85); /* Un poco más pequeño que el principal */
+}
+
 .contenedor-formulario {
     padding: 0 20px 40px 20px;
     max-width: 900px; 
@@ -1542,20 +1556,25 @@ body.usuario-identificado #btn-edit-serie {
 
 /* --- BADGE DEL CREADOR INTERACTIVO --- */
 .creador-badge {
-    display: inline-flex;
+    display: inline-flex;  /* Mantiene icono y texto en línea */
     align-items: center;
-    gap: 8px;
+    gap: 6px;              /* Un poco menos de espacio entre icono y nombre */
     background: rgba(59, 164, 250, 0.1);
     color: #3ba4fa;
     border: 1px solid rgba(59, 164, 250, 0.2);
-    padding: 6px 12px;
+    
+    /* --- EL CAMBIO CLAVE --- */
+    width: fit-content;    /* Hace que el ancho sea EXACTO al del texto */
+    padding: 4px 10px;     /* Reducimos un poco el relleno para que sea más fino */
+    /* ----------------------- */
+
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11px;       /* Bajamos un punto el tamaño para que sea más estético */
     font-weight: 600;
     margin-top: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
-    user-select: none; /* Evita que se seleccione el texto al dar clicks rápidos */
+    user-select: none;
 }
 
 .creador-badge:active {
