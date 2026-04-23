@@ -27,8 +27,6 @@ body {
     position: sticky; 
     top: 0; 
     z-index: 900;
-    /* AÑADE ESTA LÍNEA: */
-    margin-bottom: 20px; 
 }
 
 .logo h1 { 
@@ -1517,4 +1515,24 @@ body.usuario-identificado #btn-edit-serie {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.2);
+}
+
+@media (min-width: 769px) {
+    #vista-catalogo, #vista-admin, #detalles-anime {
+        margin-top: 50px;
+    }
+}
+
+/* --- SOLUCIÓN PARA ESPACIADO EN PC --- */
+@media (min-width: 769px) {
+    /* Seleccionamos todas las secciones que son hijas directas del body */
+    body > section {
+        margin-top: 40px; 
+        padding-top: 10px; /* El padding ayuda a evitar que el margen se colapse */
+    }
+
+    /* Si el primer bloque después del menú no es una sección, sino un div */
+    .navbar + div, .navbar + section {
+        margin-top: 50px;
+    }
 }
