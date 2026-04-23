@@ -342,7 +342,7 @@ body.es-admin #btn-admin-view {
     left: 12px;    /* Espacio desde la izquierda */
     z-index: 10;   /* Asegura que esté por encima de la imagen */
     
-    background-color: #3ba4fa; /* El azul que usas en tu tema */
+    background-color: #142641bb; /* El azul que usas en tu tema */
     color: white;
     border: none;
     border-radius: 50%; /* Lo hace circular */
@@ -672,8 +672,8 @@ body.es-admin #btn-admin-view {
         font-size: 15px; /* Aquí se reduce automáticamente */
     }
     .btn-favorito {
-        width: 24px;
-        height: 24px;
+        width: 38px;
+        height: 38px;
         top: 10px;
         left: 10px;
     }
