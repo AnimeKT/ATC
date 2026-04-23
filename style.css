@@ -1400,8 +1400,15 @@ body.usuario-identificado #btn-edit-serie {
 
     /* Bloques de temporadas en el editor */
     .seccion-block {
-    width: 100%;
-    min-height: min-content;
+    display: block !important; /* Quitamos el flex para evitar bugs en tablets */
+    margin-bottom: 35px !important; /* Espacio gigante e inamovible entre secciones */
+    padding: 20px !important; /* Espacio interno asegurado */
+    border: 1px solid #3ba4fa !important;
+    border-radius: 8px !important;
+    background-color: #0f0f11 !important;
+    }
+    .seccion-header {
+    margin-bottom: 20px !important; /* Separa el título de las temporadas */
     }
     .lista-temporadas:not(:empty) {
     margin-bottom: 5px;
@@ -1601,7 +1608,9 @@ body.usuario-identificado #btn-edit-serie {
 
 /* Separación para el botón de añadir si la lista está vacía o tiene contenido */
 .btn-add-sub {
-    margin-top: 15px !important;
+    margin-top: 20px !important; /* Separa el botón de lo que tenga arriba */
+    display: block !important;
+    width: 100% !important;
 }
 
 /* Ajuste opcional para PC: que el bloque no se vea tan apretado */
