@@ -1588,3 +1588,23 @@ body.usuario-identificado #btn-edit-serie {
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.2);
 }
+
+.lista-temporadas {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espacio entre cada tarjeta de temporada */
+    margin-top: 15px; /* Espacio respecto al nombre de la sección */
+}
+
+/* Separación para el botón de añadir si la lista está vacía o tiene contenido */
+.btn-add-sub {
+    margin-top: 15px !important;
+}
+
+/* Ajuste opcional para PC: que el bloque no se vea tan apretado */
+@media (min-width: 768px) {
+    .seccion-block {
+        padding: 25px !important; /* Más aire interno en PC */
+        margin-bottom: 30px !important;
+    }
+}
