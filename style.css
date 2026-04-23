@@ -257,12 +257,6 @@ body.es-admin #btn-admin-view {
 }
 
 /* Sobreescritura para bloques de temporada */
-.temporada-block input, 
-.temporada-block select, 
-.temporada-block textarea {
-    background-color: #0f0f11; 
-    border-color: #27272a; 
-}
 
 .temporada-header {
     display: flex;
@@ -1593,13 +1587,6 @@ body.usuario-identificado #btn-edit-serie {
     margin-top: 15px; /* Espacio respecto al nombre de la sección */
 }
 
-/* Separación para el botón de añadir si la lista está vacía o tiene contenido */
-.btn-add-sub {
-    margin-top: 20px !important; /* Separa el botón de lo que tenga arriba */
-    display: block !important;
-    width: 100% !important;
-}
-
 /* Ajuste opcional para PC: que el bloque no se vea tan apretado */
 @media (min-width: 768px) {
     #builder-temporadas {
@@ -1609,19 +1596,6 @@ body.usuario-identificado #btn-edit-serie {
         gap: 20px;
     }
 }
-.seccion-block {
-    display: block !important; 
-    margin-bottom: 35px !important; 
-    padding: 20px !important; 
-    border: 1px solid #3ba4fa !important;
-    border-radius: 8px !important;
-    background-color: #0f0f11 !important;
-    width: 100% !important; /* Añadimos esto para que en PC ocupe todo el ancho */
-}
-
-.temporada-block {
-        padding: 10px !important;
- }
 .seccion-header {
     margin-bottom: 20px !important; 
 }
