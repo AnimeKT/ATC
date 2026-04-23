@@ -448,6 +448,17 @@ function abrirDetalle(tituloObra) {
             btnEditar.style.setProperty('display', 'none', 'important');
         }
     }
+    const btnEliminar = document.getElementById('btn-eliminar-serie');
+    if (btnEliminar) {
+        // ¿Es el creador original o es el Admin principal?
+        const esPropietarioOAdmin = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
+        
+        if (esPropietarioOAdmin) {
+            btnEliminar.style.setProperty('display', 'flex', 'important');
+        } else {
+            btnEliminar.style.setProperty('display', 'none', 'important');
+        }
+    }
 
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
@@ -1135,6 +1146,53 @@ function toggleNombreCreador(elemento) {
     
     if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+}
+// =========================================
+// 15. ELIMINAR OBRA (SOLO DUEÑO Y ADMIN)
+// =========================================
+async function eliminarObraActual(event) {
+    if (event) event.stopPropagation();
+    
+    if (!obraActual) return;
+
+    // Validación de seguridad (por si alguien modifica el HTML)
+    const esPropietarioOAdmin = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
+    if (!esPropietarioOAdmin) {
+        alert("⚠️ No tienes permisos para eliminar este anime.");
+        return;
+    }
+
+    // 1. Mensaje de confirmación nativo
+    const confirmacion = confirm(`¿Estás seguro que quieres eliminar "${obraActual.titulo}" de forma permanente?\n\nEsta acción no se puede deshacer.`);
+    
+    if (!confirmacion) return; // Si dice cancelar, no hacemos nada
+
+    try {
+        // Pequeña vibración en Telegram si es posible
+        if (tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('warning');
+
+        // 2. Borrar de Supabase
+        const { error } = await _supabase
+            .from('obras')
+            .delete()
+            .eq('id', obraActual.id);
+
+        if (error) throw error;
+
+        // 3. Quitar de la lista local (para no recargar toda la base de datos de nuevo)
+        todasLasObras = todasLasObras.filter(o => o.id !== obraActual.id);
+
+        if (tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('success');
+        alert("🗑️ Anime eliminado correctamente.");
+
+        // 4. Devolver al usuario al catálogo y actualizar visualmente
+        volverAlCatalogo();
+        aplicarTodosLosFiltros();
+
+    } catch (err) {
+        console.error("Error al eliminar la obra:", err);
+        alert("❌ Hubo un error al intentar eliminar. Revisa la consola.");
     }
 }
 

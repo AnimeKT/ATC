@@ -1588,3 +1588,51 @@ body.usuario-identificado #btn-edit-serie {
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.2);
 }
+
+/* =========================================
+   BOTÓN DE ELIMINAR DISCRETO (BANNER)
+   ========================================= */
+.btn-eliminar-discreto {
+    position: absolute;
+    top: 60px;     /* Se ubica justo debajo del botón favorito (42px + margen) */
+    left: 17px;    /* Ligeramente centrado respecto al favorito */
+    z-index: 10;
+    
+    background-color: rgba(0, 0, 0, 0.4); /* Muy discreto */
+    color: #71717a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+}
+
+.btn-eliminar-discreto i {
+    font-size: 12px;
+}
+
+.btn-eliminar-discreto:hover, .btn-eliminar-discreto:active {
+    color: #ef4444; /* Rojo advertencia */
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Ajuste del botón en celulares para que no estorbe */
+@media (max-width: 480px) {
+    .btn-eliminar-discreto {
+        width: 22px;
+        height: 22px;
+        top: 40px; /* Debajo del favorito de móvil */
+        left: 11px;
+    }
+    .btn-eliminar-discreto i {
+        font-size: 10px;
+    }
+}
