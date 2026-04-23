@@ -1398,6 +1398,11 @@ body.usuario-identificado #btn-edit-serie {
         font-size: 12px;
     }
 
+    /* Bloques de temporadas en el editor */
+    .seccion-block {
+        padding: 8px !important;
+        margin-bottom: 10px !important;
+    }
     
     .temporada-block {
         padding: 10px !important;
