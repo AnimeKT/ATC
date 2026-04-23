@@ -496,7 +496,7 @@ function iniciarNavegacionContenido(temporadasData) {
 
         // Verificamos si esta sección fue creada por alguien diferente al dueño del anime
         const primerItem = temps[0];
-        if (primerItem.creador_nombre && primerItem.creador_nombre !== obraActual.creador_nombre) {
+        if (primerItem.creador_nombre) {
             const badge = document.createElement('div');
             badge.className = `creador-badge ${primerItem.creador_nombre === 'Admin' ? 'admin' : ''}`;
             badge.onclick = (e) => { e.stopPropagation(); toggleNombreCreador(badge); };
