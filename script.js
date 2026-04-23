@@ -764,27 +764,32 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     
     const secBlock = document.createElement('div');
     secBlock.className = 'seccion-block';
-    secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
-
+    
+    // 1. Identificamos quién es el dueño de esta sección específica
     const resolvedCreador = (creadorId !== null && creadorId !== undefined && creadorId !== '') 
         ? String(creadorId) 
         : String(userIdActual); 
-        
-    // --- NUEVO: Resolver Nombres ---
+
+    // --- CAMBIO CLAVE: Lógica de Permisos Ampliada ---
+    // Un usuario puede editar/eliminar si:
+    // a) Es el autor de la sección específica.
+    // b) Es el ADMIN del sistema.
+    // c) ES EL DUEÑO DE LA TARJETA (obraActual.creador_id).
+    const esDueñoDeLaObra = (obraActual && String(obraActual.creador_id) === String(userIdActual));
+    const esAutorDeLaSeccion = (resolvedCreador === String(userIdActual));
+    const esAdmin = (String(userIdActual) === ADMIN_ID);
+
+    const puedeEditarEstaSeccion = esAutorDeLaSeccion || esAdmin || esDueñoDeLaObra;
+    // ------------------------------------------------
+
+    // El resto de la identidad para el dataset
     const tgUser = JSON.parse(localStorage.getItem('tg_user'));
     const defaultNombre = userIdActual === ADMIN_ID ? "Admin" : (tgUser ? tgUser.first_name : "Colaborador");
     const defaultUsername = userIdActual === ADMIN_ID ? "@Admin" : (tgUser && tgUser.username ? `@${tgUser.username}` : "Sin @usuario");
 
-    const resolvedNombre = creadorNombre || defaultNombre;
-    const resolvedUsername = creadorUsername || defaultUsername;
-
-    // Guardamos toda la identidad en el dataset del bloque HTML
     secBlock.dataset.creador = resolvedCreador;
-    secBlock.dataset.creadorNombre = resolvedNombre;
-    secBlock.dataset.creadorUsername = resolvedUsername;
-    // ---------------------------------
-
-    const puedeEditarEstaSeccion = (resolvedCreador === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
+    secBlock.dataset.creadorNombre = creadorNombre || defaultNombre;
+    secBlock.dataset.creadorUsername = creadorUsername || defaultUsername;
 
     secBlock.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
@@ -801,6 +806,7 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
 
     container.appendChild(secBlock);
 
+    // Si no tiene permisos, bloqueamos los inputs y ocultamos botones
     if (!puedeEditarEstaSeccion) {
         secBlock.classList.add('campo-bloqueado');
         secBlock.querySelectorAll('input').forEach(inp => inp.disabled = true);
@@ -808,7 +814,6 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     }
 
     const listaTemps = secBlock.querySelector('.lista-temporadas');
-
     if (temporadasArray && Array.isArray(temporadasArray)) {
         temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos, puedeEditarEstaSeccion));
     } else {
