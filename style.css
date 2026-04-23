@@ -873,7 +873,7 @@ body.es-admin #btn-admin-view {
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    margin-bottom: 15px;
+    margin-bottom: 0px;
 }
 
 .btn-add-seccion {
