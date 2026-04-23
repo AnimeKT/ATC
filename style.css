@@ -1400,8 +1400,11 @@ body.usuario-identificado #btn-edit-serie {
 
     /* Bloques de temporadas en el editor */
     .seccion-block {
-        padding: 8px !important;
-        margin-bottom: 10px !important;
+    width: 100%;
+    min-height: min-content;
+    }
+    .lista-temporadas:not(:empty) {
+    margin-bottom: 5px;
     }
     
     .temporada-block {
@@ -1606,5 +1609,11 @@ body.usuario-identificado #btn-edit-serie {
     .seccion-block {
         padding: 25px !important; /* Más aire interno en PC */
         margin-bottom: 30px !important;
+    }
+    #builder-temporadas {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 }
