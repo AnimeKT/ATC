@@ -757,7 +757,8 @@ async function ejecutarRegistro() {
 // =========================================
 // 11. CONSTRUCTOR VISUAL DE TEMPORADAS (CORREGIDO PARA ROLES)
 // =========================================
-function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null) {
+// Agregamos creadorNombre y creadorUsername como parámetros
+function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null, creadorNombre = null, creadorUsername = null) {
     const container = document.getElementById('builder-temporadas');
     if(!container) return;
     
@@ -765,14 +766,24 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     secBlock.className = 'seccion-block';
     secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
 
-    // Definir quién es el creador de esta sección para el bloqueo
     const resolvedCreador = (creadorId !== null && creadorId !== undefined && creadorId !== '') 
         ? String(creadorId) 
-        : String(userIdActual); // Si es nueva, el creador es el que la está agregando ahora mismo.
+        : String(userIdActual); 
         
-    secBlock.dataset.creador = resolvedCreador;
+    // --- NUEVO: Resolver Nombres ---
+    const tgUser = JSON.parse(localStorage.getItem('tg_user'));
+    const defaultNombre = userIdActual === ADMIN_ID ? "Admin" : (tgUser ? tgUser.first_name : "Colaborador");
+    const defaultUsername = userIdActual === ADMIN_ID ? "@Admin" : (tgUser && tgUser.username ? `@${tgUser.username}` : "Sin @usuario");
 
-    // Verificamos si el usuario actual tiene permiso de editar ESTA sección específica
+    const resolvedNombre = creadorNombre || defaultNombre;
+    const resolvedUsername = creadorUsername || defaultUsername;
+
+    // Guardamos toda la identidad en el dataset del bloque HTML
+    secBlock.dataset.creador = resolvedCreador;
+    secBlock.dataset.creadorNombre = resolvedNombre;
+    secBlock.dataset.creadorUsername = resolvedUsername;
+    // ---------------------------------
+
     const puedeEditarEstaSeccion = (resolvedCreador === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
 
     secBlock.innerHTML = `
@@ -790,7 +801,6 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
 
     container.appendChild(secBlock);
 
-    // Aplicar bloqueo visual si no puede editarla
     if (!puedeEditarEstaSeccion) {
         secBlock.classList.add('campo-bloqueado');
         secBlock.querySelectorAll('input').forEach(inp => inp.disabled = true);
@@ -897,16 +907,15 @@ function agregarCapituloUI(containerCaps, capNombre = '', capUrl = '', puedeEdit
 
 function recolectarDatosTemporadas() {
     const datos = [];
-    const tgUser = JSON.parse(localStorage.getItem('tg_user'));
     
     document.querySelectorAll('.seccion-block').forEach(secBlock => {
         const inputSec = secBlock.querySelector('.sec-nombre');
         const nombreSeccion = inputSec ? inputSec.value.trim() : 'Principal';
+        
+        // --- NUEVO: Leer la identidad directamente del HTML ---
         const creadorId = secBlock.dataset.creador || ''; 
-
-        // Obtenemos los nombres del usuario que está guardando ahora mismo
-        const nombreActual = userIdActual === ADMIN_ID ? "Admin" : (tgUser ? tgUser.first_name : "Colaborador");
-        const userActual = userIdActual === ADMIN_ID ? "@Admin" : (tgUser && tgUser.username ? `@${tgUser.username}` : "Sin @usuario");
+        const creadorNombre = secBlock.dataset.creadorNombre || '';
+        const creadorUsername = secBlock.dataset.creadorUsername || '';
 
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
             const nombre = tempBlock.querySelector('.temp-nombre')?.value.trim() || '';
@@ -932,9 +941,8 @@ function recolectarDatosTemporadas() {
                     imagen, 
                     enlaces, 
                     creador_id: creadorId,
-                    // ESTO ES LO NUEVO: Guardamos quién guardó esta sección
-                    creador_nombre: nombreActual,
-                    creador_username: userActual
+                    creador_nombre: creadorNombre,
+                    creador_username: creadorUsername
                 });
             }
         });
@@ -959,9 +967,16 @@ function cargarDatosTemporadas(temporadasFlat) {
     });
 
     for (const [nombreSec, tempsArray] of Object.entries(agrupado)) {
-        // Tomamos el creador del primer elemento de esa sección
-        const sectionCreator = (tempsArray && tempsArray.length > 0 && tempsArray[0].creador_id) ? tempsArray[0].creador_id : (obraActual.creador_id || '');
-        agregarSeccionUI(nombreSec, tempsArray, sectionCreator);
+        // Tomamos todos los datos de creador del primer elemento de esa sección
+        const primerItem = tempsArray[0] || {};
+        const sectionCreator = primerItem.creador_id || (obraActual.creador_id || '');
+        
+        // --- NUEVO: Extraer nombres originales ---
+        const sectionNombre = primerItem.creador_nombre || '';
+        const sectionUsername = primerItem.creador_username || '';
+
+        // Se los pasamos a la UI
+        agregarSeccionUI(nombreSec, tempsArray, sectionCreator, sectionNombre, sectionUsername);
     }
 }
 
