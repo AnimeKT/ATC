@@ -11,10 +11,6 @@ body {
     background-color: #0f0f11;
     color: #e0e0e0;
     overflow-x: hidden;
-    /* Añade esto: */
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Esto crea una separación automática entre el navbar y las secciones */
 }
 
 /* =========================================
@@ -924,20 +920,11 @@ body.es-admin #btn-admin-view {
    MEDIA QUERIES (RESPONSIVE)
    ========================================= */
 @media (max-width: 768px) {
-    .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 25px;
-    background-color: #18181b;
-    border-bottom: 1px solid #27272a;
-    gap: 15px;
-    position: sticky; 
-    top: 0; 
-    z-index: 900;
-    /* AÑADE ESTA LÍNEA: */
-    margin-bottom: 20px; 
-    }   
+    .navbar { 
+        flex-wrap: wrap; 
+        padding: 10px 15px; 
+        gap: 10px; 
+    }
     
     .logo { 
         order: 1; 
