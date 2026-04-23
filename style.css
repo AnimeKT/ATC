@@ -1399,24 +1399,11 @@ body.usuario-identificado #btn-edit-serie {
     }
 
     /* Bloques de temporadas en el editor */
-    .seccion-block {
-    display: block !important; /* Quitamos el flex para evitar bugs en tablets */
-    margin-bottom: 35px !important; /* Espacio gigante e inamovible entre secciones */
-    padding: 20px !important; /* Espacio interno asegurado */
-    border: 1px solid #3ba4fa !important;
-    border-radius: 8px !important;
-    background-color: #0f0f11 !important;
-    }
-    .seccion-header {
-    margin-bottom: 20px !important; /* Separa el título de las temporadas */
-    }
     .lista-temporadas:not(:empty) {
     margin-bottom: 5px;
     }
     
-    .temporada-block {
-        padding: 10px !important;
-    }
+    
 }
 
 @media (max-width: 480px) {
@@ -1615,14 +1602,26 @@ body.usuario-identificado #btn-edit-serie {
 
 /* Ajuste opcional para PC: que el bloque no se vea tan apretado */
 @media (min-width: 768px) {
-    .seccion-block {
-        padding: 25px !important; /* Más aire interno en PC */
-        margin-bottom: 30px !important;
-    }
     #builder-temporadas {
         padding: 10px;
         display: flex;
         flex-direction: column;
         gap: 20px;
     }
+}
+.seccion-block {
+    display: block !important; 
+    margin-bottom: 35px !important; 
+    padding: 20px !important; 
+    border: 1px solid #3ba4fa !important;
+    border-radius: 8px !important;
+    background-color: #0f0f11 !important;
+    width: 100% !important; /* Añadimos esto para que en PC ocupe todo el ancho */
+}
+
+.temporada-block {
+        padding: 10px !important;
+ }
+.seccion-header {
+    margin-bottom: 20px !important; 
 }
