@@ -1605,6 +1605,6 @@ body.usuario-identificado #btn-edit-serie {
 .admin-secciones::before {
     content: "";
     display: block;
-    height: 25px; /* Ajusta este valor para más o menos espacio */
+    height: 256px; /* Ajusta este valor para más o menos espacio */
     width: 100%;
 }
