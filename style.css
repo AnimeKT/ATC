@@ -1588,23 +1588,3 @@ body.usuario-identificado #btn-edit-serie {
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.2);
 }
-
-@media (min-width: 769px) {
-    /* Empujamos todo el contenedor de administración hacia abajo */
-    #vista-admin {
-        margin-top: 30px; 
-    }
-    
-    /* Creamos el espacio invisible arriba del cuadro de secciones */
-    .admin-secciones {
-        margin-top: 40px;
-    }
-}
-
-/* Esto añade un bloque invisible justo antes de los títulos de las secciones */
-.admin-secciones::before {
-    content: "";
-    display: block;
-    height: 256px; /* Ajusta este valor para más o menos espacio */
-    width: 100%;
-}
