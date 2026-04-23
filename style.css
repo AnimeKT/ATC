@@ -1398,6 +1398,15 @@ body.usuario-identificado #btn-edit-serie {
         font-size: 12px;
     }
 
+    /* Bloques de temporadas en el editor */
+    .seccion-block {
+        padding: 8px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .temporada-block {
+        padding: 10px !important;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1481,7 +1490,70 @@ body.usuario-identificado #btn-edit-serie {
         color: rgba(255, 255, 255, 0.15); /* Un poquito más visible en celular para que no se pierda del todo */
     }
 }
+/* =========================================
+   REDUCCIÓN DE TAMAÑO: SECCIÓN TEMPORADAS
+   ========================================= */
+@media (max-width: 480px) {
+    /* 1. Título principal "Contenido Disponible" o "Temporadas" */
+    .titulo-temporadas {
+        font-size: 11px !important; 
+        margin-top: 12px !important;
+        margin-bottom: 6px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #a1a1aa;
+    }
 
+    /* 2. Los contenedores de cada temporada */
+    .temporada-block {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+        border-radius: 8px !important;
+        background-color: #1c1c1f !important; /* Un tono un poco más claro para separar */
+    }
+
+    .temporada-block h4 {
+        font-size: 11px !important;
+        margin-bottom: 5px !important;
+        font-weight: 600;
+    }
+
+    /* 3. LOS BOTONES DE CAPÍTULOS/ENLACES (El cambio más grande) */
+    .btn-dinamico {
+        padding: 5px 10px !important; /* Reducido a la mitad */
+        font-size: 10px !important;    /* Texto pequeño estilo sistema */
+        margin-bottom: 3px !important;
+        gap: 6px !important;
+        border-radius: 5px !important;
+        min-height: 30px !important;   /* Evita que sean demasiado altos */
+        border: 1px solid rgba(255,255,255,0.05) !important;
+    }
+
+    /* Iconos dentro de los botones */
+    .btn-dinamico i {
+        font-size: 11px !important;
+        width: 14px;
+        text-align: center;
+    }
+
+    /* 4. Lista de botones (el espacio entre ellos) */
+    .seccion-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 3px !important; /* Los pegamos más entre sí */
+    }
+
+    /* 5. Ajuste para los "Géneros" que ahora están ahí abajo */
+    .detalle-tags {
+        gap: 4px !important;
+        margin-top: 5px !important;
+    }
+
+    .tag {
+        font-size: 9px !important;
+        padding: 2px 6px !important;
+    }
+}
 
 /* --- BADGE DEL CREADOR INTERACTIVO --- */
 .creador-badge {
@@ -1518,21 +1590,13 @@ body.usuario-identificado #btn-edit-serie {
 }
 
 @media (min-width: 769px) {
-    #vista-catalogo, #vista-admin, #detalles-anime {
-        margin-top: 50px;
+    /* Empujamos todo el contenedor de administración hacia abajo */
+    #vista-admin {
+        margin-top: 30px; 
     }
-}
-
-/* --- SOLUCIÓN PARA ESPACIADO EN PC --- */
-@media (min-width: 769px) {
-    /* Seleccionamos todas las secciones que son hijas directas del body */
-    body > section {
-        margin-top: 40px; 
-        padding-top: 10px; /* El padding ayuda a evitar que el margen se colapse */
-    }
-
-    /* Si el primer bloque después del menú no es una sección, sino un div */
-    .navbar + div, .navbar + section {
-        margin-top: 50px;
+    
+    /* Creamos el espacio invisible arriba del cuadro de secciones */
+    .admin-secciones {
+        margin-top: 40px;
     }
 }
