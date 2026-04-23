@@ -672,8 +672,8 @@ body.es-admin #btn-admin-view {
         font-size: 15px; /* Aquí se reduce automáticamente */
     }
     .btn-favorito {
-        width: 24px;
-        height: 24px;
+        width: 23px;
+        height: 23px;
         top: 10px;
         left: 10px;
     }
