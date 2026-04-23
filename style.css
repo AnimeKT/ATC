@@ -257,6 +257,12 @@ body.es-admin #btn-admin-view {
 }
 
 /* Sobreescritura para bloques de temporada */
+.temporada-block input, 
+.temporada-block select, 
+.temporada-block textarea {
+    background-color: #0f0f11; 
+    border-color: #27272a; 
+}
 
 .temporada-header {
     display: flex;
@@ -1393,11 +1399,14 @@ body.usuario-identificado #btn-edit-serie {
     }
 
     /* Bloques de temporadas en el editor */
-    .lista-temporadas:not(:empty) {
-    margin-bottom: 5px;
+    .seccion-block {
+        padding: 8px !important;
+        margin-bottom: 10px !important;
     }
     
-    
+    .temporada-block {
+        padding: 10px !important;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1578,77 +1587,4 @@ body.usuario-identificado #btn-edit-serie {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.2);
-}
-
-.lista-temporadas {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Espacio entre cada tarjeta de temporada */
-    margin-top: 15px; /* Espacio respecto al nombre de la sección */
-}
-
-/* Ajuste opcional para PC: que el bloque no se vea tan apretado */
-@media (min-width: 768px) {
-    #builder-temporadas {
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-}
-.seccion-header {
-    margin-bottom: 20px !important; 
-}
-
-/* --- AJUSTES DE TAMAÑO PARA MÓVIL (Hacer el sistema más compacto) --- */
-@media (max-width: 768px) {
-    /* 1. Reducir el relleno y margen del recuadro principal (Sección) */
-    .seccion-block {
-        padding: 12px !important;
-        margin-bottom: 20px !important;
-    }
-    
-    /* 2. Achicar los títulos */
-    .seccion-header h3 {
-        font-size: 16px !important;
-        margin: 0 !important;
-    }
-    .temporada-header h4 {
-        font-size: 14px !important;
-        margin: 0 !important;
-    }
-
-    /* 3. Hacer las cajas de texto (inputs) y selectores más delgados */
-    .seccion-block input, 
-    .temporada-block input, 
-    .idioma-block input, 
-    .idioma-block select {
-        padding: 8px 10px !important;
-        font-size: 13px !important;
-        margin-bottom: 8px !important;
-    }
-
-    /* 4. Reducir el espacio de las Temporadas */
-    .temporada-block {
-        padding: 10px !important;
-        margin-bottom: 12px !important;
-        gap: 8px !important;
-    }
-
-    /* 5. Reducir el espacio de los Idiomas/Enlaces */
-    .idioma-block {
-        padding: 8px !important;
-        margin-bottom: 8px !important;
-        gap: 6px !important;
-    }
-
-    /* 6. Hacer los botones más pequeños (Añadir, Eliminar, etc.) */
-    .seccion-block button {
-        padding: 8px 12px !important;
-        font-size: 12px !important;
-    }
-    
-    .btn-add-sub {
-        margin-top: 10px !important;
-    }
 }
