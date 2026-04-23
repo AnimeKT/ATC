@@ -764,17 +764,6 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     
     const secBlock = document.createElement('div');
     secBlock.className = 'seccion-block';
-
-    secBlock.style.cssText = `
-        border: 1px solid #3ba4fa; 
-        padding: 20px; 
-        border-radius: 8px; 
-        margin-bottom: 25px; 
-        background: #0f0f11;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    `;
     
     // 1. Identificamos quién es el dueño de esta sección específica
     const resolvedCreador = (creadorId !== null && creadorId !== undefined && creadorId !== '') 
@@ -803,16 +792,16 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
     secBlock.dataset.creadorUsername = creadorUsername || defaultUsername;
 
     secBlock.innerHTML = `
-        <div class="seccion-header" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 12px;">
-            <input type="text" class="sec-nombre" placeholder="Nombre de tu Página o Grupo" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
-            <button type="button" class="btn-delete-sec" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
+        <div class="seccion-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #27272a; padding-bottom: 15px;">
+            <input type="text" class="sec-nombre" placeholder="Nombre de tu Página o Grupo" value="${nombreSeccion}" style="flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
+            <button type="button" class="btn-delete-sec" onclick="this.closest('.seccion-block').remove()" style="margin-left: 10px; background:#ef4444; color:white; border:none; padding: 12px; border-radius: 6px; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
         
-        <div class="lista-temporadas" style="display: flex; flex-direction: column; gap: 15px;"></div>
+        <div class="lista-temporadas" style="margin-bottom: 15px;"></div>
         
-        <button type="button" class="btn-add-sub" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 12px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer;">
+        <button type="button" class="btn-add-sub" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 12px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 20px;">
             <i class="fa-solid fa-plus"></i> Añadir Nueva Temporada
         </button>
     `;
