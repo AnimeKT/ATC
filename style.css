@@ -1600,3 +1600,11 @@ body.usuario-identificado #btn-edit-serie {
         margin-top: 40px;
     }
 }
+
+/* Esto añade un bloque invisible justo antes de los títulos de las secciones */
+.admin-secciones::before {
+    content: "";
+    display: block;
+    height: 25px; /* Ajusta este valor para más o menos espacio */
+    width: 100%;
+}
