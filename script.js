@@ -399,7 +399,8 @@ function abrirDetalle(tituloObra) {
         // Guardamos los datos en el elemento para que la función toggle pueda leerlos
         badge.dataset.nombre = obraActual.creador_nombre;
         badge.dataset.username = obraActual.creador_username || "Sin @usuario";
-        badge.dataset.estado = "nombre"; 
+        badge.dataset.id = obraActual.creador_id || "Sin ID"; // <-- Línea nueva
+        badge.dataset.estado = "nombre";
 
         if (obraActual.creador_id === ADMIN_ID || obraActual.creador_nombre === "Admin") {
             badge.classList.add('admin');
@@ -512,7 +513,8 @@ function iniciarNavegacionContenido(temporadasData) {
             badge.className = `creador-badge ${primerItem.creador_nombre === 'Admin' ? 'admin' : ''}`;
             badge.onclick = (e) => { e.stopPropagation(); toggleNombreCreador(badge); };
             badge.dataset.nombre = primerItem.creador_nombre;
-            badge.dataset.username = primerItem.creador_username;
+            badge.dataset.username = primerItem.creador_username || "Sin @usuario";
+            badge.dataset.id = primerItem.creador_id || "Sin ID"; // <-- Línea nueva
             badge.dataset.estado = "nombre";
             badge.innerHTML = `<i class="fa-solid fa-user-pen"></i> <span>${primerItem.creador_nombre}</span>`;
             header.appendChild(badge);
@@ -1136,9 +1138,13 @@ function toggleNombreCreador(elemento) {
     // Usamos 'elemento' para referirnos exactamente al botón que se tocó
     const txt = elemento.querySelector('span');
     
+    // Ciclo de 3 pasos: nombre -> username -> id -> nombre...
     if (elemento.dataset.estado === "nombre") {
         txt.textContent = elemento.dataset.username;
         elemento.dataset.estado = "username";
+    } else if (elemento.dataset.estado === "username") {
+        txt.textContent = `ID: ${elemento.dataset.id}`;
+        elemento.dataset.estado = "id";
     } else {
         txt.textContent = elemento.dataset.nombre;
         elemento.dataset.estado = "nombre";
