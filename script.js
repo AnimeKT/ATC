@@ -29,19 +29,13 @@ function loguearUsuario(user) {
             <div class="user-profile-nav">
                 <img src="${fotoUrl}" alt="User" class="nav-avatar">
                 <span class="user-name">${user.first_name}</span>
-                <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+                <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
             </div>
         `;
     }
-
-    // --- ESTO ES LO QUE FALTA (Añade esto aquí) ---
-    const btnAdmin = document.getElementById('btn-admin-view'); // << NUEVO
-    if (btnAdmin && userIdActual === ADMIN_ID) {                // << NUEVO
-        btnAdmin.style.display = 'flex';                         // << NUEVO
-    }
-    // ----------------------------------------------
-
-    cerrarModalAuth();
+    verificarPermisosAdmin();
 }
 
 function verificarPermisosAdmin() {
@@ -162,11 +156,6 @@ function ejecutarCambioVista(vista) {
 
 function mostrarCatalogo() { cambiarVista('catalogo', false); }
 function volverAlCatalogo() {
-
-    const repro = document.getElementById('reproductor-telegram');
-    if (repro) repro.style.display = 'none';
-    if (repro) repro.innerHTML = '';
-
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
     cambiarVista('catalogo');
 }
@@ -499,10 +488,6 @@ function iniciarNavegacionContenido(temporadasData) {
     if(!contenedor) return;
     
     contenedor.innerHTML = '';
-    // Ocultar reproductor si cambiamos de menú
-    const repro = document.getElementById('reproductor-telegram');
-    if (repro) { repro.style.display = 'none'; repro.innerHTML = ''; }
-
     const imgPortada = document.getElementById('det-portada');
     if (imgPortada && obraActual) {
         imgPortada.src = obraActual.portada_url || ''; 
@@ -600,28 +585,7 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
-
-    let postPath = "";
-
-    // 1. Verificamos si es nuestro formato guardado o el script pegado en crudo
-    if (url.startsWith('tgpost:')) {
-        postPath = url.replace('tgpost:', '');
-    } else if (url.includes('data-telegram-post=')) {
-        const match = url.match(/data-telegram-post=["']([^"']+)["']/);
-        if (match) postPath = match[1];
-    }
-
-    // 2. Si detectó que es un post de Telegram, abre el reproductor interno
-    if (postPath) {
-        mostrarReproductorTelegram(postPath);
-    } else {
-        // 3. Si es un link normal, lo abre como siempre
-        if (window.Telegram?.WebApp?.openLink) {
-            url.includes('t.me') ? tg.openTelegramLink(url) : tg.openLink(url);
-        } else {
-            window.open(url, '_blank');
-        }
-    }
+    url.includes('t.me') ? tg.openTelegramLink(url) : tg.openLink(url);
 }
 
 // =========================================
@@ -1027,20 +991,8 @@ function recolectarDatosTemporadas() {
                     enlaces[idiomaNombre] = {};
                     idBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
                         const cNombre = capRow.querySelector('.cap-nombre')?.value.trim() || '';
-                        let cUrl = capRow.querySelector('.cap-url')?.value.trim() || ''; // Cambiamos const por let
-
-                        // 👉 LÓGICA DE TELEGRAM: Extraemos solo el post si pegan el script completo
-                        if (cUrl.includes('<script') && cUrl.includes('data-telegram-post')) {
-                            const match = cUrl.match(/data-telegram-post=["']([^"']+)["']/);
-                            if (match && match[1]) {
-                                cUrl = `tgpost:${match[1]}`; 
-                            }
-                        }
-
-                        // Guardamos en el objeto enlaces
-                        if (cNombre && cUrl) {
-                            enlaces[idiomaNombre][cNombre] = cUrl;
-                        }
+                        const cUrl = capRow.querySelector('.cap-url')?.value.trim() || '';
+                        if (cNombre && cUrl) enlaces[idiomaNombre][cNombre] = cUrl;
                     });
                 }
             });
@@ -1325,40 +1277,6 @@ async function eliminarObraActual(event) {
         console.error("Error al eliminar la obra:", err);
         alert("❌ Hubo un error al intentar eliminar. Revisa la consola.");
     }
-}
-
-function mostrarReproductorTelegram(postPath) {
-    // Busca el contenedor que ya creaste en tu HTML
-    const contenedor = document.getElementById('reproductor-telegram');
-    if (!contenedor) return;
-
-    contenedor.style.display = 'flex';
-    contenedor.innerHTML = ''; // Limpiar video anterior
-
-    // Creamos un div interno forzado para evitar bugs de Telegram
-    const widgetContainer = document.createElement('div');
-    widgetContainer.id = "tg-widget-inside";
-    contenedor.appendChild(widgetContainer);
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute('data-telegram-post', postPath);
-    script.setAttribute('data-width', '100%');
-    script.setAttribute('data-dark', '1');
-    script.setAttribute('data-color', '3BA4FA'); // Tu color azul
-
-    widgetContainer.appendChild(script);
-    
-    // Auto-scroll para que el usuario vea el video
-    setTimeout(() => {
-        contenedor.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-}
-
-if (userIdActual === ADMIN_ID) {
-    const btnAdmin = document.getElementById('btn-admin-view');
-    if (btnAdmin) btnAdmin.style.display = 'flex';
 }
 
 window.addEventListener('popstate', (event) => {
