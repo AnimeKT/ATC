@@ -395,7 +395,8 @@ function abrirDetalle(tituloObra) {
     if (obraActual.creador_nombre) {
         badge.style.display = 'inline-flex';
         txtCreador.textContent = obraActual.creador_nombre;
-        
+
+        txtCreador.style.fontWeight = "normal";
         // Guardamos los datos en el elemento para que la función toggle pueda leerlos
         badge.dataset.nombre = obraActual.creador_nombre;
         badge.dataset.username = obraActual.creador_username || "Sin @usuario";
@@ -470,10 +471,12 @@ function abrirDetalle(tituloObra) {
 
     iniciarNavegacionContenido(obraActual.temporadas);
     actualizarEstadoFavoritoDetalle();
+
     const btnShare = document.getElementById('det-share-btn');
     if (btnShare) {
         btnShare.onclick = () => copiarEnlaceAnime(obraActual.titulo);
     }
+
     cambiarVista('detalle');
 }
 
@@ -1175,49 +1178,45 @@ function copiarEnlaceAnime(tituloAnime) {
     });
 }
 
-function toggleNombreCreador() {
-    const badge = document.getElementById('det-creador-badge');
-    const txt = document.getElementById('txt-creador');
-    const icon = badge.querySelector('i');
-    
-    const nombre = badge.dataset.nombre;
-    const username = badge.dataset.username;
-    const idUser = badge.dataset.id;
-    const linkTg = badge.dataset.telegram;
+function toggleNombreCreador(elemento) {
+    const txt = elemento.querySelector('span');
+    const estadoActual = elemento.dataset.estado;
+    const link = elemento.dataset.link;
 
-    if (badge.dataset.estado === "nombre") {
-        // 1er Click: Muestra @usuario
-        txt.textContent = username ? (username.startsWith('@') ? username : '@' + username) : `@${nombre}`;
-        badge.dataset.estado = "username";
-        icon.className = "fa-solid fa-at";
-
-    } else if (badge.dataset.estado === "username") {
-        // 2do Click: Muestra ID
-        txt.textContent = `ID: ${idUser}`;
-        badge.dataset.estado = "id";
-        icon.className = "fa-solid fa-fingerprint";
-
-    } else if (badge.dataset.estado === "id") {
-        // 3er Click: Muestra Botón de Página
-        txt.textContent = "Ver Página";
-        badge.dataset.estado = "pagina";
-        icon.className = "fa-brands fa-telegram";
-
-    } else {
-        // Si ya está en "Ver Página", al hacer click abre el link y reinicia a Nombre
-        if (linkTg) {
-            const urlFinal = linkTg.includes('t.me') ? linkTg : `https://t.me/${linkTg.replace('@', '')}`;
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openTelegramLink(urlFinal);
+    // Si ya estamos en modo "link" y el usuario hace clic, abrimos la página
+    if (estadoActual === "link") {
+        if (link && link !== "null" && link !== "") {
+            // Si estamos en Telegram, usamos su método nativo, si no, window.open
+            if (window.Telegram?.WebApp?.openLink) {
+                window.Telegram.WebApp.openLink(link);
             } else {
-                window.open(urlFinal, '_blank');
+                window.open(link, '_blank');
             }
+        } else {
+            // Si no hay link, volvemos al inicio
+            txt.textContent = elemento.dataset.nombre;
+            elemento.dataset.estado = "nombre";
         }
-        // Reiniciar al estado inicial
-        txt.textContent = nombre;
-        badge.dataset.estado = "nombre";
-        icon.className = "fa-solid fa-user-pen";
+        return; // Salimos para que no ejecute el cambio de estado de abajo
     }
+
+    // Lógica de rotación de estados
+    if (estadoActual === "nombre") {
+        txt.textContent = elemento.dataset.username;
+        elemento.dataset.estado = "username";
+    } else if (estadoActual === "username") {
+        txt.textContent = `ID: ${elemento.dataset.id}`;
+        elemento.dataset.estado = "id";
+    } else if (estadoActual === "id") {
+        // TERCER CLIC: Ahora dice "Ver Página" en lugar del link feo
+        txt.textContent = "🌐 Ver Página";
+        elemento.dataset.estado = "link";
+        
+        // Efecto visual para que parezca un botón (opcional)
+        txt.style.fontWeight = "bold";
+    }
+    
+    if (tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
 }
 // =========================================
 // 15. ELIMINAR OBRA (SOLO DUEÑO Y ADMIN)
