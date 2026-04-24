@@ -1175,28 +1175,48 @@ function copiarEnlaceAnime(tituloAnime) {
     });
 }
 
-function toggleNombreCreador(elemento) {
-    const txt = elemento.querySelector('span');
+function toggleNombreCreador() {
+    const badge = document.getElementById('det-creador-badge');
+    const txt = document.getElementById('txt-creador');
+    const icon = badge.querySelector('i');
     
-    // Ciclo de 4 pasos: nombre -> username -> id -> pagina -> nombre...
-    if (elemento.dataset.estado === "nombre") {
-        txt.textContent = elemento.dataset.username;
-        elemento.dataset.estado = "username";
-    } else if (elemento.dataset.estado === "username") {
-        txt.textContent = `ID: ${elemento.dataset.id}`;
-        elemento.dataset.estado = "id";
-    } else if (elemento.dataset.estado === "id") {
-        // --- NUEVO ESTADO: PÁGINA ---
-        const link = elemento.dataset.link;
-        txt.textContent = (link && link !== "null" && link !== "") ? link : "Sin link";
-        elemento.dataset.estado = "link";
+    const nombre = badge.dataset.nombre;
+    const username = badge.dataset.username;
+    const idUser = badge.dataset.id;
+    const linkTg = badge.dataset.telegram;
+
+    if (badge.dataset.estado === "nombre") {
+        // 1er Click: Muestra @usuario
+        txt.textContent = username ? (username.startsWith('@') ? username : '@' + username) : `@${nombre}`;
+        badge.dataset.estado = "username";
+        icon.className = "fa-solid fa-at";
+
+    } else if (badge.dataset.estado === "username") {
+        // 2do Click: Muestra ID
+        txt.textContent = `ID: ${idUser}`;
+        badge.dataset.estado = "id";
+        icon.className = "fa-solid fa-fingerprint";
+
+    } else if (badge.dataset.estado === "id") {
+        // 3er Click: Muestra Botón de Página
+        txt.textContent = "Ver Página";
+        badge.dataset.estado = "pagina";
+        icon.className = "fa-brands fa-telegram";
+
     } else {
-        txt.textContent = elemento.dataset.nombre;
-        elemento.dataset.estado = "nombre";
-    }
-    
-    if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        // Si ya está en "Ver Página", al hacer click abre el link y reinicia a Nombre
+        if (linkTg) {
+            const urlFinal = linkTg.includes('t.me') ? linkTg : `https://t.me/${linkTg.replace('@', '')}`;
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.openTelegramLink(urlFinal);
+            } else {
+                window.open(urlFinal, '_blank');
+            }
+        }
+        // Reiniciar al estado inicial
+        txt.textContent = nombre;
+        badge.dataset.estado = "nombre";
+        icon.className = "fa-solid fa-user-pen";
     }
 }
 // =========================================
