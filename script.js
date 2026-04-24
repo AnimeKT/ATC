@@ -399,8 +399,7 @@ function abrirDetalle(tituloObra) {
         // Guardamos los datos en el elemento para que la función toggle pueda leerlos
         badge.dataset.nombre = obraActual.creador_nombre;
         badge.dataset.username = obraActual.creador_username || "Sin @usuario";
-        badge.dataset.id = obraActual.creador_id || "Sin ID";
-        badge.dataset.link = obraActual.creador_link || ""; // <-- ESTA ES LA LÍNEA NUEVA
+        badge.dataset.id = obraActual.creador_id || "Sin ID"; // <-- Línea nueva
         badge.dataset.estado = "nombre";
 
         if (obraActual.creador_id === ADMIN_ID || obraActual.creador_nombre === "Admin") {
@@ -719,8 +718,7 @@ async function ejecutarRegistro() {
                 },
                 generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                 temporadas: recolectarDatosTemporadas(), // Recoge to   do
-                propiedades_extra: recolectarCamposExtras(),
-                creador_link: document.getElementById('creador_link').value
+                propiedades_extra: recolectarCamposExtras()
             };
 
             if (!idAnimeEnEdicion) {
@@ -1137,32 +1135,23 @@ function copiarEnlaceAnime(tituloAnime) {
 }
 
 function toggleNombreCreador(elemento) {
-    const linkPersonal = elemento.dataset.link;
-    const username = elemento.dataset.username;
-    const userId = elemento.dataset.id;
-
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    // Usamos 'elemento' para referirnos exactamente al botón que se tocó
+    const txt = elemento.querySelector('span');
+    
+    // Ciclo de 3 pasos: nombre -> username -> id -> nombre...
+    if (elemento.dataset.estado === "nombre") {
+        txt.textContent = elemento.dataset.username;
+        elemento.dataset.estado = "username";
+    } else if (elemento.dataset.estado === "username") {
+        txt.textContent = `ID: ${elemento.dataset.id}`;
+        elemento.dataset.estado = "id";
+    } else {
+        txt.textContent = elemento.dataset.nombre;
+        elemento.dataset.estado = "nombre";
     }
-
-    if (linkPersonal && linkPersonal.startsWith('http')) {
-        window.open(linkPersonal, '_blank');
-    } 
-
-    else if (username && username !== "Sin @usuario" && username !== "undefined") {
-        const userLimpio = username.replace('@', '');
-        const urlTelegram = `https://t.me/${userLimpio}`;
-        
-        if (window.Telegram?.WebApp?.openTelegramLink) {
-            window.Telegram.WebApp.openTelegramLink(urlTelegram);
-        } else {
-            window.open(urlTelegram, '_blank');
-        }
-    } 
-
-    else {
-        navigator.clipboard.writeText(userId);
-        alert(`ID del creador (${userId}) copiada. No hay links disponibles.`);
+    
+    if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
 }
 // =========================================
