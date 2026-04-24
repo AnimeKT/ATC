@@ -29,13 +29,19 @@ function loguearUsuario(user) {
             <div class="user-profile-nav">
                 <img src="${fotoUrl}" alt="User" class="nav-avatar">
                 <span class="user-name">${user.first_name}</span>
-                <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar Sesión">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
+                <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
             </div>
         `;
     }
-    verificarPermisosAdmin();
+
+    // --- ESTO ES LO QUE FALTA (Añade esto aquí) ---
+    const btnAdmin = document.getElementById('btn-admin-view'); // << NUEVO
+    if (btnAdmin && userIdActual === ADMIN_ID) {                // << NUEVO
+        btnAdmin.style.display = 'flex';                         // << NUEVO
+    }
+    // ----------------------------------------------
+
+    cerrarModalAuth();
 }
 
 function verificarPermisosAdmin() {
@@ -496,7 +502,7 @@ function iniciarNavegacionContenido(temporadasData) {
     // Ocultar reproductor si cambiamos de menú
     const repro = document.getElementById('reproductor-telegram');
     if (repro) { repro.style.display = 'none'; repro.innerHTML = ''; }
-    
+
     const imgPortada = document.getElementById('det-portada');
     if (imgPortada && obraActual) {
         imgPortada.src = obraActual.portada_url || ''; 
@@ -1348,6 +1354,11 @@ function mostrarReproductorTelegram(postPath) {
     setTimeout(() => {
         contenedor.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
+}
+
+if (userIdActual === ADMIN_ID) {
+    const btnAdmin = document.getElementById('btn-admin-view');
+    if (btnAdmin) btnAdmin.style.display = 'flex';
 }
 
 window.addEventListener('popstate', (event) => {
