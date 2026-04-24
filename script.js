@@ -400,6 +400,7 @@ function abrirDetalle(tituloObra) {
         badge.dataset.nombre = obraActual.creador_nombre;
         badge.dataset.username = obraActual.creador_username || "Sin @usuario";
         badge.dataset.id = obraActual.creador_id || "Sin ID";
+        badge.dataset.link = obraActual.creador_link || "";
         badge.dataset.estado = "nombre";
 
         // 👉 AQUÍ ESTÁ LA MAGIA: Forzamos el click igual que en las temporadas
@@ -596,7 +597,7 @@ function prepararNuevoRegistro() {
     document.getElementById('btn-publicar').textContent = "Publicar Obra";
     
     // Limpiar campos
-    const inputsId = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 'in-dia', 'in-japones', 'in-ingles'];
+    const inputsId = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 'in-dia', 'in-japones', 'in-ingles', 'edit-telegram-creador']; // <-- AGREGA edit-telegram-creador AL ARRAY
     inputsId.forEach(id => {
         const input = document.getElementById(id);
         if (input) {
@@ -625,8 +626,24 @@ function prepararEdicionDesdeDetalle() {
     idAnimeEnEdicion = obraActual.id; 
     document.getElementById('btn-publicar').textContent = "Guardar Cambios";
 
-    // 1. Validar Permisos
+    // 1. Validar Permisos (ESTO DEBE IR PRIMERO)
     const esPropietario = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
+
+    // ============================================================
+    // AQUÍ VA TU CÓDIGO (Después de definir esPropietario)
+    // ============================================================
+    const inputPagina = document.getElementById('edit-telegram-creador');
+    if (inputPagina) {
+        if (esPropietario) {
+            // Si es el creador del anime (Usa el nombre de columna de tu SQL: creador_link)
+            inputPagina.value = obraActual.creador_link || '';
+        } else {
+            // Si es colaborador, buscamos en sus temporadas
+            const miSeccion = obraActual.temporadas?.find(t => String(t.creador_id) === String(userIdActual));
+            inputPagina.value = miSeccion?.creador_link || '';
+        }
+    }
+    // ============================================================
 
     // 2. Llenar datos base
     const mapVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ''; };
@@ -680,7 +697,6 @@ function prepararEdicionDesdeDetalle() {
 
     cambiarVista('registro');
 }
-
 // Al presionar Guardar/Publicar
 async function ejecutarRegistro() {
     const btn = document.getElementById('btn-publicar');
@@ -724,7 +740,8 @@ async function ejecutarRegistro() {
                 },
                 generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                 temporadas: recolectarDatosTemporadas(), // Recoge to   do
-                propiedades_extra: recolectarCamposExtras()
+                propiedades_extra: recolectarCamposExtras(),
+                creador_link: sanitizar(getVal('edit-telegram-creador'))
             };
 
             if (!idAnimeEnEdicion) {
@@ -969,7 +986,8 @@ function recolectarDatosTemporadas() {
                     enlaces, 
                     creador_id: creadorId,
                     creador_nombre: creadorNombre,
-                    creador_username: creadorUsername
+                    creador_username: creadorUsername,
+                    creador_pagina : creadorPagina
                 });
             }
         });
@@ -1141,16 +1159,20 @@ function copiarEnlaceAnime(tituloAnime) {
 }
 
 function toggleNombreCreador(elemento) {
-    // Usamos 'elemento' para referirnos exactamente al botón que se tocó
     const txt = elemento.querySelector('span');
     
-    // Ciclo de 3 pasos: nombre -> username -> id -> nombre...
+    // Ciclo de 4 pasos: nombre -> username -> id -> pagina -> nombre...
     if (elemento.dataset.estado === "nombre") {
         txt.textContent = elemento.dataset.username;
         elemento.dataset.estado = "username";
     } else if (elemento.dataset.estado === "username") {
         txt.textContent = `ID: ${elemento.dataset.id}`;
         elemento.dataset.estado = "id";
+    } else if (elemento.dataset.estado === "id") {
+        // --- NUEVO ESTADO: PÁGINA ---
+        const link = elemento.dataset.link;
+        txt.textContent = (link && link !== "null" && link !== "") ? link : "Sin link";
+        elemento.dataset.estado = "link";
     } else {
         txt.textContent = elemento.dataset.nombre;
         elemento.dataset.estado = "nombre";
