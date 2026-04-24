@@ -399,14 +399,7 @@ function abrirDetalle(tituloObra) {
         // Guardamos los datos en el elemento para que la función toggle pueda leerlos
         badge.dataset.nombre = obraActual.creador_nombre;
         badge.dataset.username = obraActual.creador_username || "Sin @usuario";
-        badge.dataset.id = obraActual.creador_id || "Sin ID";
-        badge.dataset.estado = "nombre";
-
-        // 👉 AQUÍ ESTÁ LA MAGIA: Forzamos el click igual que en las temporadas
-        badge.onclick = (e) => { 
-            e.stopPropagation(); 
-            toggleNombreCreador(badge); 
-        };
+        badge.dataset.estado = "nombre"; 
 
         if (obraActual.creador_id === ADMIN_ID || obraActual.creador_nombre === "Admin") {
             badge.classList.add('admin');
@@ -453,17 +446,6 @@ function abrirDetalle(tituloObra) {
             btnEditar.style.setProperty('display', 'block', 'important');
         } else {
             btnEditar.style.setProperty('display', 'none', 'important');
-        }
-    }
-    const btnEliminar = document.getElementById('btn-eliminar-serie');
-    if (btnEliminar) {
-        // ¿Es el creador original o es el Admin principal?
-        const esPropietarioOAdmin = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
-        
-        if (esPropietarioOAdmin) {
-            btnEliminar.style.setProperty('display', 'flex', 'important');
-        } else {
-            btnEliminar.style.setProperty('display', 'none', 'important');
         }
     }
 
@@ -519,8 +501,7 @@ function iniciarNavegacionContenido(temporadasData) {
             badge.className = `creador-badge ${primerItem.creador_nombre === 'Admin' ? 'admin' : ''}`;
             badge.onclick = (e) => { e.stopPropagation(); toggleNombreCreador(badge); };
             badge.dataset.nombre = primerItem.creador_nombre;
-            badge.dataset.username = primerItem.creador_username || "Sin @usuario";
-            badge.dataset.id = primerItem.creador_id || "Sin ID"; // <-- Línea nueva
+            badge.dataset.username = primerItem.creador_username;
             badge.dataset.estado = "nombre";
             badge.innerHTML = `<i class="fa-solid fa-user-pen"></i> <span>${primerItem.creador_nombre}</span>`;
             header.appendChild(badge);
@@ -779,64 +760,56 @@ async function ejecutarRegistro() {
 // Agregamos creadorNombre y creadorUsername como parámetros
 function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null, creadorNombre = null, creadorUsername = null) {
     const container = document.getElementById('builder-temporadas');
-    if (!container) return;
+    if(!container) return;
     
     const secBlock = document.createElement('div');
     secBlock.className = 'seccion-block';
-    
-    // 1. Determinar si es una sección nueva o una existente
-    // Si temporadasArray es null, significa que el usuario presionó el botón "Añadir Sección"
-    const esNuevaSeccion = (temporadasArray === null);
-    
-    // 2. Asignación de identidad inteligente (Aquí está la magia que soluciona el bug)
-    if (esNuevaSeccion) {
-        // ES NUEVA: Le asignamos la autoría al usuario que está editando ahora mismo
-        const tgUser = JSON.parse(localStorage.getItem('tg_user'));
+    secBlock.style.cssText = "border: 1px solid #3ba4fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #0f0f11;";
+
+    const resolvedCreador = (creadorId !== null && creadorId !== undefined && creadorId !== '') 
+        ? String(creadorId) 
+        : String(userIdActual); 
         
-        secBlock.dataset.creador = String(userIdActual);
-        secBlock.dataset.creadorNombre = userIdActual === ADMIN_ID ? "Admin" : (tgUser?.first_name || "Colaborador");
-        secBlock.dataset.creadorUsername = userIdActual === ADMIN_ID ? "@Admin" : (tgUser?.username ? `@${tgUser.username}` : "Sin @usuario");
-    } else {
-        // YA EXISTE: Respetamos los datos que vienen de la base de datos o usamos los del dueño original
-        secBlock.dataset.creador = creadorId ? String(creadorId) : (obraActual?.creador_id ? String(obraActual.creador_id) : '');
-        secBlock.dataset.creadorNombre = creadorNombre || (obraActual?.creador_nombre || "Autor");
-        secBlock.dataset.creadorUsername = creadorUsername || (obraActual?.creador_username || "Sin @usuario");
-    }
+    // --- NUEVO: Resolver Nombres ---
+    const tgUser = JSON.parse(localStorage.getItem('tg_user'));
+    const defaultNombre = userIdActual === ADMIN_ID ? "Admin" : (tgUser ? tgUser.first_name : "Colaborador");
+    const defaultUsername = userIdActual === ADMIN_ID ? "@Admin" : (tgUser && tgUser.username ? `@${tgUser.username}` : "Sin @usuario");
 
-    // 3. Lógica de Permisos Ampliada
-    const esDueñoDeLaObra = (obraActual && String(obraActual.creador_id) === String(userIdActual));
-    const esAutorDeLaSeccion = (String(secBlock.dataset.creador) === String(userIdActual));
-    const esAdmin = (String(userIdActual) === ADMIN_ID);
+    const resolvedNombre = creadorNombre || defaultNombre;
+    const resolvedUsername = creadorUsername || defaultUsername;
 
-    const puedeEditarEstaSeccion = esAutorDeLaSeccion || esAdmin || esDueñoDeLaObra;
+    // Guardamos toda la identidad en el dataset del bloque HTML
+    secBlock.dataset.creador = resolvedCreador;
+    secBlock.dataset.creadorNombre = resolvedNombre;
+    secBlock.dataset.creadorUsername = resolvedUsername;
+    // ---------------------------------
 
-    // 4. Renderizado de la Interfaz
+    const puedeEditarEstaSeccion = (resolvedCreador === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
+
     secBlock.innerHTML = `
-        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
             <input type="text" class="sec-nombre" placeholder="Nombre de tu Página o Grupo" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
             <button type="button" class="btn-delete-sec" onclick="this.closest('.seccion-block').remove()" style="background:#ef4444; color:white; border:none; padding: 10px; border-radius: 6px; cursor:pointer;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </div>
         <div class="lista-temporadas"></div>
-        <button type="button" class="btn-add-sub" onclick="agregarSubTemporadaUI(this.previousElementSibling)" 
-        style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px; margin-bottom: 20px;">
+        <button type="button" class="btn-add-sub" onclick="agregarSubTemporadaUI(this.previousElementSibling)" style="width: 100%; padding: 10px; background: #18181b; color: #3ba4fa; border: 1px dashed #3ba4fa; border-radius: 6px; cursor: pointer; margin-top: 10px;">
             <i class="fa-solid fa-plus"></i> Añadir Nueva Temporada
         </button>
     `;
 
     container.appendChild(secBlock);
 
-    // 5. Aplicar bloqueos si no tiene permisos
     if (!puedeEditarEstaSeccion) {
         secBlock.classList.add('campo-bloqueado');
         secBlock.querySelectorAll('input').forEach(inp => inp.disabled = true);
         secBlock.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
     }
 
-    // 6. Cargar sub-temporadas o crear una vacía
     const listaTemps = secBlock.querySelector('.lista-temporadas');
-    if (!esNuevaSeccion && Array.isArray(temporadasArray)) {
+
+    if (temporadasArray && Array.isArray(temporadasArray)) {
         temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos, puedeEditarEstaSeccion));
     } else {
         agregarSubTemporadaUI(listaTemps, null, puedeEditarEstaSeccion);
@@ -1144,13 +1117,9 @@ function toggleNombreCreador(elemento) {
     // Usamos 'elemento' para referirnos exactamente al botón que se tocó
     const txt = elemento.querySelector('span');
     
-    // Ciclo de 3 pasos: nombre -> username -> id -> nombre...
     if (elemento.dataset.estado === "nombre") {
         txt.textContent = elemento.dataset.username;
         elemento.dataset.estado = "username";
-    } else if (elemento.dataset.estado === "username") {
-        txt.textContent = `ID: ${elemento.dataset.id}`;
-        elemento.dataset.estado = "id";
     } else {
         txt.textContent = elemento.dataset.nombre;
         elemento.dataset.estado = "nombre";
@@ -1158,53 +1127,6 @@ function toggleNombreCreador(elemento) {
     
     if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-    }
-}
-// =========================================
-// 15. ELIMINAR OBRA (SOLO DUEÑO Y ADMIN)
-// =========================================
-async function eliminarObraActual(event) {
-    if (event) event.stopPropagation();
-    
-    if (!obraActual) return;
-
-    // Validación de seguridad (por si alguien modifica el HTML)
-    const esPropietarioOAdmin = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
-    if (!esPropietarioOAdmin) {
-        alert("⚠️ No tienes permisos para eliminar este anime.");
-        return;
-    }
-
-    // 1. Mensaje de confirmación nativo
-    const confirmacion = confirm(`¿Estás seguro que quieres eliminar "${obraActual.titulo}" de forma permanente?\n\nEsta acción no se puede deshacer.`);
-    
-    if (!confirmacion) return; // Si dice cancelar, no hacemos nada
-
-    try {
-        // Pequeña vibración en Telegram si es posible
-        if (tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('warning');
-
-        // 2. Borrar de Supabase
-        const { error } = await _supabase
-            .from('obras')
-            .delete()
-            .eq('id', obraActual.id);
-
-        if (error) throw error;
-
-        // 3. Quitar de la lista local (para no recargar toda la base de datos de nuevo)
-        todasLasObras = todasLasObras.filter(o => o.id !== obraActual.id);
-
-        if (tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('success');
-        alert("🗑️ Anime eliminado correctamente.");
-
-        // 4. Devolver al usuario al catálogo y actualizar visualmente
-        volverAlCatalogo();
-        aplicarTodosLosFiltros();
-
-    } catch (err) {
-        console.error("Error al eliminar la obra:", err);
-        alert("❌ Hubo un error al intentar eliminar. Revisa la consola.");
     }
 }
 
