@@ -397,14 +397,10 @@ function abrirDetalle(tituloObra) {
         txtCreador.textContent = obraActual.creador_nombre;
         
         // Guardamos los datos en el elemento para que la función toggle pueda leerlos
-        badge.dataset.nombre = obraActual.creador_nombre || "Anónimo";
-        badge.dataset.username = "@" + (obraActual.creador_username || "sin_user");
-        badge.dataset.id = obraActual.creador_id || "???";
-        badge.dataset.tg_nombre = obraActual.telegram_nombre || "";
-        badge.dataset.tg_link = obraActual.telegram_link || "";
-        badge.dataset.estado = "nombre"; // Reiniciar siempre al abrir
-        badge.querySelector('span').textContent = obraActual.creador_nombre || "Anónimo";
-        badge.querySelector('i').className = "fa-solid fa-user-pen";
+        badge.dataset.nombre = obraActual.creador_nombre;
+        badge.dataset.username = obraActual.creador_username || "Sin @usuario";
+        badge.dataset.id = obraActual.creador_id || "Sin ID";
+        badge.dataset.estado = "nombre";
 
         // 👉 AQUÍ ESTÁ LA MAGIA: Forzamos el click igual que en las temporadas
         badge.onclick = (e) => { 
@@ -626,17 +622,14 @@ function prepararNuevoRegistro() {
 // Para EDITAR un anime existente (Valida si eres Dueño o Colaborador)
 function prepararEdicionDesdeDetalle() {
     if (!obraActual) return;
-    
     idAnimeEnEdicion = obraActual.id; 
     document.getElementById('btn-publicar').textContent = "Guardar Cambios";
-    document.getElementById('titulo-registro').textContent = "Editar Anime";
 
-    // 1. Validar Permisos (Dueño o Admin)
+    // 1. Validar Permisos
     const esPropietario = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
 
-    // 2. Llenar datos base (Mantenemos tu lógica de mapVal)
+    // 2. Llenar datos base
     const mapVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ''; };
-    
     mapVal('in-titulo', obraActual.titulo);
     mapVal('in-portada', obraActual.portada_url);
     mapVal('in-banner', obraActual.banner_url);
@@ -651,45 +644,26 @@ function prepararEdicionDesdeDetalle() {
     mapVal('in-japones', obraActual.nombres_alternativos?.Japonés);
     mapVal('in-ingles', obraActual.nombres_alternativos?.Ingles);
 
-    // --- NUEVOS CAMPOS DE TELEGRAM ---
-    mapVal('in-telegram-nombre', obraActual.telegram_nombre);
-    mapVal('in-telegram-link', obraActual.telegram_link);
-    // ---------------------------------
-
-    // Cargar Géneros
     const generosAnime = obraActual.generos || [];
     document.querySelectorAll('#generos-container input').forEach(cb => cb.checked = generosAnime.includes(cb.value));
 
     // 3. Aplicar Bloqueos si es Colaborador
-    // Añadimos los 2 nuevos IDs a tu lista de campos privados
-    const camposPrivados = [
-        'in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 
-        'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 
-        'in-dia', 'in-japones', 'in-ingles', 
-        'in-telegram-nombre', 'in-telegram-link' // Agregados aquí
-    ];
+    const camposPrivados = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 'in-dia', 'in-japones', 'in-ingles'];
     
     camposPrivados.forEach(id => {
         const input = document.getElementById(id);
         if (input) {
             input.disabled = !esPropietario;
-            if(!esPropietario) {
-                input.classList.add('campo-bloqueado');
-                if(id.includes('telegram')) input.placeholder = "Solo el dueño edita esto";
-            } else {
-                input.classList.remove('campo-bloqueado');
-            }
+            if(!esPropietario) input.classList.add('campo-bloqueado'); else input.classList.remove('campo-bloqueado');
         }
     });
 
-    // Bloqueo de Géneros
     document.querySelectorAll('#generos-container input').forEach(cb => {
         cb.disabled = !esPropietario;
         if(!esPropietario && cb.parentElement) cb.parentElement.classList.add('campo-bloqueado');
         else if (cb.parentElement) cb.parentElement.classList.remove('campo-bloqueado');
     });
 
-    // Bloqueo de Propiedades Extra
     const btnAddProp = document.getElementById('btn-add-prop');
     const extraPropsContainer = document.getElementById('extra-props-container');
     if (!esPropietario) {
@@ -700,7 +674,7 @@ function prepararEdicionDesdeDetalle() {
         if (extraPropsContainer) extraPropsContainer.classList.remove('campo-bloqueado');
     }
 
-    // 4. Cargar Temporadas y Extras (¡Importante no borrar esto!)
+    // 4. Cargar Temporadas y Extras
     cargarInfoAdicional(obraActual.propiedades_extra || {});
     cargarDatosTemporadas(obraActual.temporadas || []);
 
@@ -750,11 +724,7 @@ async function ejecutarRegistro() {
                 },
                 generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
                 temporadas: recolectarDatosTemporadas(), // Recoge to   do
-                propiedades_extra: recolectarCamposExtras(),
-                telegram_nombre: sanitizar(getVal('in-telegram-nombre')), // Nuevo
-                telegram_link: getVal('in-telegram-link'),
-                creador_id: obraActual ? obraActual.creador_id : userIdActual, 
-                creador_nombre: obraActual ? obraActual.creador_nombre : (tg.initDataUnsafe?.user?.first_name || "Usuario"),
+                propiedades_extra: recolectarCamposExtras()
             };
 
             if (!idAnimeEnEdicion) {
@@ -1171,51 +1141,23 @@ function copiarEnlaceAnime(tituloAnime) {
 }
 
 function toggleNombreCreador(elemento) {
+    // Usamos 'elemento' para referirnos exactamente al botón que se tocó
     const txt = elemento.querySelector('span');
-    const icon = elemento.querySelector('i');
     
-    // Obtenemos los datos desde los atributos 'data-' que pusimos en abrirDetalle
-    const nombre = elemento.dataset.nombre;
-    const username = elemento.dataset.username;
-    const id = elemento.dataset.id;
-    const tgNombre = elemento.dataset.tg_nombre;
-    const tgLink = elemento.dataset.tg_link;
-
-    // Lógica de ciclos
+    // Ciclo de 3 pasos: nombre -> username -> id -> nombre...
     if (elemento.dataset.estado === "nombre") {
-        // PASO 1: Mostrar @Username
-        txt.textContent = username;
+        txt.textContent = elemento.dataset.username;
         elemento.dataset.estado = "username";
-        icon.className = "fa-solid fa-at";
-    } 
-    else if (elemento.dataset.estado === "username") {
-        // PASO 2: Mostrar ID
-        txt.textContent = "ID: " + id;
+    } else if (elemento.dataset.estado === "username") {
+        txt.textContent = `ID: ${elemento.dataset.id}`;
         elemento.dataset.estado = "id";
-        icon.className = "fa-solid fa-fingerprint";
-    } 
-    else if (elemento.dataset.estado === "id") {
-        // PASO 3: Mostrar Telegram (si existe)
-        if (tgNombre && tgLink) {
-            txt.textContent = tgNombre;
-            elemento.dataset.estado = "telegram";
-            icon.className = "fa-brands fa-telegram";
-        } else {
-            // Si no tiene telegram, vuelve al inicio
-            txt.textContent = nombre;
-            elemento.dataset.estado = "nombre";
-            icon.className = "fa-solid fa-user-pen";
-        }
-    } 
-    else if (elemento.dataset.estado === "telegram") {
-        // PASO 4: Abrir link y reiniciar ciclo
-        if (tgLink) {
-            if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            tg.openLink(tgLink);
-        }
-        txt.textContent = nombre;
+    } else {
+        txt.textContent = elemento.dataset.nombre;
         elemento.dataset.estado = "nombre";
-        icon.className = "fa-solid fa-user-pen";
+    }
+    
+    if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
 }
 // =========================================
