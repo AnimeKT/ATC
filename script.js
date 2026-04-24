@@ -160,7 +160,7 @@ function volverAlCatalogo() {
     const repro = document.getElementById('reproductor-telegram');
     if (repro) repro.style.display = 'none';
     if (repro) repro.innerHTML = '';
-    
+
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
     cambiarVista('catalogo');
 }
@@ -493,6 +493,10 @@ function iniciarNavegacionContenido(temporadasData) {
     if(!contenedor) return;
     
     contenedor.innerHTML = '';
+    // Ocultar reproductor si cambiamos de menú
+    const repro = document.getElementById('reproductor-telegram');
+    if (repro) { repro.style.display = 'none'; repro.innerHTML = ''; }
+    
     const imgPortada = document.getElementById('det-portada');
     if (imgPortada && obraActual) {
         imgPortada.src = obraActual.portada_url || ''; 
@@ -590,7 +594,28 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
-    url.includes('t.me') ? tg.openTelegramLink(url) : tg.openLink(url);
+
+    let postPath = "";
+
+    // 1. Verificamos si es nuestro formato guardado o el script pegado en crudo
+    if (url.startsWith('tgpost:')) {
+        postPath = url.replace('tgpost:', '');
+    } else if (url.includes('data-telegram-post=')) {
+        const match = url.match(/data-telegram-post=["']([^"']+)["']/);
+        if (match) postPath = match[1];
+    }
+
+    // 2. Si detectó que es un post de Telegram, abre el reproductor interno
+    if (postPath) {
+        mostrarReproductorTelegram(postPath);
+    } else {
+        // 3. Si es un link normal, lo abre como siempre
+        if (window.Telegram?.WebApp?.openLink) {
+            url.includes('t.me') ? tg.openTelegramLink(url) : tg.openLink(url);
+        } else {
+            window.open(url, '_blank');
+        }
+    }
 }
 
 // =========================================
@@ -1297,22 +1322,14 @@ async function eliminarObraActual(event) {
 }
 
 function mostrarReproductorTelegram(postPath) {
-    let contenedor = document.getElementById('reproductor-telegram');
-    
-    if (!contenedor) {
-        const navContenido = document.querySelector('.navegacion-contenido');
-        if (!navContenido) return;
-        
-        contenedor = document.createElement('div');
-        contenedor.id = 'reproductor-telegram';
-        contenedor.style.cssText = "background:#000; border-radius:12px; margin-bottom:20px; min-height:200px; display:flex; justify-content:center; align-items:center; overflow:hidden; border: 1px solid rgba(59, 164, 250, 0.3); width: 100%;";
-        navContenido.parentNode.insertBefore(contenedor, navContenido);
-    }
+    // Busca el contenedor que ya creaste en tu HTML
+    const contenedor = document.getElementById('reproductor-telegram');
+    if (!contenedor) return;
 
     contenedor.style.display = 'flex';
-    contenedor.innerHTML = ''; // Limpiar video anterior fundamental
+    contenedor.innerHTML = ''; // Limpiar video anterior
 
-    // Creamos un div interno para el widget
+    // Creamos un div interno forzado para evitar bugs de Telegram
     const widgetContainer = document.createElement('div');
     widgetContainer.id = "tg-widget-inside";
     contenedor.appendChild(widgetContainer);
@@ -1323,13 +1340,13 @@ function mostrarReproductorTelegram(postPath) {
     script.setAttribute('data-telegram-post', postPath);
     script.setAttribute('data-width', '100%');
     script.setAttribute('data-dark', '1');
-    script.setAttribute('data-color', '3BA4FA');
+    script.setAttribute('data-color', '3BA4FA'); // Tu color azul
 
     widgetContainer.appendChild(script);
     
-    // Scroll suave para que el usuario vea que apareció el video
+    // Auto-scroll para que el usuario vea el video
     setTimeout(() => {
-        contenedor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        contenedor.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
 }
 
