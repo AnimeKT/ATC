@@ -1182,38 +1182,51 @@ function toggleNombreCreador(elemento) {
     const txt = elemento.querySelector('span');
     const estadoActual = elemento.dataset.estado;
     const link = elemento.dataset.link;
+    
+    // Detectamos si es el badge principal del detalle (el de arriba)
+    const esBadgePrincipal = (elemento.id === 'det-creador-badge');
 
-    // Si ya estamos en modo "link" y el usuario hace clic, abrimos la página
+    // --- ESTADO FINAL: ABRIR LINK Y RESETEAR (Solo si es el principal) ---
     if (estadoActual === "link") {
         if (link && link !== "null" && link !== "") {
-            // Si estamos en Telegram, usamos su método nativo, si no, window.open
             if (window.Telegram?.WebApp?.openLink) {
                 window.Telegram.WebApp.openLink(link);
             } else {
                 window.open(link, '_blank');
             }
-        } else {
-            // Si no hay link, volvemos al inicio
-            txt.textContent = elemento.dataset.nombre;
-            elemento.dataset.estado = "nombre";
         }
-        return; // Salimos para que no ejecute el cambio de estado de abajo
+
+        // Reset inmediato al nombre
+        txt.textContent = elemento.dataset.nombre;
+        elemento.dataset.estado = "nombre";
+        txt.style.fontWeight = "normal";
+        
+        if (tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('medium');
+        return; 
     }
 
-    // Lógica de rotación de estados
+    // --- CICLO DE INFORMACIÓN ---
     if (estadoActual === "nombre") {
         txt.textContent = elemento.dataset.username;
         elemento.dataset.estado = "username";
-    } else if (estadoActual === "username") {
+    } 
+    else if (estadoActual === "username") {
         txt.textContent = `ID: ${elemento.dataset.id}`;
         elemento.dataset.estado = "id";
-    } else if (estadoActual === "id") {
-        // TERCER CLIC: Ahora dice "Ver Página" en lugar del link feo
-        txt.textContent = "🌐 Ver Página";
-        elemento.dataset.estado = "link";
-        
-        // Efecto visual para que parezca un botón (opcional)
-        txt.style.fontWeight = "bold";
+    } 
+    else if (estadoActual === "id") {
+        // 👉 AQUÍ ESTÁ EL FILTRO:
+        // Solo pasamos a "Ver Página" si es el badge principal Y tiene un link válido
+        if (esBadgePrincipal && link && link !== "null" && link !== "") {
+            txt.textContent = "🌐 Ver Página";
+            elemento.dataset.estado = "link";
+            txt.style.fontWeight = "bold";
+        } else {
+            // En las temporadas (o si no hay link), vuelve al nombre directamente
+            txt.textContent = elemento.dataset.nombre;
+            elemento.dataset.estado = "nombre";
+            txt.style.fontWeight = "normal";
+        }
     }
     
     if (tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light');
