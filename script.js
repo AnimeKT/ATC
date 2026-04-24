@@ -585,13 +585,21 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
-    
-    // Si es un enlace de Telegram, usamos la función nativa de la WebApp
+
+    // Detectamos si el usuario está en PC (Desktop o Web)
+    const esPC = tg.platform === 'tdesktop' || tg.platform === 'web' || tg.platform === 'macos';
+
     if (url.includes('t.me')) {
-        tg.openTelegramLink(url);
+        if (esPC) {
+            // SI ES PC: Forzamos la apertura en una pestaña nueva del navegador
+            window.open(url, '_blank');
+        } else {
+            // SI ES CELULAR: Usamos la función nativa de Telegram para que lo lleve al post
+            tg.openTelegramLink(url);
+        }
     } else {
-        // Para cualquier otro enlace (video, etc.), forzamos una pestaña nueva
-        window.open(url, '_blank'); 
+        // Para cualquier otro enlace que no sea de Telegram
+        tg.openLink(url);
     }
 }
 
