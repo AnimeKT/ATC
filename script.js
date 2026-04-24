@@ -586,19 +586,21 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
 
-    // Detectamos si el usuario está en PC (Desktop o Web)
-    const esPC = tg.platform === 'tdesktop' || tg.platform === 'web' || tg.platform === 'macos';
+    // Es más seguro detectar si ES celular (iOS/Android)
+    // Si no es celular, asumimos que es PC (tdesktop, macos, web)
+    const esCelular = tg.platform === 'android' || tg.platform === 'ios';
 
     if (url.includes('t.me')) {
-        if (esPC) {
-            // SI ES PC: Forzamos la apertura en una pestaña nueva del navegador
-            window.open(url, '_blank');
-        } else {
-            // SI ES CELULAR: Usamos la función nativa de Telegram para que lo lleve al post
+        if (esCelular) {
+            // SI ES CELULAR: Navega internamente a ese canal sin salir de la app
             tg.openTelegramLink(url);
+        } else {
+            // SI ES PC: tg.openLink obliga a Telegram a "escupir" el enlace hacia 
+            // el navegador predeterminado (abriendo una pestaña nueva)
+            tg.openLink(url);
         }
     } else {
-        // Para cualquier otro enlace que no sea de Telegram
+        // Para cualquier otro enlace (Mega, Drive, etc) siempre forzamos afuera
         tg.openLink(url);
     }
 }
