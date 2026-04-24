@@ -987,7 +987,7 @@ function recolectarDatosTemporadas() {
                     creador_id: creadorId,
                     creador_nombre: creadorNombre,
                     creador_username: creadorUsername,
-                    creador_pagina : creadorPagina
+                    creador_link: creadorLinkActual // <-- NUEVO: Guardamos el link del creador también
                 });
             }
         });
