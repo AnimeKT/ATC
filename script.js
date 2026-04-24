@@ -586,21 +586,21 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
 
-    // Es más seguro detectar si ES celular (iOS/Android)
-    // Si no es celular, asumimos que es PC (tdesktop, macos, web)
-    const esCelular = tg.platform === 'android' || tg.platform === 'ios';
+    // Detectamos si es una versión de escritorio o web
+    // tdesktop = App de PC, macos = App de Mac, web/weba/webk = Telegram Web
+    const plataformasPC = ['tdesktop', 'macos', 'web', 'weba', 'webk'];
+    const esPC = plataformasPC.includes(tg.platform);
 
     if (url.includes('t.me')) {
-        if (esCelular) {
-            // SI ES CELULAR: Navega internamente a ese canal sin salir de la app
-            tg.openTelegramLink(url);
-        } else {
-            // SI ES PC: tg.openLink obliga a Telegram a "escupir" el enlace hacia 
-            // el navegador predeterminado (abriendo una pestaña nueva)
+        if (esPC) {
+            // EN PC: Abre el navegador en una pestaña aparte (lo que querías antes)
             tg.openLink(url);
+        } else {
+            // EN MÓVIL: Te manda directo al mensaje dentro de Telegram
+            tg.openTelegramLink(url);
         }
     } else {
-        // Para cualquier otro enlace (Mega, Drive, etc) siempre forzamos afuera
+        // Enlaces que no son de Telegram (Mega, Drive, etc.) siempre van fuera
         tg.openLink(url);
     }
 }
