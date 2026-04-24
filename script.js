@@ -991,8 +991,20 @@ function recolectarDatosTemporadas() {
                     enlaces[idiomaNombre] = {};
                     idBlock.querySelectorAll('.capitulo-row').forEach(capRow => {
                         const cNombre = capRow.querySelector('.cap-nombre')?.value.trim() || '';
-                        const cUrl = capRow.querySelector('.cap-url')?.value.trim() || '';
-                        if (cNombre && cUrl) enlaces[idiomaNombre][cNombre] = cUrl;
+                        let cUrl = capRow.querySelector('.cap-url')?.value.trim() || ''; // Cambiamos const por let
+
+                        // 👉 LÓGICA DE TELEGRAM: Extraemos solo el post si pegan el script completo
+                        if (cUrl.includes('<script') && cUrl.includes('data-telegram-post')) {
+                            const match = cUrl.match(/data-telegram-post="([^"]+)"/);
+                            if (match && match[1]) {
+                                cUrl = `tgpost:${match[1]}`; // Lo guardamos con el prefijo especial
+                            }
+                        }
+
+                        // Guardamos en el objeto enlaces
+                        if (cNombre && cUrl) {
+                            enlaces[idiomaNombre][cNombre] = cUrl;
+                        }
                     });
                 }
             });
@@ -1277,6 +1289,34 @@ async function eliminarObraActual(event) {
         console.error("Error al eliminar la obra:", err);
         alert("❌ Hubo un error al intentar eliminar. Revisa la consola.");
     }
+}
+
+function mostrarReproductorTelegram(postPath) {
+    // Buscamos o creamos un contenedor para el reproductor
+    let contenedor = document.getElementById('reproductor-telegram');
+    
+    if (!contenedor) {
+        // Si no existe en el HTML, lo creamos dinámicamente arriba de los capítulos
+        const navContenido = document.querySelector('.navegacion-contenido');
+        contenedor = document.createElement('div');
+        contenedor.id = 'reproductor-telegram';
+        contenedor.style.cssText = "background:#000; border-radius:12px; margin-bottom:20px; min-height:200px; display:flex; justify-content:center; align-items:center; overflow:hidden; border: 1px solid #3ba4fa;";
+        navContenido.parentNode.insertBefore(contenedor, navContenido);
+    }
+
+    contenedor.style.display = 'flex';
+    contenedor.innerHTML = ''; // Limpiar video anterior
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = "https://telegram.org/js/telegram-widget.js?22";
+    script.setAttribute('data-telegram-post', postPath);
+    script.setAttribute('data-width', '100%');
+    script.setAttribute('data-dark', '1');
+    script.setAttribute('data-color', '3BA4FA');
+
+    contenedor.appendChild(script);
+    contenedor.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 window.addEventListener('popstate', (event) => {
