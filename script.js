@@ -1135,23 +1135,25 @@ function copiarEnlaceAnime(tituloAnime) {
 }
 
 function toggleNombreCreador(elemento) {
-    // Usamos 'elemento' para referirnos exactamente al botón que se tocó
-    const txt = elemento.querySelector('span');
-    
-    // Ciclo de 3 pasos: nombre -> username -> id -> nombre...
-    if (elemento.dataset.estado === "nombre") {
-        txt.textContent = elemento.dataset.username;
-        elemento.dataset.estado = "username";
-    } else if (elemento.dataset.estado === "username") {
-        txt.textContent = `ID: ${elemento.dataset.id}`;
-        elemento.dataset.estado = "id";
-    } else {
-        txt.textContent = elemento.dataset.nombre;
-        elemento.dataset.estado = "nombre";
-    }
-    
-    if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
+    let username = elemento.dataset.username;
+
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+
+    if (!username || username === "Sin @usuario" || username === "undefined") {
+        alert("Este creador no tiene un @usuario público configurado en Telegram.");
+        return;
+    }
+    username = username.replace('@', '');
+
+    const urlTelegram = `https://t.me/${username}`;
+
+    // Intentamos abrirlo nativamente en la app de Telegram, o en una pestaña nueva si está en web
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(urlTelegram);
+    } else {
+        window.open(urlTelegram, '_blank');
     }
 }
 // =========================================
