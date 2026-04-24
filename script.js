@@ -399,8 +399,14 @@ function abrirDetalle(tituloObra) {
         // Guardamos los datos en el elemento para que la función toggle pueda leerlos
         badge.dataset.nombre = obraActual.creador_nombre;
         badge.dataset.username = obraActual.creador_username || "Sin @usuario";
-        badge.dataset.id = obraActual.creador_id || "Sin ID"; // <-- Línea nueva
+        badge.dataset.id = obraActual.creador_id || "Sin ID";
         badge.dataset.estado = "nombre";
+
+        // 👉 AQUÍ ESTÁ LA MAGIA: Forzamos el click igual que en las temporadas
+        badge.onclick = (e) => { 
+            e.stopPropagation(); 
+            toggleNombreCreador(badge); 
+        };
 
         if (obraActual.creador_id === ADMIN_ID || obraActual.creador_nombre === "Admin") {
             badge.classList.add('admin');
