@@ -586,22 +586,31 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
 
-    // --- NUEVA DETECCIÓN MÁS PRECISA ---
-    // En lugar de tg.platform, preguntamos directamente al navegador si es un celular.
-    // Esto es mucho más fiable para separar PC de Móvil.
-    const esDispositivoMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    // --- DETECCIÓN DE HARDWARE (MÁS FIABLE QUE LA DE TELEGRAM) ---
+    
+    // 1. ¿La pantalla es táctil? (Casi todos los móviles sí, casi ninguna PC no)
+    const tieneToque = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    
+    // 2. ¿La pantalla es estrecha? (Típico de móviles)
+    const esPantallaMovil = window.innerWidth < 1024;
+
+    // 3. ¿Telegram dice que es móvil?
+    const plataformaTG = (tg.platform || "").toLowerCase();
+    const esMovilTG = plataformaTG === 'android' || plataformaTG === 'ios';
+
+    // Lógica final: Si tiene toque Y es pantalla pequeña, O si Telegram lo confirma, ES MÓVIL.
+    const esRealmenteCelular = (tieneToque && esPantallaMovil) || esMovilTG;
 
     if (url.includes('t.me')) {
-        if (esDispositivoMovil) {
-            // SI ES CELULAR: Forzamos la apertura INTERNA para que vaya al mensaje.
+        if (esRealmenteCelular) {
+            // EN CELULAR: Abrir internamente en el chat/mensaje
             tg.openTelegramLink(url);
         } else {
-            // SI ES PC: Usamos openLink que en escritorio obliga a abrir 
-            // el navegador externo (pestaña nueva).
+            // EN PC: Abrir en pestaña nueva del navegador
             tg.openLink(url);
         }
     } else {
-        // Enlaces que no son de Telegram (Mega, Drive, etc.) siempre fuera.
+        // Enlaces externos (Mega, Drive, etc.) siempre al navegador
         tg.openLink(url);
     }
 }
