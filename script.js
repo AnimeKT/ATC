@@ -585,7 +585,14 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
-    url.includes('t.me') ? tg.openTelegramLink(url) : tg.openLink(url);
+    
+    // Si es un enlace de Telegram, usamos la función nativa de la WebApp
+    if (url.includes('t.me')) {
+        tg.openTelegramLink(url);
+    } else {
+        // Para cualquier otro enlace (video, etc.), forzamos una pestaña nueva
+        window.open(url, '_blank'); 
+    }
 }
 
 // =========================================
