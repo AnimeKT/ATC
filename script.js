@@ -794,40 +794,47 @@ async function ejecutarRegistro() {
 // 11. CONSTRUCTOR VISUAL DE TEMPORADAS (CORREGIDO PARA ROLES)
 // =========================================
 // Agregamos creadorNombre y creadorUsername como parámetros
-function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null, creadorNombre = null, creadorUsername = null) {
+// 👉 Se añadió el 6to parámetro: creadorLink
+function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId = null, creadorNombre = null, creadorUsername = null, creadorLink = null) {
     const container = document.getElementById('builder-temporadas');
     if (!container) return;
     
     const secBlock = document.createElement('div');
     secBlock.className = 'seccion-block';
     
-    // 1. Determinar si es una sección nueva o una existente
-    // Si temporadasArray es null, significa que el usuario presionó el botón "Añadir Sección"
+    // 1. Determinar si es una sección nueva o existente
     const esNuevaSeccion = (temporadasArray === null);
     
-    // 2. Asignación de identidad inteligente (Aquí está la magia que soluciona el bug)
+    // 2. Asignación de identidad y Link de Telegram
     if (esNuevaSeccion) {
-        // ES NUEVA: Le asignamos la autoría al usuario que está editando ahora mismo
+        // CASO NUEVO: Usuario actual es el autor
         const tgUser = JSON.parse(localStorage.getItem('tg_user'));
         
         secBlock.dataset.creador = String(userIdActual);
         secBlock.dataset.creadorNombre = userIdActual === ADMIN_ID ? "Admin" : (tgUser?.first_name || "Colaborador");
         secBlock.dataset.creadorUsername = userIdActual === ADMIN_ID ? "@Admin" : (tgUser?.username ? `@${tgUser.username}` : "Sin @usuario");
+        
+        // 👉 IMPORTANTE: Captura el link actual del input global al crear la sección
+        const currentInput = document.getElementById('edit-telegram-creador');
+        secBlock.dataset.creadorLink = currentInput ? currentInput.value.trim() : "";
     } else {
-        // YA EXISTE: Respetamos los datos que vienen de la base de datos o usamos los del dueño original
+        // CASO EXISTENTE: Mantenemos lo que viene de la BD
         secBlock.dataset.creador = creadorId ? String(creadorId) : (obraActual?.creador_id ? String(obraActual.creador_id) : '');
         secBlock.dataset.creadorNombre = creadorNombre || (obraActual?.creador_nombre || "Autor");
         secBlock.dataset.creadorUsername = creadorUsername || (obraActual?.creador_username || "Sin @usuario");
+        
+        // 👉 IMPORTANTE: Guardamos el link que viene de la base de datos
+        secBlock.dataset.creadorLink = creadorLink || (obraActual?.creador_link || "");
     }
 
-    // 3. Lógica de Permisos Ampliada
+    // 3. Lógica de Permisos
     const esDueñoDeLaObra = (obraActual && String(obraActual.creador_id) === String(userIdActual));
     const esAutorDeLaSeccion = (String(secBlock.dataset.creador) === String(userIdActual));
     const esAdmin = (String(userIdActual) === ADMIN_ID);
 
     const puedeEditarEstaSeccion = esAutorDeLaSeccion || esAdmin || esDueñoDeLaObra;
 
-    // 4. Renderizado de la Interfaz
+    // 4. Renderizado del HTML
     secBlock.innerHTML = `
         <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 10px;">
             <input type="text" class="sec-nombre" placeholder="Nombre de tu Página o Grupo" value="${nombreSeccion}" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #3ba4fa; background: #18181b; color: white; outline: none; font-weight: bold;">
@@ -844,14 +851,14 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
 
     container.appendChild(secBlock);
 
-    // 5. Aplicar bloqueos si no tiene permisos
+    // 5. Aplicar bloqueos de seguridad
     if (!puedeEditarEstaSeccion) {
         secBlock.classList.add('campo-bloqueado');
         secBlock.querySelectorAll('input').forEach(inp => inp.disabled = true);
         secBlock.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
     }
 
-    // 6. Cargar sub-temporadas o crear una vacía
+    // 6. Cargar sub-temporadas
     const listaTemps = secBlock.querySelector('.lista-temporadas');
     if (!esNuevaSeccion && Array.isArray(temporadasArray)) {
         temporadasArray.forEach(tempDatos => agregarSubTemporadaUI(listaTemps, tempDatos, puedeEditarEstaSeccion));
@@ -961,6 +968,15 @@ function recolectarDatosTemporadas() {
         const creadorNombre = secBlock.dataset.creadorNombre || '';
         const creadorUsername = secBlock.dataset.creadorUsername || '';
 
+        let linkGuardar = secBlock.dataset.creadorLink || '';
+
+        if (String(creadorId) === String(userIdActual)) {
+            const inputLink = document.getElementById('edit-telegram-creador');
+            if (inputLink) {
+                linkGuardar = inputLink.value.trim();
+            }
+        }
+
         secBlock.querySelectorAll('.temporada-block').forEach(tempBlock => {
             const nombre = tempBlock.querySelector('.temp-nombre')?.value.trim() || '';
             const imagen = tempBlock.querySelector('.temp-img')?.value.trim() || '';
@@ -987,7 +1003,7 @@ function recolectarDatosTemporadas() {
                     creador_id: creadorId,
                     creador_nombre: creadorNombre,
                     creador_username: creadorUsername,
-                    creador_link: creadorLinkActual // <-- NUEVO: Guardamos el link del creador también
+                    creador_link: linkGuardar 
                 });
             }
         });
@@ -1019,6 +1035,7 @@ function cargarDatosTemporadas(temporadasFlat) {
         // --- NUEVO: Extraer nombres originales ---
         const sectionNombre = primerItem.creador_nombre || '';
         const sectionUsername = primerItem.creador_username || '';
+        const sectionLink = primerItem.creador_link || '';
 
         // Se los pasamos a la UI
         agregarSeccionUI(nombreSec, tempsArray, sectionCreator, sectionNombre, sectionUsername);
