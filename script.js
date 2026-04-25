@@ -619,6 +619,10 @@ function prepararNuevoRegistro() {
     const btnAddProp = document.getElementById('btn-add-prop');
     if (btnAddProp) { btnAddProp.disabled = false; btnAddProp.style.display = 'block'; }
 
+    const seccionesFormulario = document.querySelectorAll('#vista-registro .form-seccion');
+    if (seccionesFormulario[0]) seccionesFormulario[0].style.display = 'block';
+    if (seccionesFormulario[1]) seccionesFormulario[1].style.display = 'block';
+
     agregarPropiedadUI();
     cambiarVista('registro');
 }
@@ -667,32 +671,20 @@ function prepararEdicionDesdeDetalle() {
     const generosAnime = obraActual.generos || [];
     document.querySelectorAll('#generos-container input').forEach(cb => cb.checked = generosAnime.includes(cb.value));
 
-    // 3. Aplicar Bloqueos si es Colaborador
-    const camposPrivados = ['in-titulo', 'in-portada', 'in-banner', 'in-estado', 'in-tipo', 'in-sinopsis', 'in-autor', 'in-estudio', 'in-origen', 'in-estreno', 'in-dia', 'in-japones', 'in-ingles'];
-    
-    camposPrivados.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.disabled = !esPropietario;
-            if(!esPropietario) input.classList.add('campo-bloqueado'); else input.classList.remove('campo-bloqueado');
-        }
-    });
+    // 3. Ocultar o mostrar secciones completas en lugar de bloquear campos
+    const seccionesFormulario = document.querySelectorAll('#vista-registro .form-seccion');
 
-    document.querySelectorAll('#generos-container input').forEach(cb => {
-        cb.disabled = !esPropietario;
-        if(!esPropietario && cb.parentElement) cb.parentElement.classList.add('campo-bloqueado');
-        else if (cb.parentElement) cb.parentElement.classList.remove('campo-bloqueado');
-    });
-
-    const btnAddProp = document.getElementById('btn-add-prop');
-    const extraPropsContainer = document.getElementById('extra-props-container');
     if (!esPropietario) {
-        if (btnAddProp) btnAddProp.style.display = 'none';
-        if (extraPropsContainer) extraPropsContainer.classList.add('campo-bloqueado');
+        // Si es colaborador: ocultar "Información General" (índice 0) y "Multimedia" (índice 1)
+        if (seccionesFormulario[0]) seccionesFormulario[0].style.display = 'none';
+        if (seccionesFormulario[1]) seccionesFormulario[1].style.display = 'none';
     } else {
-        if (btnAddProp) btnAddProp.style.display = 'block';
-        if (extraPropsContainer) extraPropsContainer.classList.remove('campo-bloqueado');
+        // Si es el dueño o admin: mostrar todo normalmente
+        if (seccionesFormulario[0]) seccionesFormulario[0].style.display = 'block';
+        if (seccionesFormulario[1]) seccionesFormulario[1].style.display = 'block';
     }
+
+    // 4. Cargar Temporadas y Extras...
 
     // 4. Cargar Temporadas y Extras
     cargarInfoAdicional(obraActual.propiedades_extra || {});
@@ -856,9 +848,9 @@ function agregarSeccionUI(nombreSeccion = '', temporadasArray = null, creadorId 
 
     // 5. Aplicar bloqueos de seguridad
     if (!puedeEditarEstaSeccion) {
-        secBlock.classList.add('campo-bloqueado');
-        secBlock.querySelectorAll('input').forEach(inp => inp.disabled = true);
-        secBlock.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
+        secBlock.style.display = 'none'; // Desaparece visualmente
+    } else {
+        secBlock.style.display = 'block'; // Aseguramos que se vea
     }
 
     // 6. Cargar sub-temporadas
