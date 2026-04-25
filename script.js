@@ -1292,7 +1292,7 @@ function cargarComentariosTelegram() {
     
     // CONFIGURACIÓN DEL WIDGET:
     // Sustituye "TuCanalDeTelegram" por el username de tu canal o grupo
-    script.setAttribute('data-telegram-discussion', "https://t.me/AnimeKaergsty");
+    script.setAttribute('data-telegram-discussion', "AnimeKaergsty");
     script.setAttribute('data-comments-limit', "5");
     script.setAttribute('data-color', "3ba4fa"); // El color azul de tu tema
     script.setAttribute('data-dark', "1"); // Forzar modo oscuro
