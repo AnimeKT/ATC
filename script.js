@@ -1181,8 +1181,14 @@ function toggleNombreCreador(elemento) {
     // --- ESTADO FINAL: ABRIR LINK Y RESETEAR (Solo si es el principal) ---
     if (estadoActual === "link") {
         if (link && link !== "null" && link !== "") {
-            if (window.Telegram?.WebApp?.openLink) {
-                window.Telegram.WebApp.openLink(link);
+            // Verificamos si estamos dentro de Telegram Web App
+            if (window.Telegram?.WebApp) {
+                // Si el link es de Telegram (t.me), usamos openTelegramLink nativo
+                if (link.includes('t.me')) {
+                    window.Telegram.WebApp.openTelegramLink(link);
+                } else {
+                    window.Telegram.WebApp.openLink(link);
+                }
             } else {
                 window.open(link, '_blank');
             }
