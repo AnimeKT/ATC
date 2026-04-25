@@ -585,25 +585,7 @@ function mostrarCapitulos(capitulosObj, temporadaPadre) {
 
 function abrirEnlaceTelegram(url) {
     if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('heavy');
-
-    // CLAVE: Solo mandamos al navegador si es la versión WEB pura.
-    // Si es 'tdesktop' (App de PC), 'android' o 'ios', lo mandamos al mensaje interno.
-    const esTelegramWeb = ['web', 'weba', 'webk'].includes(tg.platform);
-
-    if (url.includes('t.me')) {
-        if (esTelegramWeb) {
-            // EN NAVEGADOR (Chrome, Safari, etc.): 
-            // Abrir en pestaña nueva para no perder la Mini App.
-            tg.openLink(url);
-        } else {
-            // EN APP INSTALADA (PC, Mac, Android, iPhone):
-            // Te lleva directo al mensaje sin salir de la aplicación.
-            tg.openTelegramLink(url);
-        }
-    } else {
-        // Enlaces externos (Mega, Drive, etc.) siempre fuera
-        tg.openLink(url);
-    }
+    url.includes('t.me') ? tg.openTelegramLink(url) : tg.openLink(url);
 }
 
 // =========================================
