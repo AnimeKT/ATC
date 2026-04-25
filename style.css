@@ -1637,17 +1637,3 @@ body.usuario-identificado #btn-edit-serie {
     }
 }
 
-#comentarios-container {
-    margin-top: 30px;
-    padding: 15px;
-    background: rgba(24, 24, 27, 0.5); /* Fondo similar a tus tarjetas */
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    min-height: 200px; /* Para evitar saltos visuales mientras carga */
-}
-
-/* Opcional: Centrar el widget dentro de la vista de detalle */
-#comentarios-container iframe {
-    width: 100% !important;
-    margin: 0 auto !important;
-}

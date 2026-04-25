@@ -1279,36 +1279,7 @@ async function eliminarObraActual(event) {
     }
 }
 
-function cargarComentariosTelegram() {
-    const container = document.getElementById('comentarios-container');
-    if (!container) return;
-
-    // Limpiamos el contenedor para que no se dupliquen los comentarios al cambiar de anime
-    container.innerHTML = '';
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    
-    // CONFIGURACIÓN DEL WIDGET:
-    // Sustituye "TuCanalDeTelegram" por el username de tu canal o grupo
-    script.setAttribute('data-telegram-discussion', "AnimeKaergsty");
-    script.setAttribute('data-comments-limit', "5");
-    script.setAttribute('data-color', "3ba4fa"); // El color azul de tu tema
-    script.setAttribute('data-dark', "1"); // Forzar modo oscuro
-
-    container.appendChild(script);
-}
-
-function mostrarDetalle(obra) {
-    // ... tu lógica actual para mostrar la info ...
-    detShareBtn.onclick = () => copiarEnlaceDirecto(obra.id);
-    
-    cargarComentariosTelegram();
-}
-
 window.addEventListener('popstate', (event) => {
     if (event.state && event.state.vista) cambiarVista(event.state.vista, false);
     else cambiarVista('catalogo', false);
 });
-
