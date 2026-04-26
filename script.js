@@ -1308,16 +1308,16 @@ async function eliminarObraActual(event) {
 }
 
 // =========================================
+// =========================================
 // HERRAMIENTAS DE IMPORTACIÓN / EXPORTACIÓN
 // =========================================
 
-// Función auxiliar para obtener valores sin que dé error si el campo no existe
 const getVal = (id) => { 
     const el = document.getElementById(id); 
     return el ? el.value.trim() : ''; 
 };
 
-// 1. RECOLECTAR TODOS LOS DATOS
+// 1. RECOLECTAR DATOS
 function recolectarDatosCompletos() {
     return {
         titulo: getVal('in-titulo') || 'Sin_Titulo',
@@ -1340,137 +1340,107 @@ function recolectarDatosCompletos() {
     };
 }
 
-// 2. GENERAR EL TEXTO XML
+// 2. GENERAR XML
 function generarXML(datos) {
-    // Usamos <![CDATA[ ]]> para evitar que caracteres raros o saltos de línea rompan el XML
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
-    xml += `  <titulo><![CDATA[${datos.titulo}]]></titulo>\n`;
-    xml += `  <japones><![CDATA[${datos.japones}]]></japones>\n`;
-    xml += `  <ingles><![CDATA[${datos.ingles}]]></ingles>\n`;
-    xml += `  <sinopsis><![CDATA[${datos.sinopsis}]]></sinopsis>\n`;
-    xml += `  <creador_link><![CDATA[${datos.creador_link}]]></creador_link>\n`;
-    xml += `  <estado><![CDATA[${datos.estado}]]></estado>\n`;
-    xml += `  <tipo><![CDATA[${datos.tipo}]]></tipo>\n`;
-    xml += `  <estudio><![CDATA[${datos.estudio}]]></estudio>\n`;
-    xml += `  <autor><![CDATA[${datos.autor}]]></autor>\n`;
-    xml += `  <origen><![CDATA[${datos.origen}]]></origen>\n`;
-    xml += `  <estreno><![CDATA[${datos.estreno}]]></estreno>\n`;
-    xml += `  <dia_emision><![CDATA[${datos.dia_emision}]]></dia_emision>\n`;
-    xml += `  <portada><![CDATA[${datos.portada}]]></portada>\n`;
-    xml += `  <banner><![CDATA[${datos.banner}]]></banner>\n`;
-    xml += `  <generos><![CDATA[${datos.generos.join(',')}]]></generos>\n`;
-    xml += `  <propiedades_extra><![CDATA[${JSON.stringify(datos.propiedades_extra)}]]></propiedades_extra>\n`;
-    xml += `  <temporadas><![CDATA[${JSON.stringify(datos.temporadas)}]]></temporadas>\n`;
+    for (const key in datos) {
+        let valor = (typeof datos[key] === 'object') ? JSON.stringify(datos[key]) : datos[key];
+        xml += `  <${key}><![CDATA[${valor}]]></${key}>\n`;
+    }
     xml += `</serie>`;
     return xml;
 }
 
-// 3. EXPORTAR A ARCHIVO
+// 3. EXPORTAR (A veces falla en Telegram)
 function exportarSerieXML() {
     try {
         const datos = recolectarDatosCompletos();
-        const xmlContent = generarXML(datos);
-
-        const blob = new Blob([xmlContent], { type: 'application/xml' });
+        const blob = new Blob([generarXML(datos)], { type: 'application/xml' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        
         link.href = url;
-        const nombreArchivo = (datos.titulo.replace(/\s+/g, '_').toLowerCase()) + ".xml";
-        link.download = nombreArchivo;
-        
-        document.body.appendChild(link); 
+        link.download = `${datos.titulo.replace(/\s+/g, '_').toLowerCase()}.xml`;
+        document.body.appendChild(link);
         link.click();
-        
-        setTimeout(() => {
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-        }, 100);
-    } catch (error) {
-        console.error("Error al exportar:", error);
-        alert("No se pudo generar el archivo.");
-    }
+        setTimeout(() => { document.body.removeChild(link); window.URL.revokeObjectURL(url); }, 100);
+    } catch (e) { alert("Error al exportar."); }
 }
 
-// 4. COPIAR AL PORTAPAPELES
+// 4. COPIAR
 async function copiarXMLAlPortapapeles() {
     try {
-        const datos = recolectarDatosCompletos();
-        const xmlTexto = generarXML(datos);
+        const xml = generarXML(recolectarDatosCompletos());
+        await navigator.clipboard.writeText(xml);
+        alert("✅ Copiado al portapapeles.");
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch (e) { alert("Error al copiar."); }
+}
 
-        await navigator.clipboard.writeText(xmlTexto);
-        alert("✅ Perfil completo copiado al portapapeles.");
-        
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-        }
-    } catch (err) {
-        console.error('Error al copiar:', err);
-        alert("No se pudo copiar automáticamente.");
+// 5. NUEVA FUNCIÓN: PEGAR DESDE PORTAPAPELES
+async function pegarXMLDesdePortapapeles() {
+    try {
+        const texto = await navigator.clipboard.readText();
+        if (!texto.includes('<serie>')) throw new Error();
+        procesarXML(texto);
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch (e) {
+        alert("❌ El portapapeles no contiene un XML válido.");
     }
 }
 
-// 5. IMPORTAR DESDE ARCHIVO
+// 6. IMPORTAR DESDE ARCHIVO
 function importarSerieXML(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(e.target.result, "text/xml");
-
-            // Función para leer etiquetas XML con seguridad
-            const getXmlText = (tag) => xmlDoc.getElementsByTagName(tag)[0]?.textContent || "";
-            const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
-
-            // Llenamos todos los campos de texto
-            setVal('in-titulo', getXmlText("titulo"));
-            setVal('in-japones', getXmlText("japones"));
-            setVal('in-ingles', getXmlText("ingles"));
-            setVal('in-sinopsis', getXmlText("sinopsis"));
-            setVal('edit-telegram-creador', getXmlText("creador_link"));
-            setVal('in-estado', getXmlText("estado"));
-            setVal('in-tipo', getXmlText("tipo"));
-            setVal('in-estudio', getXmlText("estudio"));
-            setVal('in-autor', getXmlText("autor"));
-            setVal('in-origen', getXmlText("origen"));
-            setVal('in-estreno', getXmlText("estreno"));
-            setVal('in-dia', getXmlText("dia_emision"));
-            setVal('in-portada', getXmlText("portada"));
-            setVal('in-banner', getXmlText("banner"));
-
-            // Restaurar Géneros
-            const generosStr = getXmlText("generos");
-            const generosArr = generosStr ? generosStr.split(',') : [];
-            document.querySelectorAll('#generos-container input').forEach(cb => {
-                cb.checked = generosArr.includes(cb.value);
-            });
-
-            // Restaurar Propiedades Extra
-            const propsStr = getXmlText("propiedades_extra");
-            if (propsStr && typeof cargarInfoAdicional === 'function') {
-                cargarInfoAdicional(JSON.parse(propsStr));
-            }
-
-            // Restaurar Temporadas
-            const tempStr = getXmlText("temporadas");
-            if (tempStr && typeof cargarDatosTemporadas === 'function') {
-                cargarDatosTemporadas(JSON.parse(tempStr));
-            }
-
-            alert("✅ ¡Datos importados correctamente!");
-            
-            // Limpiar el input file para poder subir el mismo archivo de nuevo si se necesita
-            event.target.value = ''; 
-
-        } catch (error) {
-            console.error("Error leyendo XML:", error);
-            alert("❌ El archivo está dañado o no es un XML válido.");
-        }
+    reader.onload = (e) => {
+        procesarXML(e.target.result);
+        event.target.value = ''; 
     };
     reader.readAsText(file);
+}
+
+// 7. MOTOR DE PROCESAMIENTO (El cerebro que llena los campos)
+function procesarXML(xmlTexto) {
+    try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlTexto, "text/xml");
+        const getXml = (tag) => xmlDoc.getElementsByTagName(tag)[0]?.textContent || "";
+        const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
+
+        // Llenar campos simples
+        setVal('in-titulo', getXml("titulo"));
+        setVal('in-japones', getXml("japones"));
+        setVal('in-ingles', getXml("ingles"));
+        setVal('in-sinopsis', getXml("sinopsis"));
+        setVal('edit-telegram-creador', getXml("creador_link"));
+        setVal('in-estado', getXml("estado"));
+        setVal('in-tipo', getXml("tipo"));
+        setVal('in-estudio', getXml("estudio"));
+        setVal('in-autor', getXml("autor"));
+        setVal('in-origen', getXml("origen"));
+        setVal('in-estreno', getXml("estreno"));
+        setVal('in-dia', getXml("dia_emision"));
+        setVal('in-portada', getXml("portada"));
+        setVal('in-banner', getXml("banner"));
+
+        // Géneros
+        const genArr = getXml("generos").split(',');
+        document.querySelectorAll('#generos-container input').forEach(cb => cb.checked = genArr.includes(cb.value));
+
+        // Props Extra y Temporadas (JSON)
+        try {
+            const props = JSON.parse(getXml("propiedades_extra"));
+            if (window.cargarInfoAdicional) cargarInfoAdicional(props);
+            
+            const temps = JSON.parse(getXml("temporadas"));
+            if (window.cargarDatosTemporadas) cargarDatosTemporadas(temps);
+        } catch(e) { console.warn("Campos JSON vacíos"); }
+
+        alert("✅ Datos cargados correctamente.");
+    } catch (error) {
+        alert("❌ Error al procesar el código XML.");
+    }
 }
 
 window.addEventListener('popstate', (event) => {
