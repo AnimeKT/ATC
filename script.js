@@ -721,28 +721,50 @@ async function ejecutarRegistro() {
     
     if(!inTitulo || !inPortada) return;
 
-    // Lógica de validación
+    // Lógica de validación de permisos
     const esPropietario = idAnimeEnEdicion ? ((String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID)) : true;
+    const esAdmin = (String(userIdActual) === ADMIN_ID); // <--- IDENTIFICAR ADMIN
 
     if (esPropietario && (!inTitulo.value.trim() || !inPortada.value.trim())) {
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
         return alert("⚠️ Título y Portada son obligatorios.");
     }
 
-    // 👇 --- NUEVO CÓDIGO DE VALIDACIÓN DE DUPLICADOS --- 👇
+    // --- VALIDACIÓN DE DUPLICADOS CON BYPASS PARA ADMIN ---
     const tituloSanitizado = sanitizar(inTitulo.value.trim());
-    const slugGenerado = crearSlug(tituloSanitizado);
+    let slugGenerado = crearSlug(tituloSanitizado);
 
-    // Solo bloqueamos si estamos creando uno nuevo (no editando)
-    if (!idAnimeEnEdicion && esPropietario) {
+    // Verificamos si realmente cambiaste el título (si estás editando)
+    const tituloCambio = idAnimeEnEdicion ? (obraActual.titulo !== tituloSanitizado) : true;
+
+    if (idAnimeEnEdicion && !tituloCambio) {
+        // Si NO cambiaste el título, simplemente mantenemos tu slug original intacto
+        slugGenerado = obraActual.slug; 
+    } else {
+        // Solo buscamos duplicados si es un anime nuevo o si de verdad le cambiaste el nombre
         const animeDuplicado = todasLasObras.find(obra => crearSlug(obra.titulo) === slugGenerado);
-        
-        if (animeDuplicado) {
-            if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
-            return alert(`⚠️ ¡Este anime ya existe!\nEstá registrado como: "${animeDuplicado.titulo}"`);
+
+        if (esPropietario && animeDuplicado) {
+            // CASO 1: CREANDO NUEVO
+            if (!idAnimeEnEdicion) {
+                if (esAdmin) {
+                    slugGenerado = slugGenerado + "_" + Date.now();
+                } else {
+                    if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
+                    return alert(`⚠️ ¡Este anime ya existe!\nEstá registrado como: "${animeDuplicado.titulo}"`);
+                }
+            } 
+            // CASO 2: EDITANDO (y sí cambiaste el título a uno que ya existe)
+            else {
+                if (esAdmin) {
+                    slugGenerado = slugGenerado + "_ed" + Date.now();
+                } else {
+                    if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
+                    return alert("⚠️ No puedes usar ese nombre porque ya pertenece a otro anime.");
+                }
+            }
         }
     }
-    // 👆 --- FIN DEL NUEVO CÓDIGO --- 👆
 
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
@@ -750,11 +772,12 @@ async function ejecutarRegistro() {
     try {
         let datosObra = {};
         
-        // Si eres el dueño (o estás creando algo nuevo), actualizas todo.
         if (esPropietario) {
             const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value.trim() : '';
+            
             datosObra = {
-                titulo: sanitizar(getVal('in-titulo')),
+                titulo: tituloSanitizado,
+                slug: slugGenerado, // <--- MUY IMPORTANTE: Guardar el slug en la base de datos
                 portada_url: getVal('in-portada'),
                 banner_url: getVal('in-banner'),
                 sinopsis: sanitizar(getVal('in-sinopsis')),
@@ -770,28 +793,24 @@ async function ejecutarRegistro() {
                     Ingles: sanitizar(getVal('in-ingles'))
                 },
                 generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
-                temporadas: recolectarDatosTemporadas(), // Recoge to   do
+                temporadas: recolectarDatosTemporadas(),
                 propiedades_extra: recolectarCamposExtras(),
                 creador_link: sanitizar(getVal('edit-telegram-creador'))
             };
 
             if (!idAnimeEnEdicion) {
                 datosObra.creador_id = userIdActual;
-                
-                // Si eres tú, guardamos Admin. Si es otro, su nombre de Telegram.
-                if (userIdActual === ADMIN_ID) {
+                if (esAdmin) {
                     datosObra.creador_nombre = "Admin";
                     datosObra.creador_username = "@Admin";
                 } else {
                     const tgUser = JSON.parse(localStorage.getItem('tg_user'));
                     datosObra.creador_nombre = tgUser ? tgUser.first_name : "Usuario";
-                    // Guardamos el username si lo tiene, si no, un aviso
                     datosObra.creador_username = (tgUser && tgUser.username) ? `@${tgUser.username}` : "Sin @usuario";
                 }
             }
         } else {
-            // SI ERES COLABORADOR: SOLO se actualiza el array de temporadas.
-            // recolectarDatosTemporadas() recogerá también los inputs bloqueados (los del dueño) y los tuyos nuevos.
+            // SI ERES COLABORADOR: Solo actualizamos temporadas
             datosObra = {
                 temporadas: recolectarDatosTemporadas()
             };
