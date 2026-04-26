@@ -1278,31 +1278,51 @@ async function eliminarObraActual(event) {
 }
 
 function exportarSerieXML() {
-    // Recolectamos los datos actuales del formulario
-    const datos = {
-        titulo: document.getElementById('in-titulo').value,
-        sinopsis: document.getElementById('in-sinopsis').value,
-        portada: document.getElementById('in-portada').value,
-        banner: document.getElementById('in-banner').value,
-        generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
-        temporadas: recolectarDatosTemporadas() // Usamos tu función existente
-    };
+    try {
+        // Recolectamos los datos (asegúrate de que los IDs coincidan con tu index.html)
+        const datos = {
+            titulo: document.getElementById('in-titulo').value || 'sin-titulo',
+            sinopsis: document.getElementById('in-sinopsis').value,
+            portada: document.getElementById('in-portada').value,
+            generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
+            // Intentamos usar tu función de temporadas si existe
+            temporadas: typeof recolectarDatosTemporadas === 'function' ? recolectarDatosTemporadas() : []
+        };
 
-    // Creamos la estructura XML
-    let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
-    xmlContent += `  <titulo>${datos.titulo}</titulo>\n`;
-    xmlContent += `  <sinopsis>${datos.sinopsis}</sinopsis>\n`;
-    xmlContent += `  <portada>${datos.portada}</portada>\n`;
-    xmlContent += `  <generos>${datos.generos.join(',')}</generos>\n`;
-    xmlContent += `  <temporadas>${JSON.stringify(datos.temporadas)}</temporadas>\n`; // Simplificado con JSON por las URL complejas
-    xmlContent += `</serie>`;
+        // Creamos el contenido XML
+        let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
+        xmlContent += `  <titulo>${datos.titulo}</titulo>\n`;
+        xmlContent += `  <sinopsis>${datos.sinopsis}</sinopsis>\n`;
+        xmlContent += `  <portada>${datos.portada}</portada>\n`;
+        xmlContent += `  <generos>${datos.generos.join(',')}</generos>\n`;
+        xmlContent += `  <temporadas>${JSON.stringify(datos.temporadas)}</temporadas>\n`;
+        xmlContent += `</serie>`;
 
-    const blob = new Blob([xmlContent], { type: 'text/xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${crearSlug(datos.titulo)}.xml`;
-    link.click();
+        // CREACIÓN DEL ARCHIVO COMPATIBLE CON MÓVIL
+        const blob = new Blob([xmlContent], { type: 'application/xml' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        link.href = url;
+        // Usamos un nombre de archivo limpio
+        const nombreArchivo = (datos.titulo.replace(/\s+/g, '_').toLowerCase()) + ".xml";
+        link.download = nombreArchivo;
+        
+        // --- TRUCO PARA MÓVILES ---
+        // El link debe estar en el DOM para que el celular lo reconozca como una acción real
+        document.body.appendChild(link); 
+        link.click();
+        
+        // Limpiamos después de un segundo
+        setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+
+    } catch (error) {
+        console.error("Error al exportar:", error);
+        alert("No se pudo generar el archivo. Intenta de nuevo.");
+    }
 }
 
 function importarSerieXML(event) {
