@@ -129,12 +129,12 @@
 
     <div class="contenedor-formulario">
         
-        <div class="import-export-tools" style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: center;">
-            <button onclick="exportarSerieXML()" class="btn-login" style="background: #27272a; flex: 1;">
+        <div class="import-export-tools">
+            <button onclick="exportarSerieXML()" class="btn-login btn-tools">
                 <i class="fa-solid fa-download"></i> Exportar XML
             </button>
             
-            <button onclick="document.getElementById('fileInput').click()" class="btn-login" style="background: #27272a; flex: 1;">
+            <button onclick="document.getElementById('fileInput').click()" class="btn-login btn-tools">
                 <i class="fa-solid fa-upload"></i> Importar XML
             </button>
             <input type="file" id="fileInput" style="display: none;" accept=".xml" onchange="importarSerieXML(event)">

@@ -1637,3 +1637,32 @@ body.usuario-identificado #btn-edit-serie {
     }
 }
 
+/* Estilos base para PC */
+.import-export-tools {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn-tools {
+    background: #27272a !important; /* Mantenemos tu color oscuro */
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px !important;
+}
+
+/* --- MODO CELULAR --- */
+@media (max-width: 600px) {
+    .import-export-tools {
+        flex-direction: column; /* Apila los botones verticalmente */
+    }
+    
+    .btn-tools {
+        width: 100%; /* Los botones ocupan todo el ancho disponible */
+        font-size: 15px; /* Mejora la legibilidad en pantallas táctiles */
+    }
+}
+
