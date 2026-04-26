@@ -1277,120 +1277,170 @@ async function eliminarObraActual(event) {
     }
 }
 
+// =========================================
+// HERRAMIENTAS DE IMPORTACIÓN / EXPORTACIÓN
+// =========================================
+
+// Función auxiliar para obtener valores sin que dé error si el campo no existe
+const getVal = (id) => { 
+    const el = document.getElementById(id); 
+    return el ? el.value.trim() : ''; 
+};
+
+// 1. RECOLECTAR TODOS LOS DATOS
+function recolectarDatosCompletos() {
+    return {
+        titulo: getVal('in-titulo') || 'Sin_Titulo',
+        japones: getVal('in-japones'),
+        ingles: getVal('in-ingles'),
+        sinopsis: getVal('in-sinopsis'),
+        creador_link: getVal('edit-telegram-creador'),
+        estado: getVal('in-estado') || 'En emisión',
+        tipo: getVal('in-tipo') || 'TV',
+        estudio: getVal('in-estudio'),
+        autor: getVal('in-autor'),
+        origen: getVal('in-origen'),
+        estreno: getVal('in-estreno'),
+        dia_emision: getVal('in-dia'),
+        portada: getVal('in-portada'),
+        banner: getVal('in-banner'),
+        generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
+        propiedades_extra: typeof recolectarCamposExtras === 'function' ? recolectarCamposExtras() : {},
+        temporadas: typeof recolectarDatosTemporadas === 'function' ? recolectarDatosTemporadas() : []
+    };
+}
+
+// 2. GENERAR EL TEXTO XML
+function generarXML(datos) {
+    // Usamos <![CDATA[ ]]> para evitar que caracteres raros o saltos de línea rompan el XML
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
+    xml += `  <titulo><![CDATA[${datos.titulo}]]></titulo>\n`;
+    xml += `  <japones><![CDATA[${datos.japones}]]></japones>\n`;
+    xml += `  <ingles><![CDATA[${datos.ingles}]]></ingles>\n`;
+    xml += `  <sinopsis><![CDATA[${datos.sinopsis}]]></sinopsis>\n`;
+    xml += `  <creador_link><![CDATA[${datos.creador_link}]]></creador_link>\n`;
+    xml += `  <estado><![CDATA[${datos.estado}]]></estado>\n`;
+    xml += `  <tipo><![CDATA[${datos.tipo}]]></tipo>\n`;
+    xml += `  <estudio><![CDATA[${datos.estudio}]]></estudio>\n`;
+    xml += `  <autor><![CDATA[${datos.autor}]]></autor>\n`;
+    xml += `  <origen><![CDATA[${datos.origen}]]></origen>\n`;
+    xml += `  <estreno><![CDATA[${datos.estreno}]]></estreno>\n`;
+    xml += `  <dia_emision><![CDATA[${datos.dia_emision}]]></dia_emision>\n`;
+    xml += `  <portada><![CDATA[${datos.portada}]]></portada>\n`;
+    xml += `  <banner><![CDATA[${datos.banner}]]></banner>\n`;
+    xml += `  <generos><![CDATA[${datos.generos.join(',')}]]></generos>\n`;
+    xml += `  <propiedades_extra><![CDATA[${JSON.stringify(datos.propiedades_extra)}]]></propiedades_extra>\n`;
+    xml += `  <temporadas><![CDATA[${JSON.stringify(datos.temporadas)}]]></temporadas>\n`;
+    xml += `</serie>`;
+    return xml;
+}
+
+// 3. EXPORTAR A ARCHIVO
 function exportarSerieXML() {
     try {
-        // Recolectamos los datos (asegúrate de que los IDs coincidan con tu index.html)
-        const datos = {
-            titulo: document.getElementById('in-titulo').value || 'sin-titulo',
-            sinopsis: document.getElementById('in-sinopsis').value,
-            portada: document.getElementById('in-portada').value,
-            generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
-            // Intentamos usar tu función de temporadas si existe
-            temporadas: typeof recolectarDatosTemporadas === 'function' ? recolectarDatosTemporadas() : []
-        };
+        const datos = recolectarDatosCompletos();
+        const xmlContent = generarXML(datos);
 
-        // Creamos el contenido XML
-        let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
-        xmlContent += `  <titulo>${datos.titulo}</titulo>\n`;
-        xmlContent += `  <sinopsis>${datos.sinopsis}</sinopsis>\n`;
-        xmlContent += `  <portada>${datos.portada}</portada>\n`;
-        xmlContent += `  <generos>${datos.generos.join(',')}</generos>\n`;
-        xmlContent += `  <temporadas>${JSON.stringify(datos.temporadas)}</temporadas>\n`;
-        xmlContent += `</serie>`;
-
-        // CREACIÓN DEL ARCHIVO COMPATIBLE CON MÓVIL
         const blob = new Blob([xmlContent], { type: 'application/xml' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         
         link.href = url;
-        // Usamos un nombre de archivo limpio
         const nombreArchivo = (datos.titulo.replace(/\s+/g, '_').toLowerCase()) + ".xml";
         link.download = nombreArchivo;
         
-        // --- TRUCO PARA MÓVILES ---
-        // El link debe estar en el DOM para que el celular lo reconozca como una acción real
         document.body.appendChild(link); 
         link.click();
         
-        // Limpiamos después de un segundo
         setTimeout(() => {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
         }, 100);
-
     } catch (error) {
         console.error("Error al exportar:", error);
-        alert("No se pudo generar el archivo. Intenta de nuevo.");
+        alert("No se pudo generar el archivo.");
     }
 }
 
+// 4. COPIAR AL PORTAPAPELES
+async function copiarXMLAlPortapapeles() {
+    try {
+        const datos = recolectarDatosCompletos();
+        const xmlTexto = generarXML(datos);
+
+        await navigator.clipboard.writeText(xmlTexto);
+        alert("✅ Perfil completo copiado al portapapeles.");
+        
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
+    } catch (err) {
+        console.error('Error al copiar:', err);
+        alert("No se pudo copiar automáticamente.");
+    }
+}
+
+// 5. IMPORTAR DESDE ARCHIVO
 function importarSerieXML(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(e.target.result, "text/xml");
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(e.target.result, "text/xml");
 
-        // Llenamos los campos básicos
-        document.getElementById('in-titulo').value = xmlDoc.getElementsByTagName("titulo")[0]?.textContent || "";
-        document.getElementById('in-sinopsis').value = xmlDoc.getElementsByTagName("sinopsis")[0]?.textContent || "";
-        document.getElementById('in-portada').value = xmlDoc.getElementsByTagName("portada")[0]?.textContent || "";
+            // Función para leer etiquetas XML con seguridad
+            const getXmlText = (tag) => xmlDoc.getElementsByTagName(tag)[0]?.textContent || "";
+            const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
 
-        // Para los géneros
-        const generos = xmlDoc.getElementsByTagName("generos")[0]?.textContent.split(',') || [];
-        document.querySelectorAll('#generos-container input').forEach(cb => {
-            cb.checked = generos.includes(cb.value);
-        });
+            // Llenamos todos los campos de texto
+            setVal('in-titulo', getXmlText("titulo"));
+            setVal('in-japones', getXmlText("japones"));
+            setVal('in-ingles', getXmlText("ingles"));
+            setVal('in-sinopsis', getXmlText("sinopsis"));
+            setVal('edit-telegram-creador', getXmlText("creador_link"));
+            setVal('in-estado', getXmlText("estado"));
+            setVal('in-tipo', getXmlText("tipo"));
+            setVal('in-estudio', getXmlText("estudio"));
+            setVal('in-autor', getXmlText("autor"));
+            setVal('in-origen', getXmlText("origen"));
+            setVal('in-estreno', getXmlText("estreno"));
+            setVal('in-dia', getXmlText("dia_emision"));
+            setVal('in-portada', getXmlText("portada"));
+            setVal('in-banner', getXmlText("banner"));
 
-        // Para las temporadas (si las guardaste como JSON dentro del XML)
-        const tempStr = xmlDoc.getElementsByTagName("temporadas")[0]?.textContent;
-        if (tempStr) {
-            const temps = JSON.parse(tempStr);
-            cargarDatosTemporadas(temps); // Usamos tu función existente
+            // Restaurar Géneros
+            const generosStr = getXmlText("generos");
+            const generosArr = generosStr ? generosStr.split(',') : [];
+            document.querySelectorAll('#generos-container input').forEach(cb => {
+                cb.checked = generosArr.includes(cb.value);
+            });
+
+            // Restaurar Propiedades Extra
+            const propsStr = getXmlText("propiedades_extra");
+            if (propsStr && typeof cargarInfoAdicional === 'function') {
+                cargarInfoAdicional(JSON.parse(propsStr));
+            }
+
+            // Restaurar Temporadas
+            const tempStr = getXmlText("temporadas");
+            if (tempStr && typeof cargarDatosTemporadas === 'function') {
+                cargarDatosTemporadas(JSON.parse(tempStr));
+            }
+
+            alert("✅ ¡Datos importados correctamente!");
+            
+            // Limpiar el input file para poder subir el mismo archivo de nuevo si se necesita
+            event.target.value = ''; 
+
+        } catch (error) {
+            console.error("Error leyendo XML:", error);
+            alert("❌ El archivo está dañado o no es un XML válido.");
         }
-
-        alert("¡Datos de la serie importados correctamente!");
     };
     reader.readAsText(file);
-}
-
-async function copiarXMLAlPortapapeles() {
-    // Recolectamos todos los datos igual que en la exportación
-    const titulo = document.getElementById('in-titulo').value || 'Sin Título';
-    const sinopsis = document.getElementById('in-sinopsis').value || '';
-    const portada = document.getElementById('in-portada').value || '';
-    const generos = Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value);
-    
-    // Obtenemos temporadas (usando tu lógica existente)
-    const temporadas = typeof recolectarDatosTemporadas === 'function' ? recolectarDatosTemporadas() : [];
-
-    // Creamos el texto XML completo
-    let xmlTexto = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
-    xmlTexto += `  <titulo>${titulo}</titulo>\n`;
-    xmlTexto += `  <sinopsis>${sinopsis}</sinopsis>\n`;
-    xmlTexto += `  <portada>${portada}</portada>\n`;
-    xmlTexto += `  <generos>${generos.join(',')}</generos>\n`;
-    xmlTexto += `  <temporadas>${JSON.stringify(temporadas)}</temporadas>\n`;
-    xmlTexto += `</serie>`;
-
-    try {
-        // Intentamos copiar al portapapeles
-        await navigator.clipboard.writeText(xmlTexto);
-        
-        // Feedback visual (puedes usar un alert o un mensaje discreto)
-        alert("✅ XML copiado al portapapeles. Puedes pegarlo en un mensaje o nota.");
-        
-        // Pequeña vibración si estás en Telegram
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-        }
-    } catch (err) {
-        console.error('Error al copiar:', err);
-        alert("No se pudo copiar automáticamente. Revisa los permisos de tu navegador.");
-    }
 }
 
 window.addEventListener('popstate', (event) => {
