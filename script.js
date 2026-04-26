@@ -639,6 +639,10 @@ function prepararNuevoRegistro() {
     if (seccionesFormulario[1]) seccionesFormulario[1].style.display = 'block';
 
     agregarPropiedadUI();
+
+    const herramientas = document.querySelector('.import-export-tools');
+    if (herramientas) herramientas.style.display = 'flex';
+
     cambiarVista('registro');
 }
 
@@ -652,20 +656,24 @@ function prepararEdicionDesdeDetalle() {
     const esPropietario = (String(obraActual.creador_id) === String(userIdActual)) || (String(userIdActual) === ADMIN_ID);
 
     // ============================================================
-    // AQUÍ VA TU CÓDIGO (Después de definir esPropietario)
+    // CONTROL DE VISIBILIDAD DE HERRAMIENTAS XML (Copiar, Pegar, etc.)
     // ============================================================
+    const herramientas = document.querySelector('.import-export-tools');
+    if (herramientas) {
+        // Solo el dueño o el admin ven estas opciones
+        herramientas.style.display = esPropietario ? 'flex' : 'none';
+    }
+    // ============================================================
+
     const inputPagina = document.getElementById('edit-telegram-creador');
     if (inputPagina) {
         if (esPropietario) {
-            // Si es el creador del anime (Usa el nombre de columna de tu SQL: creador_link)
             inputPagina.value = obraActual.creador_link || '';
         } else {
-            // Si es colaborador, buscamos en sus temporadas
             const miSeccion = obraActual.temporadas?.find(t => String(t.creador_id) === String(userIdActual));
             inputPagina.value = miSeccion?.creador_link || '';
         }
     }
-    // ============================================================
 
     // 2. Llenar datos base
     const mapVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ''; };
@@ -686,11 +694,11 @@ function prepararEdicionDesdeDetalle() {
     const generosAnime = obraActual.generos || [];
     document.querySelectorAll('#generos-container input').forEach(cb => cb.checked = generosAnime.includes(cb.value));
 
-    // 3. Ocultar o mostrar secciones completas en lugar de bloquear campos
+    // 3. Ocultar o mostrar secciones completas
     const seccionesFormulario = document.querySelectorAll('#vista-registro .form-seccion');
 
     if (!esPropietario) {
-        // Si es colaborador: ocultar "Información General" (índice 0) y "Multimedia" (índice 1)
+        // Si es colaborador: ocultar "Información General" y "Multimedia"
         if (seccionesFormulario[0]) seccionesFormulario[0].style.display = 'none';
         if (seccionesFormulario[1]) seccionesFormulario[1].style.display = 'none';
     } else {
@@ -698,8 +706,6 @@ function prepararEdicionDesdeDetalle() {
         if (seccionesFormulario[0]) seccionesFormulario[0].style.display = 'block';
         if (seccionesFormulario[1]) seccionesFormulario[1].style.display = 'block';
     }
-
-    // 4. Cargar Temporadas y Extras...
 
     // 4. Cargar Temporadas y Extras
     cargarInfoAdicional(obraActual.propiedades_extra || {});
