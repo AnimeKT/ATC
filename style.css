@@ -1640,9 +1640,10 @@ body.usuario-identificado #btn-edit-serie {
 /* Contenedor de las herramientas */
 .import-export-tools {
     display: flex;
-    gap: 8px; /* Espacio pequeño entre botones */
+    gap: 8px;
     margin-bottom: 20px;
-    justify-content: flex-start; /* Alineados a la izquierda */
+    justify-content: flex-start;
+    flex-wrap: wrap; /* <--- Agrega esto para que los botones fluyan si no hay espacio */
 }
 
 /* Botones "Mini" */

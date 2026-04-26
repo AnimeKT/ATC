@@ -1357,6 +1357,42 @@ function importarSerieXML(event) {
     reader.readAsText(file);
 }
 
+async function copiarXMLAlPortapapeles() {
+    // Recolectamos todos los datos igual que en la exportación
+    const titulo = document.getElementById('in-titulo').value || 'Sin Título';
+    const sinopsis = document.getElementById('in-sinopsis').value || '';
+    const portada = document.getElementById('in-portada').value || '';
+    const generos = Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value);
+    
+    // Obtenemos temporadas (usando tu lógica existente)
+    const temporadas = typeof recolectarDatosTemporadas === 'function' ? recolectarDatosTemporadas() : [];
+
+    // Creamos el texto XML completo
+    let xmlTexto = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
+    xmlTexto += `  <titulo>${titulo}</titulo>\n`;
+    xmlTexto += `  <sinopsis>${sinopsis}</sinopsis>\n`;
+    xmlTexto += `  <portada>${portada}</portada>\n`;
+    xmlTexto += `  <generos>${generos.join(',')}</generos>\n`;
+    xmlTexto += `  <temporadas>${JSON.stringify(temporadas)}</temporadas>\n`;
+    xmlTexto += `</serie>`;
+
+    try {
+        // Intentamos copiar al portapapeles
+        await navigator.clipboard.writeText(xmlTexto);
+        
+        // Feedback visual (puedes usar un alert o un mensaje discreto)
+        alert("✅ XML copiado al portapapeles. Puedes pegarlo en un mensaje o nota.");
+        
+        // Pequeña vibración si estás en Telegram
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
+    } catch (err) {
+        console.error('Error al copiar:', err);
+        alert("No se pudo copiar automáticamente. Revisa los permisos de tu navegador.");
+    }
+}
+
 window.addEventListener('popstate', (event) => {
     if (event.state && event.state.vista) cambiarVista(event.state.vista, false);
     else cambiarVista('catalogo', false);
