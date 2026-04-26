@@ -1277,6 +1277,66 @@ async function eliminarObraActual(event) {
     }
 }
 
+function exportarSerieXML() {
+    // Recolectamos los datos actuales del formulario
+    const datos = {
+        titulo: document.getElementById('in-titulo').value,
+        sinopsis: document.getElementById('in-sinopsis').value,
+        portada: document.getElementById('in-portada').value,
+        banner: document.getElementById('in-banner').value,
+        generos: Array.from(document.querySelectorAll('#generos-container input:checked')).map(cb => cb.value),
+        temporadas: recolectarDatosTemporadas() // Usamos tu función existente
+    };
+
+    // Creamos la estructura XML
+    let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n<serie>\n`;
+    xmlContent += `  <titulo>${datos.titulo}</titulo>\n`;
+    xmlContent += `  <sinopsis>${datos.sinopsis}</sinopsis>\n`;
+    xmlContent += `  <portada>${datos.portada}</portada>\n`;
+    xmlContent += `  <generos>${datos.generos.join(',')}</generos>\n`;
+    xmlContent += `  <temporadas>${JSON.stringify(datos.temporadas)}</temporadas>\n`; // Simplificado con JSON por las URL complejas
+    xmlContent += `</serie>`;
+
+    const blob = new Blob([xmlContent], { type: 'text/xml' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${crearSlug(datos.titulo)}.xml`;
+    link.click();
+}
+
+function importarSerieXML(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(e.target.result, "text/xml");
+
+        // Llenamos los campos básicos
+        document.getElementById('in-titulo').value = xmlDoc.getElementsByTagName("titulo")[0]?.textContent || "";
+        document.getElementById('in-sinopsis').value = xmlDoc.getElementsByTagName("sinopsis")[0]?.textContent || "";
+        document.getElementById('in-portada').value = xmlDoc.getElementsByTagName("portada")[0]?.textContent || "";
+
+        // Para los géneros
+        const generos = xmlDoc.getElementsByTagName("generos")[0]?.textContent.split(',') || [];
+        document.querySelectorAll('#generos-container input').forEach(cb => {
+            cb.checked = generos.includes(cb.value);
+        });
+
+        // Para las temporadas (si las guardaste como JSON dentro del XML)
+        const tempStr = xmlDoc.getElementsByTagName("temporadas")[0]?.textContent;
+        if (tempStr) {
+            const temps = JSON.parse(tempStr);
+            cargarDatosTemporadas(temps); // Usamos tu función existente
+        }
+
+        alert("¡Datos de la serie importados correctamente!");
+    };
+    reader.readAsText(file);
+}
+
 window.addEventListener('popstate', (event) => {
     if (event.state && event.state.vista) cambiarVista(event.state.vista, false);
     else cambiarVista('catalogo', false);
