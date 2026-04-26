@@ -49,9 +49,24 @@ function verificarPermisosAdmin() {
 // Función para convertir "Solo Leveling!" a "solo_leveling"
 function crearSlug(texto) {
     if (!texto) return "";
-    return texto.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '_') // Cambia todo lo que no sea letra o número por _
-        .replace(/^_+|_+$/g, '');    // Quita guiones bajos del inicio o final
+    
+    return texto
+        // 1. Normalización NFKC: Convierte fuentes raras (𝕠𝖓𝖊, 𝑜𝑛𝑒) en letras normales
+        .normalize('NFKC') 
+        // 2. Pasar a minúsculas
+        .toLowerCase()
+        // 3. Limpiar "Leetspeak" (0 -> o, 1 -> i, etc.)
+        .replace(/0/g, 'o')
+        .replace(/1/g, 'i')
+        .replace(/3/g, 'e')
+        .replace(/4/g, 'a')
+        .replace(/5/g, 's')
+        // 4. Quitar tildes y diacríticos (ej: oͦ -> o, é -> e)
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        // 5. Eliminar cualquier cosa que no sea letra o número (quita tachados, símbolos, etc.)
+        .replace(/[^a-z0-9]+/g, '_')
+        // 6. Limpiar guiones bajos sobrantes
+        .replace(/^_+|_+$/g, '');
 }
 
 // =========================================
@@ -707,6 +722,21 @@ async function ejecutarRegistro() {
         if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
         return alert("⚠️ Título y Portada son obligatorios.");
     }
+
+    // 👇 --- NUEVO CÓDIGO DE VALIDACIÓN DE DUPLICADOS --- 👇
+    const tituloSanitizado = sanitizar(inTitulo.value.trim());
+    const slugGenerado = crearSlug(tituloSanitizado);
+
+    // Solo bloqueamos si estamos creando uno nuevo (no editando)
+    if (!idAnimeEnEdicion && esPropietario) {
+        const animeDuplicado = todasLasObras.find(obra => crearSlug(obra.titulo) === slugGenerado);
+        
+        if (animeDuplicado) {
+            if(tg?.HapticFeedback?.notificationOccurred) tg.HapticFeedback.notificationOccurred('error');
+            return alert(`⚠️ ¡Este anime ya existe!\nEstá registrado como: "${animeDuplicado.titulo}"`);
+        }
+    }
+    // 👆 --- FIN DEL NUEVO CÓDIGO --- 👆
 
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
