@@ -1637,32 +1637,50 @@ body.usuario-identificado #btn-edit-serie {
     }
 }
 
-/* Estilos base para PC */
+/* Contenedor de las herramientas */
 .import-export-tools {
     display: flex;
-    gap: 10px;
+    gap: 8px; /* Espacio pequeño entre botones */
     margin-bottom: 20px;
+    justify-content: flex-start; /* Alineados a la izquierda */
 }
 
+/* Botones "Mini" */
 .btn-tools {
-    background: #27272a !important; /* Mantenemos tu color oscuro */
-    flex: 1;
+    background: #27272a; /* Fondo oscuro igual a tu editor */
+    color: #a1a1aa;     /* Texto gris claro */
+    border: 1px solid #3f3f46;
+    border-radius: 4px;
+    
+    /* TAMAÑO QUE PEDISTE */
+    height: 30px;       
+    font-size: 11px;    /* Letra pequeña y limpia */
+    padding: 0 10px;    /* Poco espacio a los lados */
+    
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 12px !important;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap; /* Evita que el texto se parta en dos líneas */
 }
 
-/* --- MODO CELULAR --- */
-@media (max-width: 600px) {
-    .import-export-tools {
-        flex-direction: column; /* Apila los botones verticalmente */
-    }
-    
+.btn-tools i {
+    font-size: 12px; /* Icono un pelín más grande que el texto */
+}
+
+.btn-tools:hover {
+    background: #3f3f46;
+    color: #fff;
+    border-color: #3ba4fa; /* Brillo azul al pasar el mouse */
+}
+
+/* Ajuste para móviles muy pequeños */
+@media (max-width: 400px) {
     .btn-tools {
-        width: 100%; /* Los botones ocupan todo el ancho disponible */
-        font-size: 15px; /* Mejora la legibilidad en pantallas táctiles */
+        font-size: 10px; /* Aún más pequeña si el celular es muy angosto */
+        padding: 0 6px;
     }
 }
 
