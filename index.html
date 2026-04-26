@@ -124,23 +124,24 @@
             <h2 id="titulo-registro-header">Editor</h2>
             <button id="btn-publicar" class="btn-guardar-principal" onclick="ejecutarRegistro()">
                 Publicar
-            </button>
-        </div>
+        </button>
+    </div>
 
-        <div class="import-export-tools" style="margin-bottom: 15px; display: flex; gap: 10px;">
-            <button onclick="exportarSerieXML()" class="btn-login" style="background: #27272a;">
+    <div class="contenedor-formulario">
+        
+        <div class="import-export-tools" style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: center;">
+            <button onclick="exportarSerieXML()" class="btn-login" style="background: #27272a; flex: 1;">
                 <i class="fa-solid fa-download"></i> Exportar XML
             </button>
             
-            <button onclick="document.getElementById('fileInput').click()" class="btn-login" style="background: #27272a;">
+            <button onclick="document.getElementById('fileInput').click()" class="btn-login" style="background: #27272a; flex: 1;">
                 <i class="fa-solid fa-upload"></i> Importar XML
             </button>
             <input type="file" id="fileInput" style="display: none;" accept=".xml" onchange="importarSerieXML(event)">
         </div>
 
-        <div class="contenedor-formulario">
-            <div class="form-seccion">
-                <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
+        <div class="form-seccion">
+            <h3><i class="fa-solid fa-circle-info"></i> Información General</h3>
                 <div class="input-group">
                     <label>Título Principal</label>
                     <input type="text" id="in-titulo" placeholder="Ej: Solo Leveling">
