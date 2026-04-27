@@ -140,7 +140,7 @@ body.es-admin #btn-admin-view {
    ========================================= */
 .contenedor { 
     max-width: 1200px; 
-    margin: 0 auto; 
+    margin: auto; 
     padding: 20px; 
     
 }
@@ -973,7 +973,7 @@ body.es-admin #btn-admin-view {
         border-radius: 6px;
     }
     
-    .contenedor { padding: 0px; }
+    .contenedor { padding: 0 15px; }
     
     .titulo-seccion { 
         font-size: 18px; 
