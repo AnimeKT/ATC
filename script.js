@@ -185,6 +185,9 @@ let posicionScrollGuardada = 0;
 let timeoutBusqueda = null;
 let listaFavoritos = [];
 let generoSeleccionado = null;
+let animesEnEmision = [];
+let bannerIndexActual = 0;
+let bannerTimer = null;
 
 let filtrosActuales = { texto: '', estado: 'Todos', soloFavoritos: false };
 
@@ -248,6 +251,8 @@ async function cargarObras() {
 
     todasLasObras = obras || []; 
     aplicarTodosLosFiltros();
+
+    cargarBanner();
 }
 
 function aplicarTodosLosFiltros() {
@@ -1467,6 +1472,103 @@ function procesarXML(xmlTexto) {
         alert("❌ Error al procesar el código XML.");
     }
 }
+
+// === FUNCIONES DEL BANNER ===
+function cargarBanner() {
+    function esDiaDeEmision(diaEmisionDB) {
+        if (!diaEmisionDB) return false;
+        
+        const diaActualJS = new Date().getDay();
+        const diaDB = diaEmisionDB.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        switch(diaActualJS) {
+            case 0: return diaDB.includes("domingo");
+            case 1: return diaDB.includes("lunes");
+            case 2: return diaDB.includes("martes");
+            case 3: return diaDB.includes("miercoles");
+            case 4: return diaDB.includes("jueves");
+            case 5: return diaDB.includes("viernes");
+            case 6: return diaDB.includes("sabado");
+            default: return false;
+        }
+    }
+
+    // AHORA USAMOS: todasLasObras
+    animesEnEmision = todasLasObras.filter(obra => {
+        return obra.estado === "En emisión" && esDiaDeEmision(obra.dia_emision);
+    });
+    
+    const contenedor = document.getElementById('contenedor-banner');
+    const slidesContainer = document.getElementById('slides-banner');
+    
+    // Prevención de errores si no existe el contenedor
+    if (!contenedor || !slidesContainer) return; 
+    
+    slidesContainer.innerHTML = ''; 
+
+    if (animesEnEmision.length === 0) {
+        contenedor.style.display = 'none';
+        return;
+    }
+
+    contenedor.style.display = 'block';
+
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diaActualTexto = diasSemana[new Date().getDay()];
+    
+    const svgCalendario = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle; position: relative; top: -1px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"></circle></svg>`;
+
+    animesEnEmision.forEach((obra, index) => {
+        // Obtenemos la imagen correcta desde Supabase
+        let imgUrl = obra.banner_url ? obra.banner_url : (obra.portada_url ? obra.portada_url : '');
+        const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+        const div = document.createElement('div');
+        div.className = `slide ${index === 0 ? 'activo' : ''}`;
+        
+        // AHORA USAMOS abrirDetalle() en lugar de abrir()
+        div.onclick = () => abrirDetalle(tituloSeguro); 
+        
+        div.innerHTML = `
+            <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy">
+            <div class="slide-info">
+                <div class="slide-dia-emision">
+                    ${svgCalendario}Hoy: ${diaActualTexto}
+                </div>
+                <h3 class="slide-titulo">${obra.titulo}</h3>
+            </div>
+        `;
+        slidesContainer.appendChild(div);
+    });
+
+    bannerIndexActual = 0;
+    iniciarAutoBanner();
+}
+
+function cambiarBanner(direccion) {
+    if (animesEnEmision.length <= 1) return;
+    
+    const slides = document.querySelectorAll('.slide');
+    if(slides.length === 0) return;
+
+    slides[bannerIndexActual].classList.remove('activo');
+    bannerIndexActual = (bannerIndexActual + direccion + slides.length) % slides.length;
+    slides[bannerIndexActual].classList.add('activo');
+    
+    reiniciarAutoBanner();
+}
+
+function iniciarAutoBanner() {
+    if (animesEnEmision.length > 1) {
+        bannerTimer = setInterval(() => cambiarBanner(1), 5000); 
+    }
+}
+
+function reiniciarAutoBanner() {
+    clearInterval(bannerTimer);
+    iniciarAutoBanner();
+}
+// === FIN FUNCIONES DEL BANNER ===
 
 window.addEventListener('popstate', (event) => {
     if (event.state && event.state.vista) cambiarVista(event.state.vista, false);

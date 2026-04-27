@@ -1685,3 +1685,110 @@ body.usuario-identificado #btn-edit-serie {
     }
 }
 
+/* =========================================
+   DISEÑO DEL BANNER DE EMISIÓN
+   ========================================= */
+.contenedor-banner {
+    position: relative;
+    width: 100%;
+    max-width: 1200px; /* Tu ancho máximo para PC */
+    margin: 15px auto 20px auto;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: #0f0f11;
+    display: none;
+}
+
+.slides-banner {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 1400 / 500; 
+    height: auto; /* IMPORTANTE: Quitamos el height fijo de 450px */
+    position: relative;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.slide.activo {
+    opacity: 1;
+    z-index: 2;
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    /* EVITAR ESTIRAMIENTO DE IMAGEN:
+       'cover' hace que la imagen llene el rectángulo sin deformarse, 
+       recortando un poco los bordes si es necesario.
+    */
+    object-fit: cover; 
+    display: block;
+}
+
+.slide-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 60px 25px 25px 25px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
+    color: white;
+    z-index: 3;
+}
+
+.slide-dia-emision {
+    font-size: 13px;
+    color: #3ba4fa;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.slide-titulo {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+.btn-banner {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 4;
+    border-radius: 50%;
+    font-size: 18px;
+    backdrop-filter: blur(4px);
+    transition: background 0.3s;
+}
+
+.btn-prev { left: 15px; }
+.btn-next { right: 15px; }
+
+.btn-banner:hover { background: rgba(59, 164, 250, 0.8); }
+
+/* Adaptación para celulares */
+@media (max-width: 768px) {
+    /* Eliminamos cualquier instrucción de .slides-banner { height: ... } */
+    
+    .slide-info { padding: 20px 15px; } /* Ajustamos el relleno para que quepa en el rectángulo más pequeño */
+    .slide-titulo { font-size: 14px; }
+    .slide-dia-emision { font-size: 10px; }
+    .btn-banner { display: none; } /* Opcional: ocultar flechas en móvil para que se vea más limpio */
+}
+
