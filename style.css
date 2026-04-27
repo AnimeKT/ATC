@@ -1742,7 +1742,7 @@ body.usuario-identificado #btn-edit-serie {
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 30px 15px 15px 15px;
+    padding: 30px 15px 5px 15px;
     background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
     color: white;
     z-index: 3;
@@ -1789,7 +1789,7 @@ body.usuario-identificado #btn-edit-serie {
     /* Eliminamos cualquier instrucción de .slides-banner { height: ... } */
     
     /* Arriba: 20px | Derecha: 15px | Abajo: 10px | Izquierda: 15px */
-    .slide-info { padding: 20px 15px 10px 15px; } 
+    .slide-info { padding: 20px 15px 5px 15px; } 
     
     .slide-titulo { font-size: 14px; }
     .slide-dia-emision { font-size: 10px; }
