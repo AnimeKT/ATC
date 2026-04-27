@@ -142,6 +142,7 @@ body.es-admin #btn-admin-view {
     max-width: 1200px; 
     margin: 0 auto; 
     padding: 20px; 
+    
 }
 
 .titulo-seccion { 
@@ -972,11 +973,12 @@ body.es-admin #btn-admin-view {
         border-radius: 6px;
     }
     
-    .contenedor { padding: 15px; }
+    .contenedor { padding: 0px; }
     
     .titulo-seccion { 
         font-size: 18px; 
         margin-bottom: 7px;
+        padding-top: 0;
     }
     
     .header-registro { 
@@ -1748,13 +1750,13 @@ body.usuario-identificado #btn-edit-serie {
 
 .slide-dia-emision {
     font-size: 13px;
-    color: #3ba4fa;
-    margin-bottom: 5px;
+    color: #ffffff;
+    margin-bottom: 0px;
     font-weight: 600;
 }
 
 .slide-titulo {
-    font-size: 24px;
+    font-size: 19px;
     font-weight: bold;
     margin: 0;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
