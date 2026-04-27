@@ -1742,7 +1742,7 @@ body.usuario-identificado #btn-edit-serie {
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 60px 25px 25px 25px;
+    padding: 30px 15px 15px 15px;
     background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
     color: white;
     z-index: 3;
@@ -1788,7 +1788,9 @@ body.usuario-identificado #btn-edit-serie {
 @media (max-width: 768px) {
     /* Eliminamos cualquier instrucción de .slides-banner { height: ... } */
     
-    .slide-info { padding: 20px 15px; } /* Ajustamos el relleno para que quepa en el rectángulo más pequeño */
+    /* Arriba: 20px | Derecha: 15px | Abajo: 10px | Izquierda: 15px */
+    .slide-info { padding: 20px 15px 10px 15px; } 
+    
     .slide-titulo { font-size: 14px; }
     .slide-dia-emision { font-size: 10px; }
     .btn-banner { display: none; } /* Opcional: ocultar flechas en móvil para que se vea más limpio */
