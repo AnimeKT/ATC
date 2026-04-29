@@ -1580,7 +1580,7 @@ function cambiarBanner(direccion) {
 
 function iniciarAutoBanner() {
     if (animesEnEmision.length > 1) {
-        bannerTimer = setInterval(() => cambiarBanner(1), 5000); 
+        bannerTimer = setInterval(() => cambiarBanner(1), 8000); 
     }
 }
 

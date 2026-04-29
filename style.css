@@ -1764,25 +1764,47 @@ body.usuario-identificado #btn-edit-serie {
 
 .btn-banner {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
+    top: 0; /* Ocupa desde arriba */
+    height: 100%; /* Hasta abajo */
+    width: 25%; /* Cubre el 25% de cada lado */
+    display: flex;
+    align-items: center; /* Centra el icono verticalmente */
+    justify-content: center; /* Centra el icono horizontalmente */
+    background: transparent; /* Fondo invisible */
     border: none;
-    width: 40px;
-    height: 40px;
     cursor: pointer;
-    z-index: 4;
-    border-radius: 50%;
-    font-size: 18px;
-    backdrop-filter: blur(4px);
+    z-index: 10;
     transition: background 0.3s;
+    -webkit-tap-highlight-color: transparent; /* Quita el cuadro azul al tocar en móvil */
 }
 
-.btn-prev { left: 15px; }
-.btn-next { right: 15px; }
+.btn-prev {
+    left: 0;
+    justify-content: flex-start; /* Alinea el icono más a la izquierda */
+    padding-left: 15px;
+}
 
-.btn-banner:hover { background: rgba(59, 164, 250, 0.8); }
+.btn-next {
+    right: 0;
+    justify-content: flex-end; /* Alinea el icono más a la derecha */
+    padding-right: 15px;
+}
+
+.btn-banner:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-banner i {
+    background: rgba(0, 0, 0, 0.5);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: white;
+    backdrop-filter: blur(4px);
+}
 
 /* Adaptación para celulares */
 @media (max-width: 768px) {
@@ -1792,8 +1814,7 @@ body.usuario-identificado #btn-edit-serie {
     .slide-info { padding: 20px 15px 5px 15px; } 
     
     .slide-titulo { font-size: 14px; }
-    .slide-dia-emision { font-size: 10px; }
-    .btn-banner { display: none; } /* Opcional: ocultar flechas en móvil para que se vea más limpio */
+    .slide-dia-emision { font-size: 10px; }/* Opcional: ocultar flechas en móvil para que se vea más limpio */
 }
 
 /* Optimizaciones visuales para imágenes del catálogo */
