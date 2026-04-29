@@ -589,7 +589,12 @@ function mostrarIdiomas(temporadaObj) {
         const imgPortada = document.getElementById('det-portada');
         if(imgPortada) {
             imgPortada.style.opacity = 0.3;
-            setTimeout(() => { imgPortada.src = temporadaObj.imagen; imgPortada.style.opacity = 1; }, 150);
+            setTimeout(() => { 
+                imgPortada.src = temporadaObj.imagen; 
+                imgPortada.style.opacity = 1; 
+                // 👉 LÍNEA NUEVA: Actualizamos el visor para que muestre la imagen de la temporada
+                imgPortada.onclick = (e) => { e.preventDefault(); e.stopPropagation(); verImagenGrande(temporadaObj.imagen); };
+            }, 150);
         }
     }
 
