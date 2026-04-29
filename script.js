@@ -69,6 +69,16 @@ function crearSlug(texto) {
         .replace(/^_+|_+$/g, '');
 }
 
+// 👉 PEGA ESTO AQUÍ
+// 👉 REEMPLAZA LA FUNCIÓN POR ESTA VERSIÓN SEGURA
+function obtenerImagenInteligente(url, { anchoMovil = 400, calidadMovil = 70 } = {}) {
+    if (!url) return '';
+    
+    // Apagamos el proxy externo temporalmente porque choca con la seguridad de Supabase.
+    // Simplemente devolvemos la URL original para que todo vuelva a funcionar.
+    return url; 
+}
+
 // =========================================
 // 2. INICIO DE LA APLICACIÓN
 // =========================================
@@ -303,10 +313,14 @@ function renderizarObras(obras) {
 
     grid.innerHTML = obras.map(obra => {
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        // 👉 AÑADIMOS LA OPTIMIZACIÓN AQUÍ
+        const imgOptimizada = obtenerImagenInteligente(obra.portada_url, { anchoMovil: 250 });
+
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
-            <img src="${obra.portada_url}" alt="${tituloSeguro}">
+            <img src="${imgOptimizada}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
             <div class="info-tarjeta">
                 <div class="titulo-tarjeta">${obra.titulo}</div>
             </div>
@@ -392,14 +406,17 @@ function abrirDetalle(tituloObra) {
     if (!obraActual) return;
 
     const setContent = (id, value) => { if(document.getElementById(id)) document.getElementById(id).textContent = value; };
+    
+    // 👉 REEMPLAZA DESDE AQUÍ
     const imgBanner = document.getElementById('det-banner');
-    if(imgBanner) imgBanner.src = obraActual.banner_url || obraActual.portada_url || '';
+    if(imgBanner) imgBanner.src = obtenerImagenInteligente(obraActual.banner_url || obraActual.portada_url, { anchoMovil: 600 });
     
     const imgPort = document.getElementById('det-portada');
     if(imgPort) {
-        imgPort.src = obraActual.portada_url || '';
+        imgPort.src = obtenerImagenInteligente(obraActual.portada_url, { anchoMovil: 300 });
         imgPort.style.opacity = 1;
-        imgPort.onclick = (e) => { e.preventDefault(); e.stopPropagation(); verImagenGrande(imgPort.src); };
+        // El visor grande siempre usa la original en alta calidad
+        imgPort.onclick = (e) => { e.preventDefault(); e.stopPropagation(); verImagenGrande(obraActual.portada_url); };
     }
     
     setContent('det-titulo', obraActual.titulo || 'Sin título');
@@ -1519,8 +1536,11 @@ function cargarBanner() {
     const svgCalendario = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle; position: relative; top: -1px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"></circle></svg>`;
 
     animesEnEmision.forEach((obra, index) => {
-        // Obtenemos la imagen correcta desde Supabase
-        let imgUrl = obra.banner_url ? obra.banner_url : (obra.portada_url ? obra.portada_url : '');
+        
+        // 👉 REEMPLAZA EL let imgUrl ORIGINAL POR ESTO:
+        let imgBase = obra.banner_url ? obra.banner_url : (obra.portada_url ? obra.portada_url : '');
+        let imgUrl = obtenerImagenInteligente(imgBase, { anchoMovil: 600 });
+        
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         const div = document.createElement('div');
