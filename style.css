@@ -1704,7 +1704,7 @@ body.usuario-identificado #btn-edit-serie {
 .slides-banner {
     display: flex;
     width: 100%;
-    aspect-ratio: 1400 / 650; 
+    aspect-ratio: 1400 / 650; /* Mantiene una proporción de 1400x650 pero se adapta al ancho */
     height: auto; /* IMPORTANTE: Quitamos el height fijo de 450px */
     position: relative;
 }
