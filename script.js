@@ -314,13 +314,13 @@ function renderizarObras(obras) {
     grid.innerHTML = obras.map(obra => {
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         
-        // 👉 AÑADIMOS LA OPTIMIZACIÓN AQUÍ
-        const imgOptimizada = obtenerImagenInteligente(obra.portada_url, { anchoMovil: 250 });
+        // Usamos la función inteligente (que ahora solo devuelve la URL para no romper nada)
+        const imgUrl = obtenerImagenInteligente(obra.portada_url);
 
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
-            <img src="${imgOptimizada}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
+            <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
             <div class="info-tarjeta">
                 <div class="titulo-tarjeta">${obra.titulo}</div>
             </div>
