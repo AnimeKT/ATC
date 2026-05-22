@@ -99,16 +99,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (userToLog) loguearUsuario(userToLog);
 
-    // --- DETECTOR MULTIPLATAFORMA (Slugs / Nombres) ---
+    // --- DETECTOR MULTIPLATAFORMA (Slugs / Nombres / StartApp) ---
     const urlParams = new URLSearchParams(window.location.search);
     const webId = urlParams.get('id'); 
+    const webStartApp = urlParams.get('startapp'); // <--- Captura el enlace generado para Google
     const tgId = tg.initDataUnsafe?.start_param; 
 
-    const loQueBuscamos = tgId || webId;
+    // El sistema buscará prioritariamente lo que venga de Telegram, luego la ID web y finalmente el startapp de Google
+    const loQueBuscamos = tgId || webId || webStartApp;
 
     if (loQueBuscamos) {
         setTimeout(() => {
-            // Buscamos en la lista si coincide el ID o el nombre limpio (slug)
+            // Buscamos de forma inteligente si coincide la ID o el slug limpio del título
             const obraDirecta = todasLasObras.find(o => 
                 String(o.id) === String(loQueBuscamos) || 
                 crearSlug(o.titulo) === String(loQueBuscamos)
@@ -313,14 +315,19 @@ function renderizarObras(obras) {
 
     grid.innerHTML = obras.map(obra => {
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        
-        // Usamos la función inteligente (que ahora solo devuelve la URL para no romper nada)
         const imgUrl = obtenerImagenInteligente(obra.portada_url);
+        
+        // Usamos tu función crearSlug para que el enlace coincida con el formato del bot
+        const animeParametro = crearSlug(obra.titulo);
 
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
-            <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
+            
+            <a href="?startapp=${animeParametro}" style="display: block; text-decoration: none; color: inherit;" onclick="event.preventDefault();">
+                <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
+            </a>
+            
             <div class="info-tarjeta">
                 <div class="titulo-tarjeta">${obra.titulo}</div>
             </div>
@@ -1547,21 +1554,30 @@ function cargarBanner() {
         let imgUrl = obtenerImagenInteligente(imgBase, { anchoMovil: 600 });
         
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        // Creamos un identificador limpio para usar en la URL (reemplaza espacios por guiones bajos y pasa a minúsculas)
+        const animeParametro = crearSlug(obra.titulo);
 
         const div = document.createElement('div');
         div.className = `slide ${index === 0 ? 'activo' : ''}`;
         
-        // AHORA USAMOS abrirDetalle() en lugar de abrir()
-        div.onclick = () => abrirDetalle(tituloSeguro); 
+        // El onclick intercepta el clic para que la app SPA reaccione de inmediato sin recargar toda la página
+        div.onclick = (e) => {
+            e.preventDefault(); // Evita que el navegador intente seguir el enlace de forma tradicional
+            abrirDetalle(tituloSeguro); 
+        };
         
+        // Envolvemos la imagen en un tag <a> apuntando al parámetro para que Google lo indexe individualmente
         div.innerHTML = `
-            <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy">
-            <div class="slide-info">
-                <div class="slide-dia-emision">
-                    ${svgCalendario}Hoy: ${diaActualTexto}
+            <a href="?startapp=${animeParametro}" style="display: block; width: 100%; height: 100%; text-decoration: none; color: inherit;">
+                <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy">
+                <div class="slide-info">
+                    <div class="slide-dia-emision">
+                        ${svgCalendario}Hoy: ${diaActualTexto}
+                    </div>
+                    <h3 class="slide-titulo">${obra.titulo}</h3>
                 </div>
-                <h3 class="slide-titulo">${obra.titulo}</h3>
-            </div>
+            </a>
         `;
         slidesContainer.appendChild(div);
     });
@@ -1599,3 +1615,4 @@ window.addEventListener('popstate', (event) => {
     if (event.state && event.state.vista) cambiarVista(event.state.vista, false);
     else cambiarVista('catalogo', false);
 });
+
