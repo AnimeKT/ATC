@@ -80,13 +80,14 @@ function obtenerImagenInteligente(url, { anchoMovil = 400, calidadMovil = 70 } =
 }
 
 // =========================================
-// 2. INICIO DE LA APLICACIÓN
+// 2. INICIO DE LA APLICACIÓN (CORREGIDO)
 // =========================================
 document.addEventListener('DOMContentLoaded', async () => {
     verificarPermisosAdmin();
     tg.ready();
     tg.expand();
 
+    // 1. Esperamos obligatoriamente a que las obras terminen de descargar de Supabase
     await cargarObras();
     
     let userToLog = null;
@@ -99,29 +100,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (userToLog) loguearUsuario(userToLog);
 
-    // --- DETECTOR MULTIPLATAFORMA (Slugs / Nombres / StartApp) ---
+    // 2. Detectamos los parámetros inmediatamente con los datos ya cargados
     const urlParams = new URLSearchParams(window.location.search);
     const webId = urlParams.get('id'); 
-    const webStartApp = urlParams.get('startapp'); // <--- Captura el enlace generado para Google
-    const tgId = tg.initDataUnsafe?.start_param; 
+    const webStartApp = urlParams.get('startapp');
+    const tgId = tg.initDataUnsafe?.start_param;
 
-    // El sistema buscará prioritariamente lo que venga de Telegram, luego la ID web y finalmente el startapp de Google
     const loQueBuscamos = tgId || webId || webStartApp;
 
     if (loQueBuscamos) {
-        setTimeout(() => {
-            // Buscamos de forma inteligente si coincide la ID o el slug limpio del título
-            const obraDirecta = todasLasObras.find(o => 
-                String(o.id) === String(loQueBuscamos) || 
-                crearSlug(o.titulo) === String(loQueBuscamos)
-            );
-            
-            if (obraDirecta) {
-                abrirDetalle(obraDirecta.titulo);
-            } else {
-                mostrarCatalogo();
-            }
-        }, 600); 
+        // Buscamos directamente sin retrasos de milisegundos
+        const obraDirecta = todasLasObras.find(o => 
+            String(o.id) === String(loQueBuscamos) || 
+            crearSlug(o.titulo) === String(loQueBuscamos)
+        );
+        
+        if (obraDirecta) {
+            abrirDetalle(obraDirecta.titulo); // Abre el anime directamente
+        } else {
+            mostrarCatalogo();
+        }
     } else {
         mostrarCatalogo();
     }
@@ -324,7 +322,7 @@ function renderizarObras(obras) {
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
             
-            <a href="?startapp=${animeParametro}" style="display: block; text-decoration: none; color: inherit;" onclick="event.preventDefault();">
+            <a href="?startapp=${animeParametro}" style="display: block; text-decoration: none; color: inherit;">
                 <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
             </a>
             
