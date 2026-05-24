@@ -80,14 +80,13 @@ function obtenerImagenInteligente(url, { anchoMovil = 400, calidadMovil = 70 } =
 }
 
 // =========================================
-// 2. INICIO DE LA APLICACIÓN (CORREGIDO)
+// 2. INICIO DE LA APLICACIÓN
 // =========================================
 document.addEventListener('DOMContentLoaded', async () => {
     verificarPermisosAdmin();
     tg.ready();
     tg.expand();
 
-    // 1. Esperamos obligatoriamente a que las obras terminen de descargar de Supabase
     await cargarObras();
     
     let userToLog = null;
@@ -100,26 +99,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (userToLog) loguearUsuario(userToLog);
 
-    // 2. Detectamos los parámetros inmediatamente con los datos ya cargados
+    // --- DETECTOR MULTIPLATAFORMA (Slugs / Nombres) ---
     const urlParams = new URLSearchParams(window.location.search);
     const webId = urlParams.get('id'); 
-    const webStartApp = urlParams.get('startapp');
-    const tgId = tg.initDataUnsafe?.start_param;
+    const tgId = tg.initDataUnsafe?.start_param; 
 
-    const loQueBuscamos = tgId || webId || webStartApp;
+    const loQueBuscamos = tgId || webId;
 
     if (loQueBuscamos) {
-        // Buscamos directamente sin retrasos de milisegundos
-        const obraDirecta = todasLasObras.find(o => 
-            String(o.id) === String(loQueBuscamos) || 
-            crearSlug(o.titulo) === String(loQueBuscamos)
-        );
-        
-        if (obraDirecta) {
-            abrirDetalle(obraDirecta.titulo); // Abre el anime directamente
-        } else {
-            mostrarCatalogo();
-        }
+        setTimeout(() => {
+            // Buscamos en la lista si coincide el ID o el nombre limpio (slug)
+            const obraDirecta = todasLasObras.find(o => 
+                String(o.id) === String(loQueBuscamos) || 
+                crearSlug(o.titulo) === String(loQueBuscamos)
+            );
+            
+            if (obraDirecta) {
+                abrirDetalle(obraDirecta.titulo);
+            } else {
+                mostrarCatalogo();
+            }
+        }, 600); 
     } else {
         mostrarCatalogo();
     }
@@ -313,19 +313,14 @@ function renderizarObras(obras) {
 
     grid.innerHTML = obras.map(obra => {
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const imgUrl = obtenerImagenInteligente(obra.portada_url);
         
-        // Usamos tu función crearSlug para que el enlace coincida con el formato del bot
-        const animeParametro = crearSlug(obra.titulo);
+        // Usamos la función inteligente (que ahora solo devuelve la URL para no romper nada)
+        const imgUrl = obtenerImagenInteligente(obra.portada_url);
 
         return `
         <div class="tarjeta-anime" onclick="abrirDetalle('${tituloSeguro}')">
             <div class="tipo-tag">${obra.tipo || 'Anime'}</div>
-            
-            <a href="?startapp=${animeParametro}" style="display: block; text-decoration: none; color: inherit;">
-                <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
-            </a>
-            
+            <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy" class="img-catalogo">
             <div class="info-tarjeta">
                 <div class="titulo-tarjeta">${obra.titulo}</div>
             </div>
@@ -1552,30 +1547,21 @@ function cargarBanner() {
         let imgUrl = obtenerImagenInteligente(imgBase, { anchoMovil: 600 });
         
         const tituloSeguro = String(obra.titulo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        
-        // Creamos un identificador limpio para usar en la URL (reemplaza espacios por guiones bajos y pasa a minúsculas)
-        const animeParametro = crearSlug(obra.titulo);
 
         const div = document.createElement('div');
         div.className = `slide ${index === 0 ? 'activo' : ''}`;
         
-        // El onclick intercepta el clic para que la app SPA reaccione de inmediato sin recargar toda la página
-        div.onclick = (e) => {
-            e.preventDefault(); // Evita que el navegador intente seguir el enlace de forma tradicional
-            abrirDetalle(tituloSeguro); 
-        };
+        // AHORA USAMOS abrirDetalle() en lugar de abrir()
+        div.onclick = () => abrirDetalle(tituloSeguro); 
         
-        // Envolvemos la imagen en un tag <a> apuntando al parámetro para que Google lo indexe individualmente
         div.innerHTML = `
-            <a href="?startapp=${animeParametro}" style="display: block; width: 100%; height: 100%; text-decoration: none; color: inherit;">
-                <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy">
-                <div class="slide-info">
-                    <div class="slide-dia-emision">
-                        ${svgCalendario}Hoy: ${diaActualTexto}
-                    </div>
-                    <h3 class="slide-titulo">${obra.titulo}</h3>
+            <img src="${imgUrl}" alt="${tituloSeguro}" loading="lazy">
+            <div class="slide-info">
+                <div class="slide-dia-emision">
+                    ${svgCalendario}Hoy: ${diaActualTexto}
                 </div>
-            </a>
+                <h3 class="slide-titulo">${obra.titulo}</h3>
+            </div>
         `;
         slidesContainer.appendChild(div);
     });
@@ -1613,4 +1599,3 @@ window.addEventListener('popstate', (event) => {
     if (event.state && event.state.vista) cambiarVista(event.state.vista, false);
     else cambiarVista('catalogo', false);
 });
-
